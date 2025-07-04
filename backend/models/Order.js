@@ -1,20 +1,92 @@
 import mongoose from 'mongoose';
 
-const orderSchema = new mongoose.Schema({
-    email: { type: String, required: true },
-    fullName: { type: String, required: true },
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    zip: { type: String, required: true },
-    cardNumber: { type: String, required: true },
-    expiry: { type: String, required: true },
-    cvv: { type: String, required: true },
-    paymentMethod: { type: String, required: true },
-    selectedBank: String,
-    amount: { type: Number, required: true, default: 0 },
-    status: { type: String, enum: ['completed', 'pending', 'failed', 'refunded'], default: 'pending' },
-    transactionId: { type: String },
-}, { timestamps: true });
+const orderSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    products: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Product',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'cancelled', 'refunded'],
+      default: 'pending',
+    },
+    // Payment fields for admin management
+    paymentMethod: {
+      type: String,
+      enum: ['credit_card', 'debit_card', 'bank_transfer', 'paypal'],
+      required: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+      default: 'pending',
+    },
+    transactionId: {
+      type: String,
+      unique: true,
+    },
+    paymentDate: {
+      type: Date,
+    },
+    refundAmount: {
+      type: Number,
+      default: 0,
+    },
+    refundDate: {
+      type: Date,
+    },
+    refundReason: {
+      type: String,
+    },
+    // Additional fields for admin
+    adminNotes: {
+      type: String,
+    },
+    processedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    processedAt: {
+      type: Date,
+    },
+  },
+  { timestamps: true }
+);
+
+// Generate transaction ID
+orderSchema.pre('save', function (next) {
+  if (!this.transactionId) {
+    this.transactionId = `TRX-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 5)
+      .toUpperCase()}`;
+  }
+  next();
+});
 
 const Order = mongoose.model('Order', orderSchema);
-export default Order; 
+export default Order;
