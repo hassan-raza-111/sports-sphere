@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaHome,
   FaUserShield,
@@ -13,9 +13,16 @@ import logoImg from '../assets/images/Logo.png';
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path) => {
     return location.pathname === path;
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
   };
 
   return (
@@ -42,7 +49,7 @@ const AdminLayout = ({ children }) => {
         }}
       >
         <Link
-          to='/'
+          to='/admin/dashboard'
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -70,19 +77,6 @@ const AdminLayout = ({ children }) => {
           </div>
         </Link>
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <Link
-            to='/'
-            style={{
-              fontWeight: 600,
-              color: '#2c3e50',
-              transition: 'color 0.3s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
-            <FaHome /> <span>Home</span>
-          </Link>
           <Link
             to='/admin/dashboard'
             style={{
@@ -165,6 +159,23 @@ const AdminLayout = ({ children }) => {
               5
             </span>
           </Link>
+          <button
+            onClick={handleLogout}
+            style={{
+              fontWeight: 600,
+              color: '#e74c3c',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '1rem',
+              marginLeft: '1.5rem',
+            }}
+          >
+            <FaRunning /> <span>Logout</span>
+          </button>
         </nav>
       </header>
 
