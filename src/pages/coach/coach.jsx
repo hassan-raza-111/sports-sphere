@@ -7,19 +7,63 @@ import {
   FaStore,
   FaEnvelope,
   FaUser,
-  FaHandshake,
+  FaChartBar,
+  FaComments,
+  FaFileAlt,
+  FaInbox,
+  FaClock,
+  FaChalkboardTeacher,
   FaRunning,
 } from 'react-icons/fa';
 
 function Coach() {
   const [coachName, setCoachName] = useState('Coach');
+  const [coachId, setCoachId] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.name) {
+    if (user && user.name && user._id) {
       setCoachName(user.name);
+      setCoachId(user._id);
     }
   }, []);
+
+  useEffect(() => {
+    if (!coachId) return;
+    setLoading(true);
+    Promise.all([
+      fetch(`/api/coaches/${coachId}/upcoming-sessions`).then((r) => r.json()),
+      fetch(`/api/coaches/${coachId}/dashboard-stats`).then((r) => r.json()),
+    ])
+      .then(([sessionsData, statsData]) => {
+        setSessions(sessionsData);
+        setStats(statsData);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError('Failed to load dashboard data');
+        setLoading(false);
+      });
+  }, [coachId]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
+        Loading coach dashboard...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -35,7 +79,7 @@ function Coach() {
             <FaHome /> <span>Home</span>
           </Link>
           <Link to='/coach/coach-marketplace'>
-            <FaHome /> <span>Marketplace</span>
+            <FaStore /> <span>Marketplace</span>
           </Link>
           <Link to='/coach-messages'>
             <FaEnvelope />
@@ -43,7 +87,7 @@ function Coach() {
             <span className='notification-badge'>3</span>
           </Link>
           <Link to='/coach/progress'>
-            <FaStore /> <span>Coach Progress</span>
+            <FaChartBar /> <span>Coach Progress</span>
           </Link>
           <Link to='/coach-profile' className='profile-btn'>
             <FaUser />
@@ -53,95 +97,92 @@ function Coach() {
 
       <main className='dashboard'>
         <h2>
-          <i className='fas fa-chalkboard-teacher'></i> Welcome, {coachName}!
+          <FaChalkboardTeacher /> Welcome, {coachName}!
         </h2>
 
-        <section className='feature-section'>
+        <section className='feature-section card-box'>
           <div className='card'>
             <h3>
-              <i className='fas fa-chart-bar'></i> Progress Reports
+              <FaChartBar /> Progress Reports
             </h3>
             <p>
               Monitor athlete performance with detailed analytics and easily
               track their training journey.
             </p>
             <Link to='/progress' className='btn secondary'>
-              <i className='fas fa-file-alt'></i> View Progress
+              <FaFileAlt /> View Progress
             </Link>
           </div>
 
           <div className='card'>
             <h3>
-              <i className='fas fa-comments'></i> Athlete Communication
+              <FaComments /> Athlete Communication
             </h3>
             <p>
               Stay connected through instant messaging, share training plans,
               and provide session feedback in real time.
             </p>
             <Link to='/message' className='btn primary'>
-              <i className='fas fa-inbox'></i> Go to Messages
+              <FaInbox /> Go to Messages
             </Link>
           </div>
         </section>
 
         <section className='sessions-section'>
           <h3>
-            <i className='fas fa-clock'></i> Upcoming Sessions (Next 7 Days)
+            <FaClock /> Upcoming Sessions (Next 7 Days)
           </h3>
           <div className='sessions-list'>
-            {[
-              {
-                date: 'Mon, Jun 5',
-                athlete: 'Alex Morgan',
-                time: '3:00 PM - 4:30 PM',
-              },
-              {
-                date: 'Tue, Jun 6',
-                athlete: 'Jamie Johnson',
-                time: '10:00 AM - 11:30 AM',
-              },
-              {
-                date: 'Wed, Jun 7',
-                athlete: 'Taylor Smith',
-                time: '5:00 PM - 6:30 PM',
-              },
-              {
-                date: 'Fri, Jun 9',
-                athlete: 'Jordan Lee',
-                time: '4:00 PM - 5:30 PM',
-              },
-            ].map((session, index) => (
-              <div className='session-item' key={index}>
-                <div className='date'>{session.date}</div>
-                <div className='athlete'>
-                  <i className='fas fa-user'></i> {session.athlete}
-                </div>
-                <div className='time'>{session.time}</div>
-                <div className='action-btn'>
-                  <Link to='#' className='btn small-btn'>
-                    Details
-                  </Link>
-                </div>
+            {sessions.length === 0 ? (
+              <div
+                style={{
+                  color: '#e74c3c',
+                  textAlign: 'center',
+                  padding: '1rem',
+                }}
+              >
+                No upcoming sessions found.
               </div>
-            ))}
+            ) : (
+              sessions.map((session, index) => (
+                <div className='session-item' key={index}>
+                  <div className='date'>
+                    {new Date(session.date).toLocaleDateString(undefined, {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </div>
+                  <div className='athlete'>
+                    <FaUser /> {session.athlete}
+                  </div>
+                  <div className='time'>{session.time}</div>
+                  <div className='action-btn'>
+                    <Link to='#' className='btn small-btn'>
+                      Details
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
 
         <div className='stats-overview'>
           <div className='stat-card'>
-            <div className='value'>12</div>
+            <div className='value'>{stats?.upcomingSessions ?? '-'}</div>
             <div className='label'>Upcoming Sessions</div>
           </div>
           <div className='stat-card'>
-            <div className='value'>4.9</div>
+            <div className='value'>{stats?.avgRating ?? '-'}</div>
             <div className='label'>Average Rating</div>
           </div>
           <div className='stat-card'>
-            <div className='value'>87%</div>
+            <div className='value'>{stats?.retention ?? '-'}%</div>
             <div className='label'>Athlete Retention</div>
           </div>
           <div className='stat-card'>
-            <div className='value'>5</div>
+            <div className='value'>{stats?.newAthletes ?? '-'}</div>
             <div className='label'>New Athletes</div>
           </div>
         </div>
@@ -150,7 +191,7 @@ function Coach() {
       <footer>
         <div className='footer-content'>
           <div className='footer-logo'>
-            <i className='fas fa-running'></i> Sport Sphere
+            <FaRunning /> Sport Sphere
           </div>
           <div className='copyright'>
             &copy; 2025 Sport Sphere. All rights reserved.
