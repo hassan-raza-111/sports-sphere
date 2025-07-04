@@ -53,11 +53,10 @@ function App() {
       <Route path='/athlete' element={<Athlete />} />
       <Route path='/athelte-profile' element={<Profile />} />
       <Route path='/message' element={<Messages />} />
-      <Route path='/athelte-progress' element={<AthleteProgress />} />
       <Route path='/booking' element={<Booking />} />
       <Route path='/feedback' element={<Feedback />} />
       <Route path='/athelte/find-coaches' element={<FindCoaches />} />
-      <Route path='/athelte/progress' element={<Progress />} />
+      <Route path='/progress' element={<AthleteProgress />} />
 
       {/* Vendor */}
       <Route path='/vendor' element={<Vendor />} />
