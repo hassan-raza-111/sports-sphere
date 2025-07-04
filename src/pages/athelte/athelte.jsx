@@ -16,12 +16,31 @@ import {
 
 function Athlete() {
   const [athleteName, setAthleteName] = useState('User');
+  const [athleteId, setAthleteId] = useState(null);
+  const [upcomingBookings, setUpcomingBookings] = useState(0);
+  const [completedSessions, setCompletedSessions] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [goalProgress, setGoalProgress] = useState(0);
 
   useEffect(() => {
     // Try to get user info from localStorage
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.name) {
+    if (user && user.name && user._id) {
       setAthleteName(user.name);
+      setAthleteId(user._id);
+      // Fetch all dynamic stats
+      fetch(`/api/athlete/${user._id}/bookings/upcoming`)
+        .then((res) => res.json())
+        .then((data) => setUpcomingBookings(data.count || 0));
+      fetch(`/api/athlete/${user._id}/bookings/completed`)
+        .then((res) => res.json())
+        .then((data) => setCompletedSessions(data.count || 0));
+      fetch(`/api/athlete/${user._id}/average-rating`)
+        .then((res) => res.json())
+        .then((data) => setAverageRating(data.averageRating || 0));
+      fetch(`/api/athlete/${user._id}/goal-progress`)
+        .then((res) => res.json())
+        .then((data) => setGoalProgress(data.goalProgress || 0));
     }
   }, []);
 
@@ -60,8 +79,8 @@ function Athlete() {
               Welcome Back, <span className='athlete-name'>{athleteName}!</span>
             </h2>
             <p>
-              Ready for your next training session? You have 5 upcoming
-              bookings.
+              Ready for your next training session? You have {upcomingBookings}{' '}
+              upcoming bookings.
             </p>
           </div>
           <div className='notification-bell'>
@@ -110,15 +129,15 @@ function Athlete() {
           </h3>
           <div className='stats-grid'>
             <div className='stat-card'>
-              <div className='stat-value'>12</div>
+              <div className='stat-value'>{completedSessions}</div>
               <div className='stat-label'>Completed Sessions</div>
             </div>
             <div className='stat-card'>
-              <div className='stat-value'>4.8</div>
+              <div className='stat-value'>{averageRating}</div>
               <div className='stat-label'>Average Rating</div>
             </div>
             <div className='stat-card'>
-              <div className='stat-value'>85%</div>
+              <div className='stat-value'>{goalProgress}%</div>
               <div className='stat-label'>Goal Progress</div>
             </div>
           </div>
