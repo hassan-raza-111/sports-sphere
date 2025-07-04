@@ -43,6 +43,7 @@ import Admin from './pages/admin/admin';
 import AdminPaymentManagement from './pages/admin/payment-managment';
 import AdminReport from './pages/admin/report';
 import AdminUserManagement from './pages/admin/user-managment';
+import AdminAddUser from './pages/admin/admin-add-user.jsx';
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
       />
       <Route path='/admin/report' element={<AdminReport />} />
       <Route path='/admin/user-management' element={<AdminUserManagement />} />
+      <Route path='/admin/add-user' element={<AdminAddUser />} />
 
       {/* Not Found (404) */}
       <Route path='*' element={<NotFound />} />

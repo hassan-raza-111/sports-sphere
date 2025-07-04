@@ -290,4 +290,64 @@ router.put('/users/:id', async (req, res) => {
   }
 });
 
+// Admin: Create user (admin panel)
+router.post('/users/admin-create', async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      role,
+      status,
+      sports,
+      sessionType,
+      location,
+      preferredSport,
+      level,
+      storeName,
+      vendorType,
+      website,
+    } = req.body;
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    const existing = await User.findOne({ email });
+    if (existing)
+      return res.status(409).json({ message: 'Email already registered' });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = new User({
+      name,
+      email,
+      password: hashed,
+      role,
+      status: status || 'active',
+      preferredSport,
+      level,
+    });
+    await user.save();
+    // Role-specific logic
+    if (role === 'coach') {
+      await Coach.create({
+        userId: user._id,
+        name,
+        sports,
+        sessionType,
+        location,
+      });
+    } else if (role === 'athlete') {
+      // already set preferredSport, level
+    } else if (role === 'vendor') {
+      await VendorProfile.create({
+        userId: user._id,
+        storeName,
+        vendorType,
+        website,
+      });
+    }
+    res.status(201).json({ message: 'User created successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 export default router;

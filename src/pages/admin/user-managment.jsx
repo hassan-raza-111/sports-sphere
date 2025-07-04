@@ -487,6 +487,18 @@ const UserManagement = () => {
       <style dangerouslySetInnerHTML={{ __html: userStyles }} />
       {/* Main user management content only (remove header/footer) */}
       <div className='user-container'>
+        {/* Add User Button (now navigates to add user page) */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginBottom: '1.5rem',
+          }}
+        >
+          <Link to='/admin/add-user' className='btn'>
+            + Add User
+          </Link>
+        </div>
         <h2 className='user-heading'>
           <i className='fas fa-users'></i> User Management
         </h2>
@@ -550,11 +562,6 @@ const UserManagement = () => {
                 <option>Active</option>
                 <option>Disabled</option>
               </select>
-            </div>
-            <div className='filter-group'>
-              <Link className='btn' to={'/register'}>
-                <i className='fas fa-plus'></i> Add User
-              </Link>
             </div>
           </div>
 
