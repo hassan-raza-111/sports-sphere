@@ -28,16 +28,16 @@ function Login() {
       // Redirect based on role from API response
       switch (data.user.role) {
         case 'athlete':
-          navigate('/athlete');
+          navigate('/athlete/dashboard');
           break;
         case 'coach':
-          navigate('/coach');
+          navigate('/coach/dashboard');
           break;
         case 'vendor':
-          navigate('/vendor');
+          navigate('/vendor/dashboard');
           break;
         case 'admin':
-          navigate('/admin');
+          navigate('/admin/dashboard');
           break;
         default:
           setError('Invalid role.');
