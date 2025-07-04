@@ -99,11 +99,9 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
     if (user.status === 'disabled') {
-      return res
-        .status(403)
-        .json({
-          message: 'Your account is disabled. Please wait for admin approval.',
-        });
+      return res.status(403).json({
+        message: 'Your account is disabled. Please wait for admin approval.',
+      });
     }
     res.json({
       message: 'Login successful',
@@ -241,6 +239,52 @@ router.get('/users/analytics', async (req, res) => {
       role: 'coach',
     });
     res.json({ totalUsers, activeUsers, pendingApprovals });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get user profile by ID
+router.get('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id, '-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update user profile by ID
+router.put('/users/:id', async (req, res) => {
+  try {
+    const updates = (({
+      name,
+      email,
+      phone,
+      location,
+      about,
+      preferredSport,
+      level,
+      achievements,
+      goals,
+    }) => ({
+      name,
+      email,
+      phone,
+      location,
+      about,
+      preferredSport,
+      level,
+      achievements,
+      goals,
+    }))(req.body);
+    const user = await User.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      select: '-password',
+    });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'Profile updated', user });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

@@ -45,4 +45,18 @@ router.get('/athlete/:id/bookings/completed', async (req, res) => {
   }
 });
 
+// Get current bookings count for an athlete
+router.get('/athlete/:id/bookings/current', async (req, res) => {
+  try {
+    const count = await Booking.countDocuments({
+      athlete: req.params.id,
+      date: { $gte: new Date().toISOString().split('T')[0] },
+      status: 'pending',
+    });
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch current bookings count' });
+  }
+});
+
 export default router;

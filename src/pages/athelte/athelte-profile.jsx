@@ -1,8 +1,200 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from '../../assets/images/Logo.png';
-
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
+  const [profile, setProfile] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    sessions: 0,
+    rating: 0,
+    progress: 0,
+    current: 0,
+  });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user._id) {
+      setError('User not found. Please login again.');
+      setLoading(false);
+      setTimeout(() => navigate('/login'), 1500);
+      return;
+    }
+
+    console.log('Fetching profile for user:', user._id);
+
+    fetch(`http://localhost:5000/api/users/${user._id}`)
+      .then((res) => {
+        console.log('API Response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Profile data received:', data);
+        setProfile(data);
+        setForm({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          location: data.location || '',
+          about: data.about || '',
+          preferredSport: data.preferredSport || '',
+          level: data.level || '',
+          achievements: data.achievements || [],
+          goals: data.goals || [],
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Profile fetch error:', err);
+        console.error('User object:', user);
+        setError(`Profile fetch failed: ${err.message}`);
+        setLoading(false);
+      });
+
+    // Fetch stats with better error handling
+    const fetchStats = async () => {
+      try {
+        const [sessionsRes, ratingRes, progressRes, currentRes] =
+          await Promise.all([
+            fetch(
+              `http://localhost:5000/api/athlete/${user._id}/bookings/completed`
+            ),
+            fetch(
+              `http://localhost:5000/api/athlete/${user._id}/average-rating`
+            ),
+            fetch(
+              `http://localhost:5000/api/athlete/${user._id}/goal-progress`
+            ),
+            fetch(
+              `http://localhost:5000/api/athlete/${user._id}/bookings/current`
+            ),
+          ]);
+
+        const sessionsData = await sessionsRes.json();
+        const ratingData = await ratingRes.json();
+        const progressData = await progressRes.json();
+        const currentData = await currentRes.json();
+
+        setStats({
+          sessions: sessionsData.count || 0,
+          rating: ratingData.averageRating || 0,
+          progress: progressData.goalProgress || 0,
+          current: currentData.count || 0,
+        });
+      } catch (err) {
+        console.error('Stats fetch error:', err);
+      }
+    };
+
+    fetchStats();
+  }, [navigate]);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const res = await fetch(`/api/users/${user._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Update failed');
+      setProfile(data.user);
+      setEditMode(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading)
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        <div className='lds-roller'>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <style>{`
+      .lds-roller {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 80px;
+      }
+      .lds-roller div {
+        animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        transform-origin: 40px 40px;
+      }
+      .lds-roller div:after {
+        content: " ";
+        display: block;
+        position: absolute;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #e74c3c;
+        margin: -4px 0 0 -4px;
+      }
+      .lds-roller div:nth-child(1) { animation-delay: -0.036s; }
+      .lds-roller div:nth-child(1):after { top: 63px; left: 63px; }
+      .lds-roller div:nth-child(2) { animation-delay: -0.072s; }
+      .lds-roller div:nth-child(2):after { top: 68px; left: 56px; }
+      .lds-roller div:nth-child(3) { animation-delay: -0.108s; }
+      .lds-roller div:nth-child(3):after { top: 71px; left: 48px; }
+      .lds-roller div:nth-child(4) { animation-delay: -0.144s; }
+      .lds-roller div:nth-child(4):after { top: 72px; left: 40px; }
+      .lds-roller div:nth-child(5) { animation-delay: -0.18s; }
+      .lds-roller div:nth-child(5):after { top: 71px; left: 32px; }
+      .lds-roller div:nth-child(6) { animation-delay: -0.216s; }
+      .lds-roller div:nth-child(6):after { top: 68px; left: 24px; }
+      .lds-roller div:nth-child(7) { animation-delay: -0.252s; }
+      .lds-roller div:nth-child(7):after { top: 63px; left: 17px; }
+      .lds-roller div:nth-child(8) { animation-delay: -0.288s; }
+      .lds-roller div:nth-child(8):after { top: 56px; left: 12px; }
+      @keyframes lds-roller {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      `}</style>
+      </div>
+    );
+  if (error)
+    return (
+      <div style={{ color: 'red', textAlign: 'center', marginTop: '2rem' }}>
+        {error}
+      </div>
+    );
+  if (!profile) return <div>Profile not found.</div>;
+
   return (
     <>
       <style>{`
@@ -246,66 +438,255 @@ const Profile = () => {
       `}</style>
 
       <header>
-        <a href="../index.html" className="logo">
-          <img src={logo} alt="Sport Sphere Logo" className="logo-img" />
-          <div className="logo-text">Sports Sphere</div>
+        <a href='../index.html' className='logo'>
+          <img src={logo} alt='Sport Sphere Logo' className='logo-img' />
+          <div className='logo-text'>Sports Sphere</div>
         </a>
         <nav>
-          <a href="athlete.html"><i className="fas fa-tachometer-alt"></i> Dashboard</a>
-          <a href="find-coaches.html"><i className="fas fa-search"></i> Find Coaches</a>
-          <a href="message.html" className="active">
-            <i className="fas fa-envelope"></i> Messages <span className="notification-badge">3</span>
+          <a href='/athlete'>
+            <i className='fas fa-tachometer-alt'></i> Dashboard
           </a>
-          <a href="progress.html"><i className="fas fa-chart-line"></i> Progress</a>
-          <a href="athelte-profile.html" className="profile-btn"><i className="fas fa-user-tie"></i></a>
+          <a href='/find-coaches'>
+            <i className='fas fa-search'></i> Find Coaches
+          </a>
+          <a href='/message' className='active'>
+            <i className='fas fa-envelope'></i> Messages{' '}
+            <span className='notification-badge'>3</span>
+          </a>
+          <a href='/progress'>
+            <i className='fas fa-chart-line'></i> Progress
+          </a>
+          <a href='/athelte-profile' className='profile-btn'>
+            <i className='fas fa-user-tie'></i>
+          </a>
         </nav>
       </header>
 
-      <main className="profile-container">
-        <div className="profile-header">
-          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Profile" className="profile-image" />
-          <div className="profile-info">
-            <h2>Alex Morgan</h2>
-            <p><i className="fas fa-user"></i> Professional Athlete | Football</p>
-            <p><i className="fas fa-map-marker-alt"></i> Los Angeles, CA</p>
-            <p><i className="fas fa-envelope"></i> alex.morgan@sportsphere.com</p>
-            <p><i className="fas fa-phone"></i> (555) 123-4567</p>
-            <div className="profile-buttons">
-              <a href="booking.html" className="btn secondary"><i className="fas fa-calendar"></i> Book Session</a>
-              <a href="#" className="btn secondary"><i className="fas fa-share-alt"></i> Share Profile</a>
+      <main className='profile-container'>
+        <div className='profile-header'>
+          <img
+            src='https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
+            alt='Profile'
+            className='profile-image'
+          />
+          <div className='profile-info'>
+            {editMode ? (
+              <form
+                onSubmit={handleSave}
+                style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+              >
+                <input
+                  name='name'
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder='Name'
+                  required
+                />
+                <input
+                  name='email'
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder='Email'
+                  required
+                />
+                <input
+                  name='phone'
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder='Phone'
+                />
+                <input
+                  name='location'
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder='Location'
+                />
+                <textarea
+                  name='about'
+                  value={form.about}
+                  onChange={handleChange}
+                  placeholder='About Me'
+                  rows={3}
+                />
+                <input
+                  name='preferredSport'
+                  value={form.preferredSport}
+                  onChange={handleChange}
+                  placeholder='Preferred Sport'
+                />
+                <input
+                  name='level'
+                  value={form.level}
+                  onChange={handleChange}
+                  placeholder='Level'
+                />
+                {error && <div style={{ color: 'red' }}>{error}</div>}
+                <div className='profile-buttons'>
+                  <button className='btn' type='submit' disabled={saving}>
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    className='btn secondary'
+                    type='button'
+                    onClick={() => setEditMode(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <h2>{profile.name}</h2>
+                <p>
+                  <i className='fas fa-user'></i>{' '}
+                  {profile.role
+                    ? `Athlete | ${profile.preferredSport || ''}`
+                    : ''}
+                </p>
+                <p>
+                  <i className='fas fa-map-marker-alt'></i>{' '}
+                  {profile.location || 'N/A'}
+                </p>
+                <p>
+                  <i className='fas fa-envelope'></i> {profile.email}
+                </p>
+                <p>
+                  <i className='fas fa-phone'></i> {profile.phone || 'N/A'}
+                </p>
+                <div className='profile-buttons'>
+                  <button
+                    className='btn secondary'
+                    onClick={() => setEditMode(true)}
+                  >
+                    <i className='fas fa-edit'></i> Edit Profile
+                  </button>
+                  <a href='/booking' className='btn secondary'>
+                    <i className='fas fa-calendar'></i> Book Session
+                  </a>
+                  <a href='#' className='btn secondary'>
+                    <i className='fas fa-share-alt'></i> Share Profile
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className='profile-section'>
+          <h3>
+            <i className='fas fa-info-circle'></i> About Me
+          </h3>
+          <p>{profile.about || 'No bio provided.'}</p>
+          <div className='stat-grid'>
+            <div className='stat-box'>
+              <h4>{stats.sessions}</h4>
+              <p>Sessions Completed</p>
+            </div>
+            <div className='stat-box'>
+              <h4>{stats.rating}</h4>
+              <p>Avg Coach Rating</p>
+            </div>
+            <div className='stat-box'>
+              <h4>{stats.progress}%</h4>
+              <p>Goal Progress</p>
+            </div>
+            <div className='stat-box'>
+              <h4>{stats.current}</h4>
+              <p>Current Bookings</p>
             </div>
           </div>
         </div>
 
-        <div className="profile-section">
-          <h3><i className="fas fa-info-circle"></i> About Me</h3>
-          <p>Professional football athlete with 8 years of competitive experience...</p>
-          <p>My training philosophy focuses on consistent improvement...</p>
-          <div className="stat-grid">
-            <div className="stat-box"><h4>22</h4><p>Sessions Completed</p></div>
-            <div className="stat-box"><h4>4.8</h4><p>Avg Coach Rating</p></div>
-            <div className="stat-box"><h4>90%</h4><p>Goal Progress</p></div>
-            <div className="stat-box"><h4>3</h4><p>Current Bookings</p></div>
-          </div>
+        <div className='profile-section'>
+          <h3>
+            <i className='fas fa-trophy'></i> Achievements
+          </h3>
+          {editMode ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(form.achievements || []).map((ach, i) => (
+                <input
+                  key={i}
+                  name={`achievements-${i}`}
+                  value={ach}
+                  onChange={(e) => {
+                    const arr = [...form.achievements];
+                    arr[i] = e.target.value;
+                    setForm((f) => ({ ...f, achievements: arr }));
+                  }}
+                />
+              ))}
+              <button
+                type='button'
+                className='btn secondary'
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    achievements: [...(f.achievements || []), ''],
+                  }))
+                }
+              >
+                Add Achievement
+              </button>
+            </div>
+          ) : (
+            <ul>
+              {(profile.achievements || []).length ? (
+                profile.achievements.map((ach, i) => <li key={i}>{ach}</li>)
+              ) : (
+                <li>No achievements listed.</li>
+              )}
+            </ul>
+          )}
         </div>
 
-        <div className="profile-section">
-          <h3><i className="fas fa-trophy"></i> Achievements</h3>
-          <p><strong>2024 National Championships</strong> - 1st Place Offensive Player</p>
-          <p><strong>2023 Regional Tournament</strong> - MVP Award</p>
-        </div>
-
-        <div className="profile-section">
-          <h3><i className="fas fa-bullseye"></i> Current Goals</h3>
-          <p><i className="fas fa-circle" style={{ color: "#e74c3c" }}></i> Improve 40-yard dash time by 0.3 seconds</p>
-          <p><i className="fas fa-circle" style={{ color: "#e74c3c" }}></i> Master 3 new offensive plays</p>
+        <div className='profile-section'>
+          <h3>
+            <i className='fas fa-bullseye'></i> Current Goals
+          </h3>
+          {editMode ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(form.goals || []).map((goal, i) => (
+                <input
+                  key={i}
+                  name={`goals-${i}`}
+                  value={goal}
+                  onChange={(e) => {
+                    const arr = [...form.goals];
+                    arr[i] = e.target.value;
+                    setForm((f) => ({ ...f, goals: arr }));
+                  }}
+                />
+              ))}
+              <button
+                type='button'
+                className='btn secondary'
+                onClick={() =>
+                  setForm((f) => ({ ...f, goals: [...(f.goals || []), ''] }))
+                }
+              >
+                Add Goal
+              </button>
+            </div>
+          ) : (
+            <ul>
+              {(profile.goals || []).length ? (
+                profile.goals.map((goal, i) => <li key={i}>{goal}</li>)
+              ) : (
+                <li>No goals listed.</li>
+              )}
+            </ul>
+          )}
         </div>
       </main>
 
       <footer>
-        <div className="footer-content">
-          <div className="footer-logo"><i className="fas fa-running"></i> Sport Sphere</div>
-          <div className="copyright">&copy; 2025 Sport Sphere. All rights reserved.</div>
+        <div className='footer-content'>
+          <div className='footer-logo'>
+            <i className='fas fa-running'></i> Sport Sphere
+          </div>
+          <div className='copyright'>
+            &copy; 2025 Sport Sphere. All rights reserved.
+          </div>
         </div>
       </footer>
     </>
