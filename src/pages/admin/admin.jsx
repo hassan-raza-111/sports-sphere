@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import '../../css/admin.css';
-import logoImg from '../../assets/images/Logo.png';
-import {
-  FaHome,
-  FaUserShield,
-  FaFlag,
-  FaUsers,
-  FaMoneyBillWave,
-  FaRunning,
-} from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import AdminLayout from '../../components/AdminLayout';
+import { FaUserShield, FaUsers, FaMoneyBillWave, FaFlag } from 'react-icons/fa';
 
 const Admin = () => {
   const [stats, setStats] = useState({
@@ -22,9 +15,9 @@ const Admin = () => {
     async function fetchStats() {
       try {
         const [usersRes, reportsRes, revenueRes] = await Promise.all([
-          fetch('http://localhost:5000/api/users/analytics'),
-          fetch('http://localhost:5000/api/reports/open-count'),
-          fetch('http://localhost:5000/api/order/revenue'),
+          fetch('/api/users/analytics'),
+          fetch('/api/reports/open-count'),
+          fetch('/api/order/admin/stats'),
         ]);
         const usersData = await usersRes.json();
         const reportsData = await reportsRes.json();
@@ -33,109 +26,290 @@ const Admin = () => {
           activeUsers: usersData.activeUsers || 0,
           pendingApprovals: usersData.pendingApprovals || 0,
           openReports: reportsData.openCount || 0,
-          revenue: revenueData.revenue || 0,
+          revenue: revenueData.totalRevenue || 0,
         });
       } catch (err) {
-        // Optionally handle error
+        console.error('Error fetching admin stats:', err);
       }
     }
     fetchStats();
   }, []);
 
   return (
-    <div>
-      <header>
-        <a href='/' className='logo'>
-          <img src={logoImg} alt='Sport Sphere Logo' className='logo-img' />
-          <div>
-            <div className='logo-text'>Sports Sphere</div>
-          </div>
-        </a>
-        <nav>
-          <a href='/'>
-            <FaHome /> <span>Home</span>
-          </a>
-          <a href='/admin' className='active'>
-            <FaUserShield /> <span>Admin</span>{' '}
-            <span className='admin-badge'>ADMIN</span>
-          </a>
-          <a href='/admin/report'>
-            <FaFlag /> <span>Reports</span>{' '}
-            <span className='notification-badge'>5</span>
-          </a>
-        </nav>
-      </header>
+    <AdminLayout>
+      <h2
+        style={{
+          fontSize: '2.2rem',
+          color: 'white',
+          marginBottom: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px',
+          textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+        }}
+      >
+        <FaUserShield /> Admin Dashboard
+      </h2>
 
-      <main className='admin-container'>
-        <h2 className='admin-heading'>
-          <FaUserShield /> Admin Dashboard
-        </h2>
-
-        <div className='admin-grid'>
-          <div className='admin-card'>
-            <FaUsers />
-            <h3>User Management</h3>
-            <p>
-              Manage all athletes, coaches, and vendors with full administrative
-              controls.
-            </p>
-            <a href='/admin/user-management' className='btn'>
-              Manage Users
-            </a>
-          </div>
-
-          <div className='admin-card'>
-            <FaMoneyBillWave />
-            <h3>Payment Management</h3>
-            <p>
-              View transactions, process refunds, and manage subscription plans.
-            </p>
-            <a href='/admin/payment-management' className='btn'>
-              Payment Center
-            </a>
-          </div>
-
-          <div className='admin-card'>
-            <FaFlag />
-            <h3>Reports</h3>
-            <p>Create and manage platform-wide Reports.</p>
-            <a href='/admin/report' className='btn'>
-              View Reports
-            </a>
-          </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaUsers
+            style={{ fontSize: '3rem', color: '#e74c3c', marginBottom: '1rem' }}
+          />
+          <h3
+            style={{
+              fontSize: '1.5rem',
+              color: '#2c3e50',
+              marginBottom: '1rem',
+            }}
+          >
+            User Management
+          </h3>
+          <p
+            style={{
+              color: '#7f8c8d',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+            }}
+          >
+            Manage all athletes, coaches, and vendors with full administrative
+            controls.
+          </p>
+          <Link
+            to='/admin/user-management'
+            style={{
+              display: 'inline-block',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '5px',
+              fontWeight: 600,
+              transition: 'background-color 0.3s, transform 0.2s',
+              textDecoration: 'none',
+            }}
+          >
+            Manage Users
+          </Link>
         </div>
 
-        <div className='stats-overview'>
-          <div className='stat-card'>
-            <div className='value'>{stats.activeUsers}</div>
-            <div className='label'>Active Users</div>
-          </div>
-          <div className='stat-card'>
-            <div className='value'>{stats.pendingApprovals}</div>
-            <div className='label'>Pending Approvals</div>
-          </div>
-          <div className='stat-card'>
-            <div className='value'>{stats.openReports}</div>
-            <div className='label'>Open Reports</div>
-          </div>
-          <div className='stat-card'>
-            <div className='value'>${stats.revenue.toLocaleString()}</div>
-            <div className='label'>Revenue (30d)</div>
-          </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaMoneyBillWave
+            style={{ fontSize: '3rem', color: '#e74c3c', marginBottom: '1rem' }}
+          />
+          <h3
+            style={{
+              fontSize: '1.5rem',
+              color: '#2c3e50',
+              marginBottom: '1rem',
+            }}
+          >
+            Payment Management
+          </h3>
+          <p
+            style={{
+              color: '#7f8c8d',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+            }}
+          >
+            View transactions, process refunds, and manage subscription plans.
+          </p>
+          <Link
+            to='/admin/payment-management'
+            style={{
+              display: 'inline-block',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '5px',
+              fontWeight: 600,
+              transition: 'background-color 0.3s, transform 0.2s',
+              textDecoration: 'none',
+            }}
+          >
+            Payment Center
+          </Link>
         </div>
-      </main>
 
-      <footer>
-        <div className='footer-content'>
-          <div className='footer-logo'>
-            <FaRunning /> Sport Sphere
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaFlag
+            style={{ fontSize: '3rem', color: '#e74c3c', marginBottom: '1rem' }}
+          />
+          <h3
+            style={{
+              fontSize: '1.5rem',
+              color: '#2c3e50',
+              marginBottom: '1rem',
+            }}
+          >
+            Reports
+          </h3>
+          <p
+            style={{
+              color: '#7f8c8d',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+            }}
+          >
+            Create and manage platform-wide Reports.
+          </p>
+          <Link
+            to='/admin/report'
+            style={{
+              display: 'inline-block',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '5px',
+              fontWeight: 600,
+              transition: 'background-color 0.3s, transform 0.2s',
+              textDecoration: 'none',
+            }}
+          >
+            View Reports
+          </Link>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1.5rem',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats.activeUsers}
           </div>
-          <div className='copyright'>
-            &copy; 2025 Sport Sphere. Admin Panel v2.4.1
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Active Users
           </div>
         </div>
-      </footer>
-    </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats.pendingApprovals}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Pending Approvals
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats.openReports}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Open Reports
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            ${stats.revenue.toLocaleString()}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Revenue (30d)
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 };
 
