@@ -162,4 +162,37 @@ router.get('/:id/profile', async (req, res) => {
   }
 });
 
+// Update coach profile by userId
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const updates = req.body;
+    // Only allow updating certain fields for security
+    const allowedFields = [
+      'name',
+      'email',
+      'phone',
+      'sports',
+      'sessionType',
+      'location',
+      'profileImage',
+      'about',
+      'certifications',
+      'specialties',
+    ];
+    const updateData = {};
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) updateData[key] = updates[key];
+    }
+    const coach = await Coach.findOneAndUpdate(
+      { userId: req.params.id },
+      { $set: updateData },
+      { new: true }
+    );
+    if (!coach) return res.status(404).json({ message: 'Coach not found' });
+    res.json({ message: 'Profile updated', coach });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 export default router;

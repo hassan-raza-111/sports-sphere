@@ -30,6 +30,7 @@ import VendorProfile from './pages/vendor/vendor-profile';
 import Coach from './pages/coach/coach';
 import CoachBooking from './pages/coach/booking';
 import CoachProfile from './pages/coach/coach-profile';
+import CoachProfileEdit from './pages/coach/coach-profile-edit.jsx';
 import CoachMarketplace from './pages/coach/marketplace';
 import CoachMessages from './pages/coach/message';
 import CoachProgress from './pages/coach/progress';
@@ -75,6 +76,7 @@ function App() {
       {/* Coach */}
       <Route path='/coach/dashboard' element={<Coach />} />
       <Route path='/coach/profile' element={<CoachProfile />} />
+      <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
       <Route path='/coach/booking' element={<CoachBooking />} />
       <Route path='/coach/marketplace' element={<CoachMarketplace />} />
       <Route path='/coach/messages' element={<CoachMessages />} />
