@@ -195,4 +195,120 @@ router.put('/:id/profile', async (req, res) => {
   }
 });
 
+// Get all coaches for find coaches page
+router.get('/find', async (req, res) => {
+  try {
+    const { search, sport, rating, available } = req.query;
+
+    let query = { isAvailable: true };
+
+    // Search by name, sports, or location
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { sports: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { specialties: { $in: [new RegExp(search, 'i')] } },
+      ];
+    }
+
+    // Filter by sport
+    if (sport && sport !== 'All Sports') {
+      query.sports = { $regex: sport, $options: 'i' };
+    }
+
+    // Filter by rating
+    if (rating) {
+      query.rating = { $gte: parseFloat(rating) };
+    }
+
+    // Filter by availability
+    if (available === 'true') {
+      const today = new Date().toLocaleDateString('en-US', {
+        weekday: 'lowercase',
+      });
+      query[`availability.${today}`] = true;
+    }
+
+    const coaches = await Coach.find(query)
+      .populate('userId', 'name email')
+      .select(
+        'name sports location rating reviewCount hourlyRate experience about profileImage specialties'
+      )
+      .sort({ rating: -1, reviewCount: -1 });
+
+    res.json(coaches);
+  } catch (error) {
+    console.error('Error fetching coaches:', error);
+    res.status(500).json({ message: 'Failed to fetch coaches' });
+  }
+});
+
+// Get coach by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const coach = await Coach.findById(req.params.id).populate('userId');
+    if (!coach) {
+      return res.status(404).json({ message: 'Coach not found' });
+    }
+    res.json(coach);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch coach' });
+  }
+});
+
+// Get coach profile by userId
+router.get('/profile/:userId', async (req, res) => {
+  try {
+    const coach = await Coach.findOne({ userId: req.params.userId }).populate(
+      'userId'
+    );
+    if (!coach) {
+      return res.status(404).json({ message: 'Coach not found' });
+    }
+    res.json(coach);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch coach profile' });
+  }
+});
+
+// Get coach dashboard stats
+router.get('/:userId/dashboard-stats', async (req, res) => {
+  try {
+    const coach = await Coach.findOne({ userId: req.params.userId });
+    if (!coach) {
+      return res.status(404).json({ message: 'Coach not found' });
+    }
+
+    // Mock data for now - in real app, calculate from bookings and feedback
+    const stats = {
+      upcomingSessions: Math.floor(Math.random() * 10) + 5,
+      avgRating: (Math.random() * 2 + 3).toFixed(1), // 3.0 to 5.0
+      retention: Math.floor(Math.random() * 30) + 70, // 70% to 100%
+      newAthletes: Math.floor(Math.random() * 5) + 1,
+    };
+
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch dashboard stats' });
+  }
+});
+
+// Update coach profile
+router.put('/:userId', async (req, res) => {
+  try {
+    const coach = await Coach.findOneAndUpdate(
+      { userId: req.params.userId },
+      req.body,
+      { new: true }
+    );
+    if (!coach) {
+      return res.status(404).json({ message: 'Coach not found' });
+    }
+    res.json(coach);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update coach profile' });
+  }
+});
+
 export default router;

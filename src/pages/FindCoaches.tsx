@@ -1,650 +1,525 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  FaSearch,
+  FaStar,
+  FaUser,
+  FaCalendarCheck,
+  FaMedal,
+  FaRunning,
+} from 'react-icons/fa';
 
-const findCoachesStyles = `
-  /* Reset and base styles */
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Arial', sans-serif;
-  }
+interface Coach {
+  _id: string;
+  name: string;
+  sports: string;
+  location: string;
+  rating: number;
+  reviewCount: number;
+  hourlyRate: number;
+  experience: number;
+  about: string;
+  profileImage: string;
+  specialties: string[];
+}
 
-  body {
-    color: #333;
-    line-height: 1.6;
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-      url('https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
-    min-height: 100vh;
-  }
+const FindCoaches: React.FC = () => {
+  const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSport, setSelectedSport] = useState('All Sports');
+  const [selectedRating, setSelectedRating] = useState('');
+  const [availableToday, setAvailableToday] = useState(false);
 
-  a {
-    text-decoration: none;
-    color: inherit;
-  }
+  const sports = [
+    'All Sports',
+    'Tennis',
+    'Football',
+    'Basketball',
+    'Swimming',
+    'Cricket',
+    'Badminton',
+  ];
 
-  /* Header Styles */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 5%;
-    background-color: rgba(255, 255, 255, 0.95);
-    position: fixed;
-    width: 100%;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
+  useEffect(() => {
+    fetchCoaches();
+  }, [searchTerm, selectedSport, selectedRating, availableToday]);
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  const fetchCoaches = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (selectedSport !== 'All Sports') params.append('sport', selectedSport);
+      if (selectedRating) params.append('rating', selectedRating);
+      if (availableToday) params.append('available', 'true');
 
-  .logo-img {
-    height: 40px;
-    width: auto;
-  }
+      const response = await fetch(`/api/coaches/find?${params}`);
+      const data = await response.json();
+      setCoaches(data);
+    } catch (error) {
+      console.error('Error fetching coaches:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  .logo-text {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #2c3e50;   
-    font-style: italic;
-  }
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
 
-  nav {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-  }
-
-  nav a {
-    font-weight: 600;
-    color: #2c3e50;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  nav a:hover,
-  nav a.active {
-    color: #e74c3c;
-  }
-
-  .notification-badge {
-    background-color: #e74c3c;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 0.7rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 5px;
-  }
-
-  .profile-btn {
-    background-color: #e74c3c;
-    color: white !important;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s;
-  }
-
-  .profile-btn:hover {
-    background-color: #c0392b;
-  }
-
-  /* Find Coaches Page Styles */
-  main {
-    padding-top: 140px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 140px 5% 60px;
-  }
-
-  .coaches-heading {
-    font-size: 2.2rem;
-    color: white;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-  }
-
-  .coach-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .search-wrapper {
-    position: relative;
-    flex: 1;
-    min-width: 300px;
-  }
-
-  .search-input {
-    width: 100%;
-    padding: 10px 15px 10px 40px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    font-size: 1rem;
-    background-color: #fff;
-    outline: none;
-    transition: all 0.3s;
-  }
-
-  .search-input:focus {
-    border-color: #e74c3c;
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
-  }
-
-  .search-icon {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #7f8c8d;
-    pointer-events: none;
-  }
-
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-  }
-
-  .filter-btn {
-    padding: 0.5rem 1.2rem;
-    background-color: rgba(255, 255, 255, 0.95);
-    border: 2px solid #e1e5eb;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-
-  .filter-btn:hover,
-  .filter-btn.active {
-    background-color: #e74c3c;
-    color: white;
-    border-color: #e74c3c;
-  }
-
-  .coaches-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-  }
-
-  .coach-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s;
-    border-left: 4px solid #e74c3c;
-  }
-
-  .coach-card:hover {
-    transform: translateY(-5px);
-  }
-
-  .coach-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .coach-avatar {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 2px solid #e74c3c;
-  }
-
-  .coach-name {
-    font-size: 1.3rem;
-    color: #2c3e50;
-    font-weight: 600;
-  }
-
-  .coach-location {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-  }
-
-  .rating {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 0.5rem;
-    color: #f1c40f;
-  }
-
-  .stars {
-    display: flex;
-    gap: 2px;
-  }
-
-  .stars i {
-    color: #f1c40f;
-  }
-
-  .reviews {
-    color: #7f8c8d;
-    font-size: 0.85rem;
-    margin-top: 4px;
-  }
-
-  .coach-bio {
-    font-size: 0.95rem;
-    color: #333;
-    margin-top: 1rem;
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
-  }
-
-  .coach-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 1.5rem;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 0.6rem 1.5rem;
-    background-color: #e74c3c;
-    color: white;
-    border-radius: 30px;
-    font-weight: 600;
-    transition: background-color 0.3s, transform 0.2s;
-    text-decoration: none;
-    text-align: center;
-  }
-
-  .btn:hover {
-    background-color: #c0392b;
-    transform: translateY(-2px);
-  }
-
-  .btn.secondary {
-    background-color: transparent;
-    border: 2px solid #e74c3c;
-    color: #e74c3c;
-  }
-
-  .btn.secondary:hover {
-    background-color: #e74c3c;
-    color: white;
-  }
-
-  footer {
-    background-color: rgba(44, 62, 80, 0.9);
-    color: white;
-    padding: 2rem 5%;
-    margin-top: 3rem;
-  }
-
-  .footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer-logo {
-    font-size: 1.5rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .copyright {
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 768px) {
-    header {
-      flex-direction: column;
-      gap: 1rem;
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<FaStar key={i} style={{ color: '#e74c3c' }} />);
     }
 
-    nav {
-      width: 100%;
-      justify-content: space-between;
-      flex-wrap: wrap;
+    if (hasHalfStar) {
+      stars.push(<FaStar key='half' style={{ color: '#e74c3c' }} />);
     }
 
-    main {
-      padding-top: 160px;
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<FaStar key={`empty-${i}`} style={{ color: '#ddd' }} />);
     }
 
-    .coaches-heading {
-      font-size: 1.8rem;
-    }
+    return stars;
+  };
 
-    .coach-actions {
-      flex-direction: column;
-      align-items: flex-start;
-    }
+  const getDefaultImage = (sport: string) => {
+    const sportImages = {
+      Tennis:
+        'https://images.unsplash.com/photo-1547347298-4074fc3086f0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+      Football:
+        'https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+      Basketball:
+        'https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80',
+      Swimming:
+        'https://images.unsplash.com/photo-1519861531473-9200262188bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80',
+    };
+    return (
+      sportImages[sport as keyof typeof sportImages] ||
+      'https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80'
+    );
+  };
 
-    .search-wrapper {
-      width: 100%;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .coaches-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .footer-content {
-      flex-direction: column;
-      gap: 1rem;
-      text-align: center;
-    }
-  }
-`;
-
-const FindCoaches = () => {
   return (
-    <div>
-      {/* Inject CSS dynamically */}
-      <style dangerouslySetInnerHTML={{ __html: findCoachesStyles }} />
-
-      <header>
-        <a href="/index.html" className="logo">
+    <div
+      style={{
+        minHeight: '100vh',
+        background:
+          'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80") no-repeat center center/cover',
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '1.5rem 5%',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          position: 'fixed',
+          width: '100%',
+          top: 0,
+          zIndex: 100,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <Link
+          to='/'
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            textDecoration: 'none',
+            color: 'inherit',
+          }}
+        >
           <img
-            src="/assets/images/Logo.png"
-            alt="Sport Sphere Logo"
-            className="logo-img"
+            src='/src/assets/images/Logo.png'
+            alt='Sport Sphere Logo'
+            style={{ height: '40px', width: 'auto' }}
           />
           <div>
-            <div className="logo-text">Sports Sphere</div>
+            <div
+              style={{
+                fontSize: '1.8rem',
+                fontWeight: 'bold',
+                color: '#2c3e50',
+                fontStyle: 'italic',
+              }}
+            >
+              Sports Sphere
+            </div>
           </div>
-        </a>
-        <nav>
-          <a href="/index.html">
-            <i className="fas fa-home"></i> Home
-          </a>
-          <a href="#" className="active">
-            <i className="fas fa-running"></i> Find Coaches
-          </a>
-          <a href="#">
-            <i className="fas fa-trophy"></i> Achievements
-          </a>
-          <a href="#" className="profile-btn">
-            <i className="fas fa-user"></i>
-          </a>
+        </Link>
+        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <Link
+            to='/'
+            style={{
+              fontWeight: 600,
+              color: '#2c3e50',
+              transition: 'color 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <FaRunning /> <span>Home</span>
+          </Link>
+          <Link
+            to='/athlete/dashboard'
+            style={{
+              fontWeight: 600,
+              color: '#2c3e50',
+              transition: 'color 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <FaUser /> <span>Dashboard</span>
+          </Link>
+          <Link
+            to='/athlete/messages'
+            style={{
+              fontWeight: 600,
+              color: '#2c3e50',
+              transition: 'color 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <FaUser /> <span>Messages</span>
+            <span
+              style={{
+                backgroundColor: '#e74c3c',
+                color: 'white',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '0.7rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: '5px',
+              }}
+            >
+              3
+            </span>
+          </Link>
+          <Link
+            to='/athlete/profile'
+            style={{
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background-color 0.3s',
+            }}
+          >
+            <FaUser />
+          </Link>
         </nav>
       </header>
 
-      <main className="coaches-container">
-        <h2 className="coaches-heading">
-          <i className="fas fa-users"></i> Find Your Coach
+      {/* Main Content */}
+      <main
+        style={{
+          padding: '140px 5% 60px',
+          maxWidth: '1200px',
+          margin: '0 auto',
+        }}
+      >
+        <h2
+          style={{
+            fontSize: '2.2rem',
+            color: 'white',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px',
+            textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <FaSearch /> Find Your Perfect Coach
         </h2>
 
-        <div className="coach-actions">
-          <div className="search-wrapper">
-            <i className="fas fa-search search-icon"></i>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by name or sport..."
-            />
-          </div>
-
-          <div className="filters">
-            <button className="filter-btn active">All Sports</button>
-            <button className="filter-btn">Tennis</button>
-            <button className="filter-btn">Basketball</button>
-            <button className="filter-btn">Soccer</button>
-            <button className="filter-btn">Swimming</button>
-            <button className="filter-btn">Golf</button>
-            <button className="filter-btn">Volleyball</button>
-            <button className="filter-btn">Cycling</button>
-          </div>
+        {/* Search Bar */}
+        <div
+          style={{
+            position: 'relative',
+            marginBottom: '2rem',
+            maxWidth: '800px',
+          }}
+        >
+          <FaSearch
+            style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#7f8c8d',
+            }}
+          />
+          <input
+            type='text'
+            placeholder='Search by sport, name or location...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.8rem 1rem 0.8rem 3rem',
+              border: '2px solid #e1e5eb',
+              borderRadius: '5px',
+              fontSize: '1rem',
+              transition: 'all 0.3s',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            }}
+          />
         </div>
 
-        <div className="coaches-grid">
-          {/* Coach Card 1 */}
-          <div className="coach-card">
-            <div className="coach-header">
-              <img
-                src="https://randomuser.me/api/portraits/men/32.jpg"
-                alt="Coach Williams"
-                className="coach-avatar"
-              />
-              <div>
-                <div className="coach-name">Coach Williams</div>
-                <div className="coach-location">New York, USA</div>
-              </div>
-            </div>
-
-            <div className="rating">
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="far fa-star"></i>
-              </div>
-              <span className="reviews">(4.5)</span>
-            </div>
-
-            <div className="coach-bio">
-              Specializing in tennis coaching with over 10 years of experience.
-            </div>
-
-            <div className="coach-footer">
-              <button className="btn secondary">View Profile</button>
-              <button className="btn">Book Session</button>
-            </div>
-          </div>
-
-          {/* Coach Card 2 */}
-          <div className="coach-card">
-            <div className="coach-header">
-              <img
-                src="https://randomuser.me/api/portraits/women/44.jpg"
-                alt="Coach Johnson"
-                className="coach-avatar"
-              />
-              <div>
-                <div className="coach-name">Coach Johnson</div>
-                <div className="coach-location">Los Angeles, USA</div>
-              </div>
-            </div>
-
-            <div className="rating">
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star-half-alt"></i>
-                <i className="far fa-star"></i>
-              </div>
-              <span className="reviews">(4.3)</span>
-            </div>
-
-            <div className="coach-bio">
-              Certified basketball coach with a focus on youth development.
-            </div>
-
-            <div className="coach-footer">
-              <button className="btn secondary">View Profile</button>
-              <button className="btn">Book Session</button>
-            </div>
-          </div>
-
-          {/* Coach Card 3 */}
-          <div className="coach-card">
-            <div className="coach-header">
-              <img
-                src="https://randomuser.me/api/portraits/men/75.jpg"
-                alt="Coach Davis"
-                className="coach-avatar"
-              />
-              <div>
-                <div className="coach-name">Coach Davis</div>
-                <div className="coach-location">Chicago, USA</div>
-              </div>
-            </div>
-
-            <div className="rating">
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-              </div>
-              <span className="reviews">(5.0)</span>
-            </div>
-
-            <div className="coach-bio">
-              Elite soccer trainer with professional team experience.
-            </div>
-
-            <div className="coach-footer">
-              <button className="btn secondary">View Profile</button>
-              <button className="btn">Book Session</button>
-            </div>
-          </div>
-
-          {/* Coach Card 4 */}
-          <div className="coach-card">
-            <div className="coach-header">
-              <img
-                src="https://randomuser.me/api/portraits/women/63.jpg"
-                alt="Coach Lee"
-                className="coach-avatar"
-              />
-              <div>
-                <div className="coach-name">Coach Lee</div>
-                <div className="coach-location">Houston, USA</div>
-              </div>
-            </div>
-
-            <div className="rating">
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="far fa-star"></i>
-              </div>
-              <span className="reviews">(4.0)</span>
-            </div>
-
-            <div className="coach-bio">
-              Swimming coach with Olympic-level training programs.
-            </div>
-
-            <div className="coach-footer">
-              <button className="btn secondary">View Profile</button>
-              <button className="btn">Book Session</button>
-            </div>
-          </div>
-
-          {/* Coach Card 5 */}
-          <div className="coach-card">
-            <div className="coach-header">
-              <img
-                src="https://randomuser.me/api/portraits/men/67.jpg"
-                alt="Coach Rodriguez"
-                className="coach-avatar"
-              />
-              <div>
-                <div className="coach-name">Coach Rodriguez</div>
-                <div className="coach-location">Miami, USA</div>
-              </div>
-            </div>
-
-            <div className="rating">
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-              </div>
-              <span className="reviews">(4.8)</span>
-            </div>
-
-            <div className="coach-bio">
-              Golf instructor with PGA certification. Personalized lessons
-              available.
-            </div>
-
-            <div className="coach-footer">
-              <button className="btn secondary">View Profile</button>
-              <button className="btn">Book Session</button>
-            </div>
-          </div>
-
-          {/* Coach Card 6 */}
-          <div className="coach-card">
-            <div className="coach-header">
-              <img
-                src="https://randomuser.me/api/portraits/women/28.jpg"
-                alt="Coach Wilson"
-                className="coach-avatar"
-              />
-              <div>
-                <div className="coach-name">Coach Wilson</div>
-                <div className="coach-location">Austin, USA</div>
-              </div>
-            </div>
-
-            <div className="rating">
-              <div className="stars">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-              </div>
-              <span className="reviews">(5.0)</span>
-            </div>
-
-            <div className="coach-bio">
-              Cycling coach with endurance training expertise.
-            </div>
-
-            <div className="coach-footer">
-              <button className="btn secondary">View Profile</button>
-              <button className="btn">Book Session</button>
-            </div>
-          </div>
+        {/* Filters */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.8rem',
+            marginBottom: '2rem',
+          }}
+        >
+          {sports.map((sport) => (
+            <button
+              key={sport}
+              onClick={() => setSelectedSport(sport)}
+              style={{
+                padding: '0.5rem 1.2rem',
+                backgroundColor:
+                  selectedSport === sport
+                    ? '#e74c3c'
+                    : 'rgba(255, 255, 255, 0.95)',
+                color: selectedSport === sport ? 'white' : '#2c3e50',
+                border: '2px solid #e1e5eb',
+                borderRadius: '20px',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+              }}
+            >
+              {sport}
+            </button>
+          ))}
+          <button
+            onClick={() =>
+              setSelectedRating(selectedRating === '4.5' ? '' : '4.5')
+            }
+            style={{
+              padding: '0.5rem 1.2rem',
+              backgroundColor:
+                selectedRating === '4.5'
+                  ? '#e74c3c'
+                  : 'rgba(255, 255, 255, 0.95)',
+              color: selectedRating === '4.5' ? 'white' : '#2c3e50',
+              border: '2px solid #e1e5eb',
+              borderRadius: '20px',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+            }}
+          >
+            4.5+ Rating
+          </button>
+          <button
+            onClick={() => setAvailableToday(!availableToday)}
+            style={{
+              padding: '0.5rem 1.2rem',
+              backgroundColor: availableToday
+                ? '#e74c3c'
+                : 'rgba(255, 255, 255, 0.95)',
+              color: availableToday ? 'white' : '#2c3e50',
+              border: '2px solid #e1e5eb',
+              borderRadius: '20px',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+            }}
+          >
+            Available Today
+          </button>
         </div>
+
+        {/* Coaches Grid */}
+        {loading ? (
+          <div
+            style={{ textAlign: 'center', color: 'white', fontSize: '1.2rem' }}
+          >
+            Loading coaches...
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+              gap: '1.5rem',
+            }}
+          >
+            {coaches.map((coach) => (
+              <div
+                key={coach._id}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  transition: 'transform 0.3s',
+                  borderLeft: '4px solid #e74c3c',
+                }}
+              >
+                <div
+                  style={{
+                    height: '200px',
+                    backgroundImage: `url(${
+                      coach.profileImage || getDefaultImage(coach.sports)
+                    })`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+                <div style={{ padding: '1.5rem' }}>
+                  <h3
+                    style={{
+                      fontSize: '1.5rem',
+                      color: '#2c3e50',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    {coach.name}
+                  </h3>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      color: '#7f8c8d',
+                      marginBottom: '1rem',
+                      fontSize: '1rem',
+                    }}
+                  >
+                    <FaMedal />
+                    <span>{coach.sports} Coach</span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '1rem',
+                    }}
+                  >
+                    <div style={{ color: '#e74c3c' }}>
+                      {renderStars(coach.rating)}
+                    </div>
+                    <span style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+                      {coach.rating} ({coach.reviewCount} reviews)
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      color: '#7f8c8d',
+                      marginBottom: '1.5rem',
+                      lineHeight: '1.6',
+                    }}
+                  >
+                    {coach.about ||
+                      `${coach.experience} years of experience in ${
+                        coach.sports
+                      }. Specializes in ${
+                        coach.specialties?.join(', ') || 'general training'
+                      }.`}
+                  </p>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <Link
+                      to={`/coach/profile/${coach._id}`}
+                      style={{
+                        display: 'inline-block',
+                        padding: '0.6rem 1.2rem',
+                        backgroundColor: '#e74c3c',
+                        color: 'white',
+                        borderRadius: '5px',
+                        fontWeight: 600,
+                        transition: 'background-color 0.3s, transform 0.2s',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <FaUser /> View Profile
+                    </Link>
+                    <Link
+                      to={`/booking/${coach._id}`}
+                      style={{
+                        display: 'inline-block',
+                        padding: '0.6rem 1.2rem',
+                        backgroundColor: 'transparent',
+                        border: '2px solid #e74c3c',
+                        color: '#e74c3c',
+                        borderRadius: '5px',
+                        fontWeight: 600,
+                        transition: 'all 0.3s',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <FaCalendarCheck /> Book Session
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && coaches.length === 0 && (
+          <div
+            style={{ textAlign: 'center', color: 'white', fontSize: '1.2rem' }}
+          >
+            No coaches found matching your criteria.
+          </div>
+        )}
       </main>
 
-      <footer>
-        <div className="footer-content">
-          <div className="footer-logo">
-            <i className="fas fa-running"></i> Sport Sphere
+      {/* Footer */}
+      <footer
+        style={{
+          backgroundColor: 'rgba(44, 62, 80, 0.9)',
+          color: 'white',
+          padding: '2rem 5%',
+          marginTop: '3rem',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            <FaRunning /> Sport Sphere
           </div>
-          <div className="copyright">
+          <div style={{ fontSize: '0.9rem' }}>
             &copy; 2025 Sport Sphere. All rights reserved.
           </div>
         </div>
