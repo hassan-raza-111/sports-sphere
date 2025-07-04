@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import logoImg from '../../assets/images/Logo.png';
 import { Link } from 'react-router-dom';
+import AdminLayout from '../../components/AdminLayout';
 const userStyles = `
   /* Reset and base styles */
   * {
@@ -481,38 +482,11 @@ const UserManagement = () => {
   };
 
   return (
-    <div>
+    <AdminLayout>
       {/* Inject styles */}
       <style dangerouslySetInnerHTML={{ __html: userStyles }} />
-
-      {/* Header */}
-      <header>
-        <a href='/index.html' className='logo'>
-          <img src={logoImg} alt='Sport Sphere Logo' className='logo-img' />
-          <div>
-            <div className='logo-text'>Sports Sphere</div>
-          </div>
-        </a>
-        <nav>
-          <a href='/'>
-            <i className='fas fa-home'></i> Home
-          </a>
-          <a href='/admin' className='active'>
-            <i className='fas fa-user-shield'></i> Dashboard{' '}
-            <span className='admin-badge'>ADMIN</span>
-          </a>
-          <a href='/payment'>
-            <i className='fas fa-money-bill-wave'></i> Payments
-          </a>
-          <a href='/report'>
-            <i className='fas fa-flag'></i> Reports{' '}
-            <span className='notification-badge'>5</span>
-          </a>
-        </nav>
-      </header>
-
-      {/* Main Content */}
-      <main className='user-container'>
+      {/* Main user management content only (remove header/footer) */}
+      <div className='user-container'>
         <h2 className='user-heading'>
           <i className='fas fa-users'></i> User Management
         </h2>
@@ -639,10 +613,6 @@ const UserManagement = () => {
                     </td>
                     <td>{user.createdAt ? formatDate(user.createdAt) : ''}</td>
                     <td>
-                      {/* <div className='action-dropdown'> */}
-                      {/* <button className='dropdown-btn'>
-                          <i className='fas fa-ellipsis-v'></i>
-                        </button> */}
                       <div className='flex'>
                         <a
                           href='#'
@@ -665,7 +635,6 @@ const UserManagement = () => {
                           {user.status === 'active' ? 'Deactivate' : 'Activate'}
                         </a>
                       </div>
-                      {/* </div> */}
                     </td>
                   </tr>
                 ))
@@ -673,20 +642,8 @@ const UserManagement = () => {
             </tbody>
           </table>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer>
-        <div className='footer-content'>
-          <div className='footer-logo'>
-            <i className='fas fa-running'></i> Sport Sphere
-          </div>
-          <div className='copyright'>
-            © 2025 Sport Sphere. Admin Panel v2.4.1
-          </div>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
