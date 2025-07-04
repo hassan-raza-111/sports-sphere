@@ -1,0 +1,278 @@
+{
+  "info": {
+    "_postman_id": "sports-sphere-api-collection",
+    "name": "Sports Sphere API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"athlete\",\n  \"sport\": \"Football\",\n  \"experience\": \"2 years\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "register"]
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "login"]
+        }
+      }
+    },
+    {
+      "name": "Create Booking",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"coach\": \"sarah\",\n  \"athlete\": \"john@example.com\",\n  \"date\": \"2024-06-01\",\n  \"time\": \"10:00\",\n  \"notes\": \"Focus on defense\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/booking",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "booking"]
+        }
+      }
+    },
+    {
+      "name": "Submit Feedback",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"feedbackType\": \"coach\",\n  \"selectedCoach\": \"sarah\",\n  \"rating\": 5,\n  \"feedbackText\": \"Great session!\",\n  \"email\": \"john@example.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/feedback",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "feedback"]
+        }
+      }
+    },
+    {
+      "name": "Place Order",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"john@example.com\",\n  \"fullName\": \"John Doe\",\n  \"address\": \"123 Main St\",\n  \"city\": \"Karachi\",\n  \"zip\": \"12345\",\n  \"cardNumber\": \"1234 5678 9012 3456\",\n  \"expiry\": \"12/25\",\n  \"cvv\": \"123\",\n  \"paymentMethod\": \"card\",\n  \"selectedBank\": \"hbl\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/order",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "order"]
+        }
+      }
+    },
+    {
+      "name": "Create Vendor Profile",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"<USER_ID>\",\n  \"storeName\": \"Elite Wear\",\n  \"vendorType\": \"marketplace\",\n  \"website\": \"https://elitewear.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/vendor-profile",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "vendor-profile"]
+        }
+      }
+    },
+    {
+      "name": "Get Messages",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5000/api/messages?sender=john@example.com&receiver=coach@example.com",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "messages"],
+          "query": [
+            { "key": "sender", "value": "john@example.com" },
+            { "key": "receiver", "value": "coach@example.com" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Send Message",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sender\": \"john@example.com\",\n  \"receiver\": \"coach@example.com\",\n  \"content\": \"Hello Coach!\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/messages",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "messages"]
+        }
+      }
+    },
+    {
+      "name": "Get Progress",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5000/api/progress?userId=<USER_ID>",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "progress"],
+          "query": [{ "key": "userId", "value": "<USER_ID>" }]
+        }
+      }
+    },
+    {
+      "name": "Add Progress",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"<USER_ID>\",\n  \"metrics\": {\n    \"stamina\": 80,\n    \"speed\": 75,\n    \"strength\": 85\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/progress",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "progress"]
+        }
+      }
+    },
+    {
+      "name": "Get Reports",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5000/api/reports?type=admin",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "reports"],
+          "query": [{ "key": "type", "value": "admin" }]
+        }
+      }
+    },
+    {
+      "name": "Add Report",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"admin\",\n  \"data\": {\n    \"newUsers\": 10,\n    \"activeUsers\": 50\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/reports",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "reports"]
+        }
+      }
+    },
+    {
+      "name": "Get Coaches",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5000/api/coaches",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "coaches"]
+        }
+      }
+    },
+    {
+      "name": "Add Coach",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Coach Sarah Williams\",\n  \"specialty\": \"Tennis Specialist\",\n  \"rating\": 4.8,\n  \"reviews\": 128,\n  \"bio\": \"Professional tennis coach with 10+ years experience.\",\n  \"image\": \"https://example.com/sarah.jpg\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/coaches",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "coaches"]
+        }
+      }
+    },
+    {
+      "name": "Get Products",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5000/api/products",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "products"]
+        }
+      }
+    },
+    {
+      "name": "Add Product",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Elite Wear T-Shirt\",\n  \"description\": \"High quality sports t-shirt.\",\n  \"price\": 2500,\n  \"image\": \"https://example.com/tshirt.jpg\",\n  \"vendorId\": \"<VENDOR_ID>\",\n  \"category\": \"Apparel\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/products",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "products"]
+        }
+      }
+    }
+  ]
+}
