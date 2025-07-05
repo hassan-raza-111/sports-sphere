@@ -6,6 +6,7 @@ import Register from './pages/register';
 import ForgotPassword from './pages/forgot-password';
 import ResetPassword from './pages/reset-password';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Athlete pages
 import Athlete from './pages/athelte/athelte';
@@ -45,12 +46,47 @@ import ProfilePage from './pages/athelte/ProfilePage.jsx';
 function App() {
   return (
     <Routes>
-      {/* General */}
-      <Route path='/' element={<Home />} />
-      <Route path='/login' element={<Login />} />
-      <Route path='/register' element={<Register />} />
-      <Route path='/forgot-password' element={<ForgotPassword />} />
-      <Route path='/reset-password/:token' element={<ResetPassword />} />
+      {/* General - Protected from logged-in users */}
+      <Route
+        path='/'
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/login'
+        element={
+          <ProtectedRoute>
+            <Login />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/register'
+        element={
+          <ProtectedRoute>
+            <Register />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/forgot-password'
+        element={
+          <ProtectedRoute>
+            <ForgotPassword />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/reset-password/:token'
+        element={
+          <ProtectedRoute>
+            <ResetPassword />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Athlete */}
       <Route path='/athlete/dashboard' element={<Athlete />} />
