@@ -1,0 +1,244 @@
+/* Athlete Layout Styles */
+
+/* Main container */
+.athlete-main {
+  min-height: calc(100vh - 140px); /* Account for header and footer */
+  padding-top: 80px; /* Space for fixed header */
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+              url('https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+}
+
+/* Header styles - EXACT match to original HTML */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 5%;
+  background-color: rgba(255, 255, 255, 0.9);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+}
+
+.logo-text {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2c3e50;
+  font-style: italic;
+}
+
+nav {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+nav a {
+  font-weight: 600;
+  transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  color: #2c3e50;
+}
+
+nav a:hover, nav a.active {
+  color: #e74c3c;
+}
+
+/* Profile dropdown */
+.profile-dropdown {
+  position: relative;
+}
+
+.profile-btn {
+  background-color: #e74c3c;
+  color: white !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+  cursor: pointer;
+  border: none;
+}
+
+.profile-btn:hover {
+  background-color: #c0392b;
+}
+
+.profile-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 1000;
+  margin-top: 0.5rem;
+}
+
+.profile-menu a,
+.profile-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #2c3e50;
+  transition: background-color 0.2s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.profile-menu a:hover,
+.profile-menu button:hover {
+  background-color: #f8f9fa;
+}
+
+.logout-btn {
+  border-top: 1px solid #eee !important;
+  color: #e74c3c !important;
+}
+
+.logout-btn:hover {
+  background-color: #fff5f5 !important;
+}
+
+/* Footer styles */
+footer {
+  background-color: rgba(44, 62, 80, 0.9);
+  color: white;
+  padding: 2rem 5%;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+.footer-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.footer-links a {
+  transition: color 0.3s;
+  text-decoration: none;
+  color: white;
+}
+
+.footer-links a:hover {
+  color: #e74c3c;
+}
+
+.social-icons {
+  display: flex;
+  gap: 1rem;
+  font-size: 1.2rem;
+}
+
+.social-icons a {
+  transition: color 0.3s;
+  color: white;
+  text-decoration: none;
+}
+
+.social-icons a:hover {
+  color: #e74c3c;
+}
+
+.copyright {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  header {
+    padding: 1rem 5%;
+  }
+
+  .logo-img {
+    height: 30px;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+  }
+
+  nav {
+    gap: 1rem;
+  }
+
+  .athlete-main {
+    padding-top: 120px;
+  }
+
+  .profile-menu {
+    min-width: 180px;
+    right: -50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logo-img {
+    height: 25px;
+  }
+
+  .logo-text {
+    font-size: 1.2rem;
+  }
+
+  nav a span {
+    display: none;
+  }
+
+  .profile-menu {
+    min-width: 150px;
+    right: -100px;
+  }
+} 
