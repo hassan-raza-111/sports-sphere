@@ -63,6 +63,7 @@ const AthleteDashboard = () => {
         setUpcomingBookings(data.count || 0);
       } else {
         console.error('Failed to fetch upcoming bookings');
+        setUpcomingBookings(0);
       }
 
       if (completedSessionsRes.ok) {
@@ -70,6 +71,7 @@ const AthleteDashboard = () => {
         setCompletedSessions(data.count || 0);
       } else {
         console.error('Failed to fetch completed sessions');
+        setCompletedSessions(0);
       }
 
       if (averageRatingRes.ok) {
@@ -77,6 +79,7 @@ const AthleteDashboard = () => {
         setAverageRating(data.averageRating || 0);
       } else {
         console.error('Failed to fetch average rating');
+        setAverageRating(0);
       }
 
       if (goalProgressRes.ok) {
@@ -84,6 +87,7 @@ const AthleteDashboard = () => {
         setGoalProgress(data.goalProgress || 0);
       } else {
         console.error('Failed to fetch goal progress');
+        setGoalProgress(0);
       }
 
       if (notificationsRes.ok) {
@@ -91,6 +95,7 @@ const AthleteDashboard = () => {
         setNotifications(data.notifications || []);
       } else {
         console.error('Failed to fetch notifications');
+        setNotifications([]);
       }
 
       if (recentBookingsRes.ok) {
@@ -98,6 +103,7 @@ const AthleteDashboard = () => {
         setRecentBookings(data.bookings || []);
       } else {
         console.error('Failed to fetch recent bookings');
+        setRecentBookings([]);
       }
 
       if (quickStatsRes.ok) {
@@ -110,10 +116,29 @@ const AthleteDashboard = () => {
         });
       } else {
         console.error('Failed to fetch quick stats');
+        setQuickStats({
+          totalSessions: 0,
+          thisMonth: 0,
+          nextSession: null,
+          achievements: 0,
+        });
       }
     } catch (err) {
       console.error('Error fetching athlete data:', err);
       setError('Failed to load dashboard data. Please try again.');
+      // Set fallback data
+      setUpcomingBookings(0);
+      setCompletedSessions(0);
+      setAverageRating(0);
+      setGoalProgress(0);
+      setNotifications([]);
+      setRecentBookings([]);
+      setQuickStats({
+        totalSessions: 0,
+        thisMonth: 0,
+        nextSession: null,
+        achievements: 0,
+      });
     } finally {
       setLoading(false);
     }

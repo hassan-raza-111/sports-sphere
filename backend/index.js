@@ -171,6 +171,22 @@ const seedNotifications = async () => {
           type: 'system',
           read: true,
         },
+        {
+          recipient: '507f1f77bcf86cd799439011',
+          recipientType: 'athlete',
+          message:
+            'Coach David has sent you a message about your upcoming session.',
+          type: 'message',
+          read: false,
+        },
+        {
+          recipient: '507f1f77bcf86cd799439011',
+          recipientType: 'athlete',
+          message:
+            'Congratulations! You have completed 10 sessions this month.',
+          type: 'achievement',
+          read: false,
+        },
       ];
 
       await Notification.insertMany(sampleNotifications);

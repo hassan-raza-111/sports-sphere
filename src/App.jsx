@@ -66,6 +66,7 @@ function App() {
       <Route path='/athlete/feedback' element={<AthleteFeedback />} />
       <Route path='/athlete/find-coaches' element={<AthleteFindCoaches />} />
       <Route path='/athlete/progress' element={<AthleteProgress />} />
+      <Route path='/athlete/marketplace' element={<VendorMarketplace />} />
       <Route
         path='/athlete/general-progress'
         element={<AthleteGeneralProgress />}
