@@ -86,8 +86,8 @@ function Register() {
         label { margin-top: 10px; display: block; font-weight: bold; }
         input, select { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; transition: border-color 0.3s ease; }
         input:hover, select:hover, input:focus, select:focus { border-color: #f97316; outline: none; }
-        button[type='submit'] { width: 100%; background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background 0.3s ease; }
-        button[type='submit']:hover { background: #c0392b; }
+        button[type='submit'] { width: 100%; background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; }
+        button[type='submit']:hover { background: #c0392b; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .role-specific { display: none; }
         .role-specific.active { display: block; }
         @media (max-width: 768px) { .form-container { max-width: 90%; } .form-title { font-size: 24px; } }
