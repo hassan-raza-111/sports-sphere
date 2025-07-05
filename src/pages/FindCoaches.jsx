@@ -9,22 +9,8 @@ import {
   FaRunning,
 } from 'react-icons/fa';
 
-interface Coach {
-  _id: string;
-  name: string;
-  sports: string;
-  location: string;
-  rating: number;
-  reviewCount: number;
-  hourlyRate: number;
-  experience: number;
-  about: string;
-  profileImage: string;
-  specialties: string[];
-}
-
-const FindCoaches: React.FC = () => {
-  const [coaches, setCoaches] = useState<Coach[]>([]);
+const FindCoaches = () => {
+  const [coaches, setCoaches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSport, setSelectedSport] = useState('All Sports');
@@ -64,7 +50,7 @@ const FindCoaches: React.FC = () => {
     }
   };
 
-  const renderStars = (rating: number) => {
+  const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
@@ -85,7 +71,7 @@ const FindCoaches: React.FC = () => {
     return stars;
   };
 
-  const getDefaultImage = (sport: string) => {
+  const getDefaultImage = (sport) => {
     const sportImages = {
       Tennis:
         'https://images.unsplash.com/photo-1547347298-4074fc3086f0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
@@ -97,7 +83,7 @@ const FindCoaches: React.FC = () => {
         'https://images.unsplash.com/photo-1519861531473-9200262188bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80',
     };
     return (
-      sportImages[sport as keyof typeof sportImages] ||
+      sportImages[sport] ||
       'https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80'
     );
   };

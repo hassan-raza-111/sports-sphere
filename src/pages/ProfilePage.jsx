@@ -4,30 +4,24 @@ import AthleteLayout from '../components/AthleteLayout';
 import '../css/profile.css';
 
 const ProfilePage = () => {
-  const [profile, setProfile] =
-    useState <
-    Profile >
-    {
-      name: 'Loading...',
-      role: 'Athlete',
-      sport: 'Football',
-      location: 'Los Angeles, CA',
-      email: 'loading@email.com',
-      phone: '(555) 123-4567',
-      bio: 'Professional athlete with competitive experience...',
-      image:
-        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    };
+  const [profile, setProfile] = useState({
+    name: 'Loading...',
+    role: 'Athlete',
+    sport: 'Football',
+    location: 'Los Angeles, CA',
+    email: 'loading@email.com',
+    phone: '(555) 123-4567',
+    bio: 'Professional athlete with competitive experience...',
+    image:
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+  });
 
-  const [stats, setStats] =
-    useState <
-    Stats >
-    {
-      sessionsCompleted: 0,
-      avgCoachRating: 0,
-      goalProgress: 0,
-      currentBookings: 0,
-    };
+  const [stats, setStats] = useState({
+    sessionsCompleted: 0,
+    avgCoachRating: 0,
+    goalProgress: 0,
+    currentBookings: 0,
+  });
 
   const [achievements, setAchievements] = useState([]);
   const [goals, setGoals] = useState([]);
