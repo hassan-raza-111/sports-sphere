@@ -14,7 +14,6 @@ function Home() {
         <nav>
           <Link to='/login'>Login</Link> {/* ✅ This now uses React Router */}
           <Link to='/register'>Sign Up</Link>
-          <Link to='/find-coaches'>Find Coaches</Link>
           <a href='#about'>About</a>
         </nav>
       </header>
@@ -26,16 +25,13 @@ function Home() {
           verified sports gear.
         </p>
         <div className='cta-buttons'>
-          <Link to='/find-coaches' className='btn primary'>
-            Find Coaches
-          </Link>
-          <Link to='/login?role=athlete' className='btn secondary'>
+          <Link to='/login?role=athlete' className='btn primary '>
             Join as Athlete
           </Link>
-          <Link to='/login?role=coach' className='btn tertiary'>
+          <Link to='/login?role=coach' className='btn secondary'>
             Become a Coach
           </Link>
-          <Link to='/login?role=vendor' className='btn secondary'>
+          <Link to='/login?role=vendor' className='btn primary'>
             Join as Vendor
           </Link>
           <Link to='/login?role=admin' className='btn secondary'>
