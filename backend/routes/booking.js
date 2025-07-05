@@ -59,4 +59,31 @@ router.get('/athlete/:id/bookings/current', async (req, res) => {
   }
 });
 
+// Get recent bookings for an athlete
+router.get('/athlete/:id/recent', async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      athlete: req.params.id,
+      date: { $gte: new Date().toISOString().split('T')[0] },
+      status: { $ne: 'cancelled' },
+    })
+      .populate('coach', 'name')
+      .sort({ date: 1, time: 1 })
+      .limit(5);
+
+    const formattedBookings = bookings.map((booking) => ({
+      _id: booking._id,
+      date: booking.date,
+      time: booking.time,
+      coachName: booking.coach?.name || 'Coach',
+      notes: booking.notes,
+      status: booking.status,
+    }));
+
+    res.json({ bookings: formattedBookings });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch recent bookings' });
+  }
+});
+
 export default router;

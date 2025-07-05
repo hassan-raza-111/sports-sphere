@@ -11,7 +11,9 @@ import progressRoutes from './routes/progress.js';
 import reportsRoutes from './routes/reports.js';
 import coachesRoutes from './routes/coaches.js';
 import productsRoutes from './routes/products.js';
+import notificationsRoutes from './routes/notifications.js';
 import Coach from './models/Coach.js';
+import Notification from './models/Notification.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -138,8 +140,52 @@ const seedCoaches = async () => {
   }
 };
 
+// Seed sample notifications
+const seedNotifications = async () => {
+  try {
+    const existingNotifications = await Notification.countDocuments();
+    if (existingNotifications === 0) {
+      // Get a sample athlete ID (you'll need to create one or use an existing one)
+      const sampleNotifications = [
+        {
+          recipient: '507f1f77bcf86cd799439011', // Sample athlete ID
+          recipientType: 'athlete',
+          message:
+            'Your booking with Coach Sarah has been confirmed for tomorrow at 2:00 PM',
+          type: 'booking',
+          read: false,
+        },
+        {
+          recipient: '507f1f77bcf86cd799439011',
+          recipientType: 'athlete',
+          message:
+            "Great progress on your tennis skills! You've improved by 15% this month.",
+          type: 'progress',
+          read: false,
+        },
+        {
+          recipient: '507f1f77bcf86cd799439011',
+          recipientType: 'athlete',
+          message:
+            'New equipment available in the marketplace - check out the latest tennis rackets!',
+          type: 'system',
+          read: true,
+        },
+      ];
+
+      await Notification.insertMany(sampleNotifications);
+      console.log('Sample notifications seeded successfully');
+    }
+  } catch (error) {
+    console.error('Error seeding notifications:', error);
+  }
+};
+
 // Run seeding after database connection
-setTimeout(seedCoaches, 2000);
+setTimeout(() => {
+  seedCoaches();
+  seedNotifications();
+}, 2000);
 
 app.use('/api', authRoutes);
 app.use('/api/booking', bookingRoutes);
@@ -151,5 +197,6 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/coaches', coachesRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
