@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AthleteLayout from '../components/AthleteLayout';
-import '../css/profile.css';
+import '../../css/profile.css';
+import AthleteLayout from '../../components/AthleteLayout';
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState({

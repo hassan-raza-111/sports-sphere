@@ -16,9 +16,6 @@ import AthleteFeedback from './pages/athelte/feedback';
 import AthleteFindCoaches from './pages/athelte/find-coaches';
 import AthleteGeneralProgress from './pages/athelte/progress';
 
-// Find Coaches page
-import FindCoaches from './pages/FindCoaches';
-
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
 import VendorFeedback from './pages/vendor/feedback';
@@ -54,9 +51,6 @@ function App() {
       <Route path='/register' element={<Register />} />
       <Route path='/forgot-password' element={<ForgotPassword />} />
       <Route path='/reset-password/:token' element={<ResetPassword />} />
-
-      {/* Find Coaches */}
-      <Route path='/find-coaches' element={<FindCoaches />} />
 
       {/* Athlete */}
       <Route path='/athlete/dashboard' element={<Athlete />} />
