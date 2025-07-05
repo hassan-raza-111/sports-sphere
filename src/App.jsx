@@ -43,7 +43,7 @@ import AdminPaymentManagement from './pages/admin/payment-managment';
 import AdminReport from './pages/admin/report';
 import AdminUserManagement from './pages/admin/user-managment';
 import AdminAddUser from './pages/admin/admin-add-user.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
+import ProfilePage from './pages/athelte/ProfilePage.jsx';
 
 function App() {
   return (
