@@ -9,7 +9,6 @@ import NotFound from './pages/NotFound';
 
 // Athlete pages
 import Athlete from './pages/athelte/athelte';
-import AthleteProfile from './pages/athelte/athelte-profile';
 import AthleteMessages from './pages/athelte/message';
 import AthleteProgress from './pages/athelte/athelte-progress';
 import AthleteBooking from './pages/athelte/booking';
@@ -44,6 +43,7 @@ import AdminPaymentManagement from './pages/admin/payment-managment';
 import AdminReport from './pages/admin/report';
 import AdminUserManagement from './pages/admin/user-managment';
 import AdminAddUser from './pages/admin/admin-add-user.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 
 function App() {
   return (
@@ -60,7 +60,7 @@ function App() {
 
       {/* Athlete */}
       <Route path='/athlete/dashboard' element={<Athlete />} />
-      <Route path='/athlete/profile' element={<AthleteProfile />} />
+      <Route path='/athlete/profile' element={<ProfilePage />} />
       <Route path='/athlete/messages' element={<AthleteMessages />} />
       <Route path='/athlete/booking' element={<AthleteBooking />} />
       <Route path='/athlete/feedback' element={<AthleteFeedback />} />
@@ -85,9 +85,9 @@ function App() {
       <Route path='/coach/dashboard' element={<Coach />} />
       <Route path='/coach/profile' element={<CoachProfile />} />
       <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
-      <Route path='/coach/booking' element={<CoachBooking />} />
       <Route path='/coach/marketplace' element={<CoachMarketplace />} />
       <Route path='/coach/messages' element={<CoachMessages />} />
+      <Route path='/coach/booking' element={<CoachBooking />} />
       <Route path='/coach/progress' element={<CoachProgress />} />
 
       {/* Admin */}
