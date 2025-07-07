@@ -12,7 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Athlete pages
 import Athlete from './pages/athelte/athelte';
 import AthleteMessages from './pages/athelte/message';
-import AthleteProgress from './pages/athelte/athelte-progress';
+import AthleteProgress from './pages/athelte/progress.jsx';
 import AthleteBooking from './pages/athelte/booking';
 import AthleteFeedback from './pages/athelte/feedback';
 import AthleteGeneralProgress from './pages/athelte/progress';

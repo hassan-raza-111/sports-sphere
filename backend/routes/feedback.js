@@ -37,4 +37,16 @@ router.get('/athlete/:id/average-rating', async (req, res) => {
   }
 });
 
+// Get all feedback for an athlete
+router.get('/athlete/:id', async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find({ athlete: req.params.id })
+      .sort({ date: -1 })
+      .populate('coach', 'name');
+    res.json(feedbacks);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch feedback' });
+  }
+});
+
 export default router;

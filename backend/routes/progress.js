@@ -125,4 +125,41 @@ router.get('/athlete/:id', async (req, res) => {
   }
 });
 
+// Get latest metrics summary for athlete
+router.get('/athlete/:id/metrics-summary', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const latest = await Progress.find({ userId }).sort({ date: -1 }).limit(1);
+    if (!latest.length)
+      return res.json({ stamina: 0, speed: 0, strength: 0, focus: 0 });
+    const {
+      stamina = 0,
+      speed = 0,
+      strength = 0,
+      focus = 0,
+    } = latest[0].metrics || {};
+    res.json({ stamina, speed, strength, focus });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch metrics summary' });
+  }
+});
+
+// Get metrics trend for athlete (for chart)
+router.get('/athlete/:id/metrics-trend', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const progress = await Progress.find({ userId })
+      .sort({ date: 1 })
+      .limit(10);
+    const labels = progress.map((p) => p.date.toISOString().slice(0, 10));
+    const stamina = progress.map((p) => p.metrics?.stamina || 0);
+    const speed = progress.map((p) => p.metrics?.speed || 0);
+    const strength = progress.map((p) => p.metrics?.strength || 0);
+    const focus = progress.map((p) => p.metrics?.focus || 0);
+    res.json({ labels, stamina, speed, strength, focus });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch metrics trend' });
+  }
+});
+
 export default router;

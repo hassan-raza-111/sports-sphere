@@ -8,7 +8,9 @@ const progressSchema = new mongoose.Schema({
     backhandPower: Number,
     footworkSpeed: Number,
     stamina: Number,
-    // add more as needed
+    speed: Number,
+    strength: Number,
+    focus: Number,
   },
   performance: Number, // overall performance score
   coachNotes: String,
