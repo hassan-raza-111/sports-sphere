@@ -12,6 +12,7 @@ import reportsRoutes from './routes/reports.js';
 import coachesRoutes from './routes/coaches.js';
 import productsRoutes from './routes/products.js';
 import notificationsRoutes from './routes/notifications.js';
+import athleteProgressRoutes from './routes/athleteProgress.js';
 import Coach from './models/Coach.js';
 import Notification from './models/Notification.js';
 import dotenv from 'dotenv';
@@ -214,5 +215,6 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/coaches', coachesRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/progress', athleteProgressRoutes);
 
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
