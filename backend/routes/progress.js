@@ -33,8 +33,13 @@ router.post('/', async (req, res) => {
 // Get goal progress (percentage) for an athlete
 router.get('/athlete/:id/goal-progress', async (req, res) => {
   try {
-    // TODO: Replace with real calculation based on progress data
-    res.json({ goalProgress: 85 });
+    const user = await User.findById(req.params.id);
+    if (!user || !user.goals) return res.json({ goalProgress: 0 });
+    const total = user.goals.length;
+    if (total === 0) return res.json({ goalProgress: 0 });
+    const completed = user.goals.filter((g) => g.status === 'completed').length;
+    const progress = Math.round((completed / total) * 100);
+    res.json({ goalProgress: progress });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch goal progress' });
   }

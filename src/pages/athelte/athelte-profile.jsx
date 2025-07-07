@@ -50,6 +50,9 @@ const Profile = () => {
           level: data.level || '',
           achievements: data.achievements || [],
           goals: data.goals || [],
+          profileImage: data.profileImage || '',
+          age: data.age || '',
+          gender: data.gender || '',
         });
         setLoading(false);
       })
@@ -209,11 +212,80 @@ const Profile = () => {
 
   return (
     <AthleteLayout>
-      <div className='profile-container'>
-        {/* Profile content will go here */}
-        <h1>Athlete Profile</h1>
-        <p>Profile content will be displayed here...</p>
+      {/* Profile Image */}
+      {profile?.profileImage && (
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <img
+            src={profile.profileImage}
+            alt='Profile'
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #e74c3c',
+            }}
+          />
+        </div>
+      )}
+      {/* Profile Details */}
+      <div>
+        <strong>Name:</strong> {profile?.name}
+        <br />
+        <strong>Email:</strong> {profile?.email}
+        <br />
+        <strong>Phone:</strong> {profile?.phone}
+        <br />
+        <strong>Location:</strong> {profile?.location}
+        <br />
+        <strong>About:</strong> {profile?.about}
+        <br />
+        <strong>Preferred Sport:</strong> {profile?.preferredSport}
+        <br />
+        <strong>Level:</strong> {profile?.level}
+        <br />
+        <strong>Achievements:</strong> {profile?.achievements?.join(', ')}
+        <br />
+        <strong>Goals:</strong> {profile?.goals?.join(', ')}
+        <br />
+        <strong>Age:</strong> {profile?.age}
+        <br />
+        <strong>Gender:</strong> {profile?.gender}
+        <br />
       </div>
+      {/* Edit Form */}
+      {editMode && (
+        <form onSubmit={handleSave} style={{ marginTop: '2rem' }}>
+          <label>
+            Profile Image URL:
+            <input
+              type='text'
+              name='profileImage'
+              value={form.profileImage}
+              onChange={handleChange}
+            />
+          </label>
+          <label>
+            Age:
+            <input
+              type='number'
+              name='age'
+              value={form.age}
+              onChange={handleChange}
+            />
+          </label>
+          <label>
+            Gender:
+            <select name='gender' value={form.gender} onChange={handleChange}>
+              <option value=''>Select</option>
+              <option value='male'>Male</option>
+              <option value='female'>Female</option>
+              <option value='other'>Other</option>
+            </select>
+          </label>
+          <button type='submit'>Save</button>
+        </form>
+      )}
     </AthleteLayout>
   );
 };

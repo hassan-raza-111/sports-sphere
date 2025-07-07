@@ -16,8 +16,28 @@ const userSchema = new mongoose.Schema(
     phone: String,
     location: String,
     about: String,
-    achievements: [String],
-    goals: [String],
+    profileImage: String,
+    age: Number,
+    gender: { type: String, enum: ['male', 'female', 'other'] },
+    philosophy: String,
+    achievements: [
+      {
+        year: String,
+        title: String,
+        description: String,
+      },
+    ],
+    goals: [
+      {
+        goal: String,
+        status: {
+          type: String,
+          enum: ['in progress', 'completed', 'not started'],
+          default: 'not started',
+        },
+        progress: { type: Number, default: 0 }, // percent
+      },
+    ],
   },
   { timestamps: true }
 );

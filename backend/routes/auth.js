@@ -268,6 +268,10 @@ router.put('/users/:id', async (req, res) => {
       level,
       achievements,
       goals,
+      profileImage,
+      age,
+      gender,
+      philosophy,
     }) => ({
       name,
       email,
@@ -278,6 +282,10 @@ router.put('/users/:id', async (req, res) => {
       level,
       achievements,
       goals,
+      profileImage,
+      age,
+      gender,
+      philosophy,
     }))(req.body);
     const user = await User.findByIdAndUpdate(req.params.id, updates, {
       new: true,
