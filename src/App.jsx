@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import './css/find-coaches.css';
 
 import Home from './pages/Home';
 import Login from './pages/login';
@@ -14,7 +15,6 @@ import AthleteMessages from './pages/athelte/message';
 import AthleteProgress from './pages/athelte/athelte-progress';
 import AthleteBooking from './pages/athelte/booking';
 import AthleteFeedback from './pages/athelte/feedback';
-import AthleteFindCoaches from './pages/athelte/find-coaches';
 import AthleteGeneralProgress from './pages/athelte/progress';
 
 // Vendor pages
@@ -42,6 +42,7 @@ import AdminReport from './pages/admin/report';
 import AdminUserManagement from './pages/admin/user-managment';
 import AdminAddUser from './pages/admin/admin-add-user.jsx';
 import ProfilePage from './pages/athelte/ProfilePage.jsx';
+import FindCoaches from './pages/athelte/find-coaches.jsx';
 
 function App() {
   return (
@@ -94,7 +95,7 @@ function App() {
       <Route path='/athlete/messages' element={<AthleteMessages />} />
       <Route path='/athlete/booking' element={<AthleteBooking />} />
       <Route path='/athlete/feedback' element={<AthleteFeedback />} />
-      <Route path='/athlete/find-coaches' element={<AthleteFindCoaches />} />
+      <Route path='/athlete/find-coaches' element={<FindCoaches />} />
       <Route path='/athlete/progress' element={<AthleteProgress />} />
       <Route path='/athlete/marketplace' element={<VendorMarketplace />} />
       <Route
