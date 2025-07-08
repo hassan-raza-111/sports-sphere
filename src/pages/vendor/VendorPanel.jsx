@@ -49,6 +49,11 @@ export default function VendorPanel() {
   const [payoutError, setPayoutError] = useState('');
   const [payoutHistory, setPayoutHistory] = useState([]);
   const [payoutHistoryLoading, setPayoutHistoryLoading] = useState(false);
+  const [feedbackTabLoading, setFeedbackTabLoading] = useState(false);
+  const [feedbackTabError, setFeedbackTabError] = useState(null);
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [replying, setReplying] = useState({});
+  const [replyText, setReplyText] = useState({});
 
   // Get vendorId from localStorage
   const userStr = localStorage.getItem('user');
@@ -109,6 +114,23 @@ export default function VendorPanel() {
         setPayoutHistoryLoading(false);
       })
       .catch(() => setPayoutHistoryLoading(false));
+  }, [tab, vendorId]);
+
+  // Fetch vendor feedback when tab is 'feedback'
+  useEffect(() => {
+    if (tab !== 'feedback' || !vendorId) return;
+    setFeedbackTabLoading(true);
+    setFeedbackTabError(null);
+    fetch(`${BACKEND_URL}/api/feedback/vendor/${vendorId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setFeedbackList(data);
+        setFeedbackTabLoading(false);
+      })
+      .catch(() => {
+        setFeedbackTabError('Failed to fetch feedback');
+        setFeedbackTabLoading(false);
+      });
   }, [tab, vendorId]);
 
   // Handle image preview
@@ -308,6 +330,32 @@ export default function VendorPanel() {
     }
   };
 
+  const handleReplyChange = (id, value) => {
+    setReplyText((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleReplySubmit = async (id) => {
+    setReplying((prev) => ({ ...prev, [id]: true }));
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/feedback/${id}/reply`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply: replyText[id] }),
+      });
+      if (!res.ok) throw new Error('Failed to submit reply');
+      // Refresh feedback list
+      const updated = await fetch(
+        `${BACKEND_URL}/api/feedback/vendor/${vendorId}`
+      ).then((r) => r.json());
+      setFeedbackList(updated);
+      setReplyText((prev) => ({ ...prev, [id]: '' }));
+    } catch (err) {
+      alert('Failed to submit reply');
+    } finally {
+      setReplying((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
   return (
     <VendorLayout>
       <div className='container'>
@@ -339,6 +387,12 @@ export default function VendorPanel() {
             onClick={() => setTab('earnings')}
           >
             Earnings
+          </button>
+          <button
+            className={`tab-button${tab === 'feedback' ? ' active' : ''}`}
+            onClick={() => setTab('feedback')}
+          >
+            Feedback
           </button>
         </div>
 
@@ -775,6 +829,81 @@ export default function VendorPanel() {
                           : '-'}
                       </td>
                       <td>{p.notes || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {tab === 'feedback' && (
+          <div>
+            <h2>Product Feedback</h2>
+            {feedbackTabLoading ? (
+              <div>Loading feedback...</div>
+            ) : feedbackTabError ? (
+              <div style={{ color: 'red' }}>{feedbackTabError}</div>
+            ) : feedbackList.length === 0 ? (
+              <div>No feedback found.</div>
+            ) : (
+              <table className='table'>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Rating</th>
+                    <th>Feedback</th>
+                    <th>Buyer</th>
+                    <th>Date</th>
+                    <th>Reply</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feedbackList.map((fb) => (
+                    <tr key={fb._id}>
+                      <td>{fb.productId?.name || '-'}</td>
+                      <td>
+                        {'★'.repeat(fb.rating)}
+                        {'☆'.repeat(5 - fb.rating)}
+                      </td>
+                      <td>{fb.feedbackText}</td>
+                      <td>{fb.userId?.name || fb.email || '-'}</td>
+                      <td>{new Date(fb.createdAt).toLocaleString()}</td>
+                      <td>
+                        {fb.reply ? (
+                          <div>
+                            <div style={{ color: '#2980b9' }}>{fb.reply}</div>
+                            <div style={{ fontSize: 12, color: '#888' }}>
+                              {fb.repliedAt
+                                ? 'Replied: ' +
+                                  new Date(fb.repliedAt).toLocaleString()
+                                : ''}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <input
+                              type='text'
+                              value={replyText[fb._id] || ''}
+                              onChange={(e) =>
+                                handleReplyChange(fb._id, e.target.value)
+                              }
+                              placeholder='Write a reply...'
+                              style={{ width: 120 }}
+                            />
+                            <button
+                              onClick={() => handleReplySubmit(fb._id)}
+                              disabled={
+                                replying[fb._id] ||
+                                !(replyText[fb._id] && replyText[fb._id].trim())
+                              }
+                              style={{ marginLeft: 5 }}
+                            >
+                              {replying[fb._id] ? 'Replying...' : 'Reply'}
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,5 +1,6 @@
 import express from 'express';
 import Feedback from '../models/Feedback.js';
+import Product from '../models/Product.js';
 
 const router = express.Router();
 
@@ -61,6 +62,42 @@ router.get('/', async (req, res) => {
     res.json(feedbacks);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch testimonials' });
+  }
+});
+
+// Get all feedback for a vendor's products
+router.get('/vendor/:vendorId', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    // Find all products for this vendor
+    const products = await Product.find({ vendorId });
+    const productIds = products.map((p) => p._id);
+    // Find all feedback for these products
+    const feedbacks = await Feedback.find({ productId: { $in: productIds } })
+      .populate('userId', 'name email')
+      .populate('productId', 'name');
+    res.json(feedbacks);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch feedback' });
+  }
+});
+
+// Vendor reply to feedback
+router.put('/:feedbackId/reply', async (req, res) => {
+  try {
+    const { feedbackId } = req.params;
+    const { reply } = req.body;
+    if (!reply) return res.status(400).json({ message: 'Reply is required' });
+    const feedback = await Feedback.findByIdAndUpdate(
+      feedbackId,
+      { reply, repliedAt: new Date() },
+      { new: true }
+    );
+    if (!feedback)
+      return res.status(404).json({ message: 'Feedback not found' });
+    res.json({ message: 'Reply added', feedback });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to add reply' });
   }
 });
 
