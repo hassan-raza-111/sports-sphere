@@ -25,6 +25,7 @@ import VendorMessages from './pages/vendor/message';
 import VendorProgress from './pages/vendor/progress';
 import VendorReport from './pages/vendor/report';
 import VendorProfile from './pages/vendor/vendor-profile';
+import VendorProfileForm from './pages/vendor/VendorProfileForm';
 
 // Coach pages
 import CoachBooking from './pages/coach/booking';
@@ -106,6 +107,7 @@ function App() {
       {/* Vendor */}
       <Route path='/vendor/dashboard' element={<Vendor />} />
       <Route path='/vendor/profile' element={<VendorProfile />} />
+      <Route path='/vendor/profile/edit' element={<VendorProfileForm />} />
       <Route path='/vendor/feedback' element={<VendorFeedback />} />
       <Route path='/vendor/marketplace' element={<VendorMarketplace />} />
       <Route path='/vendor/messages' element={<VendorMessages />} />
