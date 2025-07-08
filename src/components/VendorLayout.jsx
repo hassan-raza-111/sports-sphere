@@ -26,25 +26,49 @@ const VendorLayout = ({ children }) => {
           </div>
         </Link>
         <nav>
-          <Link to='/' className={isActive('/') ? 'active' : ''}>
-            <FaHome /> <span>Home</span>
+          <Link
+            to='/vendor/dashboard'
+            className={isActive('/vendor/dashboard') ? 'active' : ''}
+          >
+            <FaHome /> <span>Dashboard</span>
           </Link>
           <Link
-            to='/marketplace'
-            className={isActive('/marketplace') ? 'active' : ''}
+            to='/vendor/marketplace'
+            className={isActive('/vendor/marketplace') ? 'active' : ''}
           >
             <FaStore /> <span>Marketplace</span>
           </Link>
-          <Link to='/message' className={isActive('/message') ? 'active' : ''}>
+          <Link
+            to='/vendor/messages'
+            className={isActive('/vendor/messages') ? 'active' : ''}
+          >
             <FaEnvelope /> <span>Messages</span>
           </Link>
           <Link
-            to='/vendor-profile'
+            to='/vendor/profile'
             className={
-              isActive('/vendor-profile') ? 'profile-btn active' : 'profile-btn'
+              isActive('/vendor/profile') ? 'profile-btn active' : 'profile-btn'
             }
           >
-            <FaUser />
+            <FaUser /> <span>Profile</span>
+          </Link>
+          <Link
+            to='/vendor/feedback'
+            className={isActive('/vendor/feedback') ? 'active' : ''}
+          >
+            <span>Feedback</span>
+          </Link>
+          <Link
+            to='/vendor/progress'
+            className={isActive('/vendor/progress') ? 'active' : ''}
+          >
+            <span>Progress</span>
+          </Link>
+          <Link
+            to='/vendor/report'
+            className={isActive('/vendor/report') ? 'active' : ''}
+          >
+            <span>Report</span>
           </Link>
           <button
             onClick={handleLogout}
