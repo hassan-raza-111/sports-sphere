@@ -1,133 +1,168 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+const BACKEND_URL = 'http://localhost:5000';
 
 const Progress = () => {
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const lineChartRef = useRef();
+  const barChartRef = useRef();
+
+  // Get vendorId from localStorage
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const vendorId = user?._id;
+
+  useEffect(() => {
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}/analytics`)
+      .then((res) => res.json())
+      .then((data) => {
+        setAnalytics(data);
+        setAnalyticsLoading(false);
+      })
+      .catch(() => {
+        setAnalyticsError('Failed to fetch analytics');
+        setAnalyticsLoading(false);
+      });
+  }, [vendorId]);
+
+  // Draw charts when analytics data changes
+  useEffect(() => {
+    if (!analytics) return;
+    // Sales Over Time (Line Chart)
+    if (window.Chart && lineChartRef.current) {
+      if (lineChartRef.current._chartInstance) {
+        lineChartRef.current._chartInstance.destroy();
+      }
+      const ctx = lineChartRef.current.getContext('2d');
+      lineChartRef.current._chartInstance = new window.Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(analytics.salesByMonth),
+          datasets: [
+            {
+              label: 'Sales (PKR)',
+              data: Object.values(analytics.salesByMonth),
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+    }
+    // Best-Selling Products (Bar Chart)
+    if (window.Chart && barChartRef.current) {
+      if (barChartRef.current._chartInstance) {
+        barChartRef.current._chartInstance.destroy();
+      }
+      const ctx = barChartRef.current.getContext('2d');
+      barChartRef.current._chartInstance = new window.Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(analytics.productSales),
+          datasets: [
+            {
+              label: 'Units Sold',
+              data: Object.values(analytics.productSales),
+              backgroundColor: '#2980b9',
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+    }
+  }, [analytics]);
+
   return (
-    <>
-      <header>
-        <a href="../index.html" className="logo">
-          <img src="../../assests/images/Logo.png" alt="Sport Sphere Logo" className="logo-img" />
-          <div>
-            <div className="logo-text">Sports Sphere</div>
-          </div>
-        </a>
-        <nav>
-          <a href="../index.html"><FontAwesomeIcon icon={faHome} /> <span>Home</span></a>
-          <a href="athlete.html"><FontAwesomeIcon icon={faTachometerAlt} /> <span>Dashboard</span></a>
-          <a href="message.html">
-            <FontAwesomeIcon icon={faEnvelope} /> <span>Messages</span>
-            <span className="notification-badge">3</span>
-          </a>
-          <a href="athelte-profile.html" className="profile-btn">
-            <FontAwesomeIcon icon={faUser} />
-          </a>
-        </nav>
-      </header>
-
-      <main className="progress-container">
-        <h2 className="progress-heading">
-          <FontAwesomeIcon icon={faChartLine} /> My Training Progress
-        </h2>
-
-        <div className="metrics-grid">
-          {[{
-            icon: faTachometerAlt,
-            label: 'Stamina',
-            value: '+10%',
-            desc: 'Improvement in endurance over last 4 weeks',
-            width: '65%'
-          }, {
-            icon: faBolt,
-            label: 'Speed',
-            value: '+8%',
-            desc: 'Average sprint time improvement',
-            width: '55%'
-          }, {
-            icon: faDumbbell,
-            label: 'Strength',
-            value: '+12%',
-            desc: 'Increase in max lifting capacity',
-            width: '70%'
-          }, {
-            icon: faBrain,
-            label: 'Focus',
-            value: '9/10',
-            desc: "Coach's latest focus rating",
-            width: '90%'
-          }].map((metric, idx) => (
-            <div key={idx} className="metric-card">
-              <h3><FontAwesomeIcon icon={metric.icon} /> {metric.label}</h3>
-              <div className="metric-value">{metric.value}</div>
-              <div className="metric-description">{metric.desc}</div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: metric.width }}></div>
-              </div>
+    <main className='analytics-container'>
+      <h2 className='analytics-heading'>
+        <i className='fas fa-chart-pie'></i> Vendor Analytics & Reports
+      </h2>
+      {analyticsLoading ? (
+        <div>Loading analytics...</div>
+      ) : analyticsError ? (
+        <div style={{ color: 'red' }}>{analyticsError}</div>
+      ) : analytics ? (
+        <>
+          <div className='analytics-grid'>
+            <div className='analytics-card'>
+              <i className='fas fa-money-bill-wave'></i>
+              <h4>PKR {analytics.totalSales?.toFixed(2)}</h4>
+              <p>Total Sales</p>
             </div>
-          ))}
-        </div>
-
-        <section className="charts-section">
-          <h3><FontAwesomeIcon icon={faChartBar} /> Performance Trends</h3>
-
-          <div className="chart-container">
-            <div className="chart-placeholder"></div>
-          </div>
-
-          <div className="chart-legend">
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: '#e74c3c' }}></div>
-              <span>Stamina</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: '#c0392b' }}></div>
-              <span>Speed</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: '#2c3e50' }}></div>
-              <span>Strength</span>
+            <div className='analytics-card'>
+              <i className='fas fa-shopping-cart'></i>
+              <h4>{analytics.totalOrders}</h4>
+              <p>Total Orders</p>
             </div>
           </div>
-        </section>
-
-        <section className="feedback-section">
-          <h3><FontAwesomeIcon icon={faCommentAlt} /> Coach's Feedback</h3>
-
-          {[{
-            date: 'June 10, 2025',
-            content: `Excellent progress on your endurance training! Your stamina has improved significantly over the past month. Let's focus now on maintaining this while we work on increasing your sprint speed. Your consistency in training is really paying off.`
-          }, {
-            date: 'May 25, 2025',
-            content: `Great work on your strength training - you've hit all your targets this week. I'm particularly impressed with your dedication to proper form, which is showing in your reduced injury risk scores. Keep it up!`
-          }].map((feedback, idx) => (
-            <div key={idx} className="feedback-card">
-              <div className="feedback-meta">
-                <span>Coach Williams</span>
-                <span>{feedback.date}</span>
-              </div>
-              <div className="feedback-content">
-                <p>{feedback.content}</p>
-              </div>
+          <div className='chart-section'>
+            <div className='chart-header'>
+              <h3 className='chart-title'>
+                <i className='fas fa-chart-line'></i> Sales Over Time
+              </h3>
             </div>
-          ))}
-
-          <div className="feedback-actions">
-            <a href="feeback.html" className="btn">
-              <FontAwesomeIcon icon={faEdit} /> Submit Your Feedback
+            <div className='chart-container'>
+              <canvas
+                ref={lineChartRef}
+                style={{ width: '100%', height: 250 }}
+              />
+            </div>
+          </div>
+          <div className='chart-section'>
+            <div className='chart-header'>
+              <h3 className='chart-title'>
+                <i className='fas fa-chart-bar'></i> Best-Selling Products
+              </h3>
+            </div>
+            <div className='chart-container'>
+              <canvas
+                ref={barChartRef}
+                style={{ width: '100%', height: 250 }}
+              />
+            </div>
+          </div>
+          <div className='chart-section'>
+            <div className='chart-header'>
+              <h3 className='chart-title'>
+                <i className='fas fa-download'></i> Download Reports
+              </h3>
+            </div>
+            <a
+              href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.csv`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <button style={{ marginRight: 10 }}>Download CSV</button>
+            </a>
+            <a
+              href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.pdf`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <button>Download PDF</button>
             </a>
           </div>
-        </section>
-      </main>
-
-      <footer>
-        <div className="footer-content">
-          <div className="footer-logo">
-            <FontAwesomeIcon icon={faUser} /> Sport Sphere
-          </div>
-          <div className="copyright">
-            &copy; 2025 Sport Sphere. All rights reserved.
-          </div>
-        </div>
-      </footer>
-    </>
+        </>
+      ) : null}
+    </main>
   );
 };
 

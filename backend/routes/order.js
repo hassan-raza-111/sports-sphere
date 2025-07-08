@@ -2,6 +2,8 @@ import express from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import PayoutRequest from '../models/PayoutRequest.js';
+import { Parser as CsvParser } from 'json2csv';
+import PDFDocument from 'pdfkit';
 
 const router = express.Router();
 
@@ -434,6 +436,145 @@ router.get('/vendor/:vendorId/payout-history', async (req, res) => {
     res.json(history);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch payout history' });
+  }
+});
+
+// Vendor Analytics
+router.get('/vendor/:vendorId/analytics', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    // Get all orders for this vendor
+    const orders = await Order.find({ 'products.productId': { $exists: true } })
+      .populate('products.productId', 'vendorId name price')
+      .populate('userId', 'name email');
+    // Filter orders for this vendor
+    const vendorOrders = orders.filter((order) =>
+      order.products.some(
+        (p) =>
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+      )
+    );
+    // Sales over time (by month)
+    const salesByMonth = {};
+    vendorOrders.forEach((order) => {
+      const month = order.createdAt.toISOString().slice(0, 7); // YYYY-MM
+      salesByMonth[month] =
+        (salesByMonth[month] || 0) + (order.totalAmount || 0);
+    });
+    // Best-selling products
+    const productSales = {};
+    vendorOrders.forEach((order) => {
+      order.products.forEach((p) => {
+        if (
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+        ) {
+          const name = p.productId.name;
+          productSales[name] = (productSales[name] || 0) + p.quantity;
+        }
+      });
+    });
+    // Order trends (orders per month)
+    const ordersByMonth = {};
+    vendorOrders.forEach((order) => {
+      const month = order.createdAt.toISOString().slice(0, 7);
+      ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
+    });
+    res.json({
+      salesByMonth,
+      productSales,
+      ordersByMonth,
+      totalSales: vendorOrders.reduce(
+        (sum, o) => sum + (o.totalAmount || 0),
+        0
+      ),
+      totalOrders: vendorOrders.length,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch analytics' });
+  }
+});
+
+// Vendor CSV Report Download
+router.get('/vendor/:vendorId/report.csv', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const orders = await Order.find({ 'products.productId': { $exists: true } })
+      .populate('products.productId', 'vendorId name price')
+      .populate('userId', 'name email');
+    const vendorOrders = orders.filter((order) =>
+      order.products.some(
+        (p) =>
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+      )
+    );
+    const rows = vendorOrders.map((order) => ({
+      orderId: order._id,
+      date: order.createdAt,
+      buyer: order.userId?.name || '',
+      amount: order.totalAmount,
+      products: order.products
+        .map((p) => p.productId?.name + ' x' + p.quantity)
+        .join('; '),
+      status: order.status,
+    }));
+    const parser = new CsvParser({
+      fields: ['orderId', 'date', 'buyer', 'amount', 'products', 'status'],
+    });
+    const csv = parser.parse(rows);
+    res.header('Content-Type', 'text/csv');
+    res.attachment('vendor_report.csv');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to download CSV' });
+  }
+});
+
+// Vendor PDF Report Download (placeholder)
+router.get('/vendor/:vendorId/report.pdf', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const orders = await Order.find({ 'products.productId': { $exists: true } })
+      .populate('products.productId', 'vendorId name price')
+      .populate('userId', 'name email');
+    const vendorOrders = orders.filter((order) =>
+      order.products.some(
+        (p) =>
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+      )
+    );
+    const doc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=vendor_report.pdf'
+    );
+    doc.text('Vendor Sales Report', { align: 'center', underline: true });
+    doc.moveDown();
+    vendorOrders.forEach((order) => {
+      doc.text(`Order ID: ${order._id}`);
+      doc.text(`Date: ${order.createdAt}`);
+      doc.text(`Buyer: ${order.userId?.name || ''}`);
+      doc.text(`Amount: PKR ${order.totalAmount}`);
+      doc.text(
+        `Products: ${order.products
+          .map((p) => p.productId?.name + ' x' + p.quantity)
+          .join('; ')}`
+      );
+      doc.text(`Status: ${order.status}`);
+      doc.moveDown();
+    });
+    doc.end();
+    doc.pipe(res);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to download PDF' });
   }
 });
 
