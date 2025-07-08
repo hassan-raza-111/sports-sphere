@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import VendorLayout from '../../components/VendorLayout';
 
 const BACKEND_URL = 'http://localhost:5000';
 
@@ -91,78 +92,80 @@ const Progress = () => {
   }, [analytics]);
 
   return (
-    <main className='analytics-container'>
-      <h2 className='analytics-heading'>
-        <i className='fas fa-chart-pie'></i> Vendor Analytics & Reports
-      </h2>
-      {analyticsLoading ? (
-        <div>Loading analytics...</div>
-      ) : analyticsError ? (
-        <div style={{ color: 'red' }}>{analyticsError}</div>
-      ) : analytics ? (
-        <>
-          <div className='analytics-grid'>
-            <div className='analytics-card'>
-              <i className='fas fa-money-bill-wave'></i>
-              <h4>PKR {analytics.totalSales?.toFixed(2)}</h4>
-              <p>Total Sales</p>
+    <VendorLayout>
+      <main className='analytics-container'>
+        <h2 className='analytics-heading'>
+          <i className='fas fa-chart-pie'></i> Vendor Analytics & Reports
+        </h2>
+        {analyticsLoading ? (
+          <div>Loading analytics...</div>
+        ) : analyticsError ? (
+          <div style={{ color: 'red' }}>{analyticsError}</div>
+        ) : analytics ? (
+          <>
+            <div className='analytics-grid'>
+              <div className='analytics-card'>
+                <i className='fas fa-money-bill-wave'></i>
+                <h4>PKR {analytics.totalSales?.toFixed(2)}</h4>
+                <p>Total Sales</p>
+              </div>
+              <div className='analytics-card'>
+                <i className='fas fa-shopping-cart'></i>
+                <h4>{analytics.totalOrders}</h4>
+                <p>Total Orders</p>
+              </div>
             </div>
-            <div className='analytics-card'>
-              <i className='fas fa-shopping-cart'></i>
-              <h4>{analytics.totalOrders}</h4>
-              <p>Total Orders</p>
+            <div className='chart-section'>
+              <div className='chart-header'>
+                <h3 className='chart-title'>
+                  <i className='fas fa-chart-line'></i> Sales Over Time
+                </h3>
+              </div>
+              <div className='chart-container'>
+                <canvas
+                  ref={lineChartRef}
+                  style={{ width: '100%', height: 250 }}
+                />
+              </div>
             </div>
-          </div>
-          <div className='chart-section'>
-            <div className='chart-header'>
-              <h3 className='chart-title'>
-                <i className='fas fa-chart-line'></i> Sales Over Time
-              </h3>
+            <div className='chart-section'>
+              <div className='chart-header'>
+                <h3 className='chart-title'>
+                  <i className='fas fa-chart-bar'></i> Best-Selling Products
+                </h3>
+              </div>
+              <div className='chart-container'>
+                <canvas
+                  ref={barChartRef}
+                  style={{ width: '100%', height: 250 }}
+                />
+              </div>
             </div>
-            <div className='chart-container'>
-              <canvas
-                ref={lineChartRef}
-                style={{ width: '100%', height: 250 }}
-              />
+            <div className='chart-section'>
+              <div className='chart-header'>
+                <h3 className='chart-title'>
+                  <i className='fas fa-download'></i> Download Reports
+                </h3>
+              </div>
+              <a
+                href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.csv`}
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                <button style={{ marginRight: 10 }}>Download CSV</button>
+              </a>
+              <a
+                href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.pdf`}
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                <button>Download PDF</button>
+              </a>
             </div>
-          </div>
-          <div className='chart-section'>
-            <div className='chart-header'>
-              <h3 className='chart-title'>
-                <i className='fas fa-chart-bar'></i> Best-Selling Products
-              </h3>
-            </div>
-            <div className='chart-container'>
-              <canvas
-                ref={barChartRef}
-                style={{ width: '100%', height: 250 }}
-              />
-            </div>
-          </div>
-          <div className='chart-section'>
-            <div className='chart-header'>
-              <h3 className='chart-title'>
-                <i className='fas fa-download'></i> Download Reports
-              </h3>
-            </div>
-            <a
-              href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.csv`}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              <button style={{ marginRight: 10 }}>Download CSV</button>
-            </a>
-            <a
-              href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.pdf`}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              <button>Download PDF</button>
-            </a>
-          </div>
-        </>
-      ) : null}
-    </main>
+          </>
+        ) : null}
+      </main>
+    </VendorLayout>
   );
 };
 

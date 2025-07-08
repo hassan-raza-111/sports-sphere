@@ -96,7 +96,7 @@ const VendorLayout = ({ children }) => {
         </nav>
       </header>
       {/* Main Content */}
-      <main className='vendors-container' style={{ flex: 1 }}>
+      <main className='' style={{ flex: 1 }}>
         {children}
       </main>
       {/* Footer */}
