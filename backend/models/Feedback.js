@@ -7,12 +7,12 @@ const feedbackSchema = new mongoose.Schema(
     athlete: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
     },
     coach: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
     },
     rating: { type: Number, required: true },
     feedbackText: { type: String, required: true },

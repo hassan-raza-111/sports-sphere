@@ -49,4 +49,19 @@ router.get('/athlete/:id', async (req, res) => {
   }
 });
 
+// Get all feedback (for testimonials)
+router.get('/', async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find({
+      rating: { $gte: 4 },
+      feedbackText: { $ne: '' },
+    })
+      .sort({ date: -1 })
+      .limit(10);
+    res.json(feedbacks);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch testimonials' });
+  }
+});
+
 export default router;
