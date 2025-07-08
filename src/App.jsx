@@ -27,13 +27,13 @@ import VendorReport from './pages/vendor/report';
 import VendorProfile from './pages/vendor/vendor-profile';
 
 // Coach pages
-import Coach from './pages/coach/coach';
 import CoachBooking from './pages/coach/booking';
 import CoachProfile from './pages/coach/coach-profile';
 import CoachProfileEdit from './pages/coach/coach-profile-edit.jsx';
 import CoachMarketplace from './pages/coach/marketplace';
 import CoachMessages from './pages/coach/message';
 import CoachProgress from './pages/coach/progress';
+import CoachDashboard from './pages/coach/CoachDashboard';
 
 // Admin pages
 import Admin from './pages/admin/admin';
@@ -113,7 +113,7 @@ function App() {
       <Route path='/vendor/report' element={<VendorReport />} />
 
       {/* Coach */}
-      <Route path='/coach/dashboard' element={<Coach />} />
+      <Route path='/coach/dashboard' element={<CoachDashboard />} />
       <Route path='/coach/profile' element={<CoachProfile />} />
       <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
       <Route path='/coach/marketplace' element={<CoachMarketplace />} />
