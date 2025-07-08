@@ -15,6 +15,7 @@ import notificationsRoutes from './routes/notifications.js';
 import athleteProgressRoutes from './routes/athleteProgress.js';
 import Coach from './models/Coach.js';
 import Notification from './models/Notification.js';
+import VendorProfile from './models/VendorProfile.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -198,10 +199,81 @@ const seedNotifications = async () => {
   }
 };
 
+// Seed sample vendor data
+const seedVendors = async () => {
+  try {
+    const existingVendors = await VendorProfile.countDocuments();
+    if (existingVendors === 0) {
+      const sampleVendors = [
+        {
+          userId: '507f1f77bcf86cd799439012',
+          storeName: 'ProGear Sports',
+          vendorType: 'Gear',
+          website: 'http://www.progearvision.com/',
+          description:
+            'High-quality gear for athletes of all levels with 20+ years of industry experience.',
+          image: '/assets/images/Gear2.jpeg',
+        },
+        {
+          userId: '507f1f77bcf86cd799439013',
+          storeName: 'Elite Wear',
+          vendorType: 'Apparel',
+          website:
+            'https://elitewear.pk/?srsltid=AfmBOopMfkJw8DnOWfajhxcsouVABaxj2R52qQXZHwg3ocH5sSA_BSN9',
+          description:
+            'Performance apparel trusted by top-tier trainers and professional athletes.',
+          image: '/assets/images/Elite Wear.jpeg',
+        },
+        {
+          userId: '507f1f77bcf86cd799439014',
+          storeName: 'Flex Equip',
+          vendorType: 'Equipment',
+          website: 'https://www.flex.sport/en/productos/equipment/',
+          description:
+            'Innovative fitness tools and training equipment for optimal performance.',
+          image: '/assets/images/Flex.jpeg',
+        },
+        {
+          userId: '507f1f77bcf86cd799439015',
+          storeName: 'Peak Nutrition',
+          vendorType: 'Nutrition',
+          website: 'https://peaknutrition.com/',
+          description:
+            'Science-backed supplements and nutrition plans for serious athletes.',
+          image: '/assets/images/Peak Nutrition.jpeg',
+        },
+        {
+          userId: '507f1f77bcf86cd799439016',
+          storeName: 'Titan Tech',
+          vendorType: 'Tech',
+          website: 'https://www.recovery-plus.es/?lang=en',
+          description:
+            'Wearable tech and analytics tools to track and improve performance.',
+          image: '/assets/images/Titan Tech.jpeg',
+        },
+        {
+          userId: '507f1f77bcf86cd799439017',
+          storeName: 'Recovery Plus',
+          vendorType: 'Recovery',
+          website: 'https://www.recovery-plus.es/?lang=en',
+          description:
+            'Specialized recovery equipment and therapies for faster results.',
+          image: '/assets/images/Recover.jpeg',
+        },
+      ];
+      await VendorProfile.insertMany(sampleVendors);
+      console.log('Sample vendors seeded successfully');
+    }
+  } catch (error) {
+    console.error('Error seeding vendors:', error);
+  }
+};
+
 // Run seeding after database connection
 setTimeout(() => {
   seedCoaches();
   seedNotifications();
+  seedVendors();
 }, 2000);
 
 app.use('/api', authRoutes);

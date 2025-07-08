@@ -1,11 +1,20 @@
 import mongoose from 'mongoose';
 
-const vendorProfileSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const vendorProfileSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     storeName: { type: String, required: true },
     vendorType: { type: String, required: true },
     website: String,
-}, { timestamps: true });
+    description: { type: String },
+    image: { type: String },
+  },
+  { timestamps: true }
+);
 
 const VendorProfile = mongoose.model('VendorProfile', vendorProfileSchema);
-export default VendorProfile; 
+export default VendorProfile;
