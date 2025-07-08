@@ -34,7 +34,7 @@ const Layout = ({ children, role = 'coach' }) => {
                 <FaEnvelope /> <span>Messages</span>
                 <span className='notification-badge'>3</span>
               </Link>
-              <Link to='/coach/progress'>
+              <Link to='/coach/athlete-progress'>
                 <FaChartLine /> <span>Coach Progress</span>
               </Link>
               <Link to='/coach/profile' className='profile-btn'>

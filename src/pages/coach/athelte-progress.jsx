@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AthleteLayout from '../../components/AthleteLayout';
+import Layout from '../../components/Layout';
 import { Line } from 'react-chartjs-2';
 import {
   FaChartLine,
@@ -12,9 +12,9 @@ import {
   FaArrowDown,
   FaHistory,
 } from 'react-icons/fa';
-import '../../css/athlete-progress.css';
+import '../../css/coach-athlete-progress.css';
 
-const AthleteProgress = () => {
+const CoachAthleteProgress = () => {
   const [athletes, setAthletes] = useState([]);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [overview, setOverview] = useState(null);
@@ -129,7 +129,7 @@ const AthleteProgress = () => {
     : null;
 
   return (
-    <AthleteLayout>
+    <Layout role='coach'>
       <div className='analytics-container'>
         <h2 className='analytics-heading'>
           <FaChartLine /> Athlete Progress Analysis
@@ -305,8 +305,8 @@ const AthleteProgress = () => {
           </div>
         )}
       </div>
-    </AthleteLayout>
+    </Layout>
   );
 };
 
-export default AthleteProgress;
+export default CoachAthleteProgress;

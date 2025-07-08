@@ -32,7 +32,6 @@ import CoachProfile from './pages/coach/coach-profile';
 import CoachProfileEdit from './pages/coach/coach-profile-edit.jsx';
 import CoachMarketplace from './pages/coach/marketplace';
 import CoachMessages from './pages/coach/message';
-import CoachProgress from './pages/coach/progress';
 import CoachDashboard from './pages/coach/CoachDashboard';
 
 // Admin pages
@@ -43,6 +42,7 @@ import AdminUserManagement from './pages/admin/user-managment';
 import AdminAddUser from './pages/admin/admin-add-user.jsx';
 import ProfilePage from './pages/athelte/ProfilePage.jsx';
 import FindCoaches from './pages/athelte/find-coaches.jsx';
+import CoachAthleteProgress from './pages/coach/athelte-progress.jsx';
 
 function App() {
   return (
@@ -119,7 +119,10 @@ function App() {
       <Route path='/coach/marketplace' element={<CoachMarketplace />} />
       <Route path='/coach/messages' element={<CoachMessages />} />
       <Route path='/coach/booking' element={<CoachBooking />} />
-      <Route path='/coach/progress' element={<CoachProgress />} />
+      <Route
+        path='/coach/athlete-progress'
+        element={<CoachAthleteProgress />}
+      />
 
       {/* Admin */}
       <Route path='/admin/dashboard' element={<Admin />} />

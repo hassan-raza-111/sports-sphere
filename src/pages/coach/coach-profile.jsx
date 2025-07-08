@@ -90,7 +90,7 @@ const CoachProfile = () => {
               <Link to='/coach/profile/edit' className='btn'>
                 <FaUserEdit /> Edit Profile
               </Link>
-              <Link to='/coach/progress' className='btn secondary'>
+              <Link to='/coach/athlete-progress' className='btn secondary'>
                 <FaChartLine /> View Analytics
               </Link>
               <Link to='/coach/booking' className='btn secondary'>

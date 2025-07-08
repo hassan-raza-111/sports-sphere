@@ -76,7 +76,7 @@ function CoachDashboard() {
             Monitor athlete performance with detailed analytics and easily track
             their training journey.
           </p>
-          <Link to='/coach/progress' className='btn secondary'>
+          <Link to='/coach/athlete-progress' className='btn secondary'>
             <FaFileAlt /> View Progress
           </Link>
         </div>
