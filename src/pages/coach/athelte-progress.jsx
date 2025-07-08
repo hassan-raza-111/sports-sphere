@@ -11,8 +11,22 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaHistory,
+  FaTachometerAlt,
 } from 'react-icons/fa';
 import '../../css/coach-athlete-progress.css';
+
+const timeframes = [
+  { key: 'month', label: '1M' },
+  { key: 'quarter', label: '3M' },
+  { key: 'half', label: '6M' },
+  { key: 'year', label: '1Y' },
+];
+const sessionTimeframes = [
+  { key: 'month', label: '1M' },
+  { key: 'quarter', label: '3M' },
+  { key: 'year', label: '1Y' },
+  { key: 'all', label: 'All' },
+];
 
 const CoachAthleteProgress = () => {
   const [athletes, setAthletes] = useState([]);
@@ -24,7 +38,9 @@ const CoachAthleteProgress = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTimeframe, setActiveTimeframe] = useState('quarter');
+  const [sessionFilter, setSessionFilter] = useState('quarter');
 
+  // Fetch athletes on mount
   useEffect(() => {
     setLoading(true);
     fetch('/api/progress/athletes')
@@ -37,26 +53,29 @@ const CoachAthleteProgress = () => {
         setLoading(false);
       })
       .catch(() => {
+        setError('Failed to load athletes');
         setLoading(false);
       });
   }, []);
 
+  // Fetch all data for selected athlete and timeframe
   useEffect(() => {
     if (!selectedAthlete) return;
     setLoading(true);
+    setError(null);
     Promise.all([
       fetch(
-        `/api/progress/athletes/${selectedAthlete._id}/progress-overview`
+        `/api/progress/athletes/${selectedAthlete._id}/progress-overview?timeframe=${activeTimeframe}`
       ).then((r) => r.json()),
       fetch(
-        `/api/progress/athletes/${selectedAthlete._id}/progress-chart`
+        `/api/progress/athletes/${selectedAthlete._id}/progress-chart?timeframe=${activeTimeframe}`
       ).then((r) => r.json()),
       fetch(`/api/progress/athletes/${selectedAthlete._id}/metrics`).then((r) =>
         r.json()
       ),
-      fetch(`/api/progress/athletes/${selectedAthlete._id}/sessions`).then(
-        (r) => r.json()
-      ),
+      fetch(
+        `/api/progress/athletes/${selectedAthlete._id}/sessions?timeframe=${sessionFilter}`
+      ).then((r) => r.json()),
     ])
       .then(([overviewData, chartData, metricsData, sessionsData]) => {
         setOverview(overviewData);
@@ -66,29 +85,42 @@ const CoachAthleteProgress = () => {
         setLoading(false);
       })
       .catch(() => {
+        setError('Failed to load athlete progress data');
         setLoading(false);
       });
-  }, [selectedAthlete?._id]);
+  }, [selectedAthlete, activeTimeframe, sessionFilter]);
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
-        Loading athlete progress...
-      </div>
+      <Layout role='coach'>
+        <div
+          style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}
+        >
+          Loading athlete progress...
+        </div>
+      </Layout>
     );
   }
   if (error) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
-        {error}
-      </div>
+      <Layout role='coach'>
+        <div
+          style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}
+        >
+          {error}
+        </div>
+      </Layout>
     );
   }
   if (!athletes.length) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
-        No athletes found in the system.
-      </div>
+      <Layout role='coach'>
+        <div
+          style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}
+        >
+          No athletes found in the system.
+        </div>
+      </Layout>
     );
   }
 
@@ -176,7 +208,7 @@ const CoachAthleteProgress = () => {
               <h4>{overview.completedSessions}</h4>
               <p>Completed Sessions</p>
               <div className='trend-indicator trend-up'>
-                <FaArrowUp /> {overview.trends.sessions}% from last month
+                <FaArrowUp /> {overview.trends?.sessions}% from last month
               </div>
             </div>
             <div className='analytics-card'>
@@ -184,7 +216,7 @@ const CoachAthleteProgress = () => {
               <h4>{overview.goalCompletion}%</h4>
               <p>Goal Completion</p>
               <div className='trend-indicator trend-up'>
-                <FaArrowUp /> {overview.trends.goals}% from last month
+                <FaArrowUp /> {overview.trends?.goals}% from last month
               </div>
             </div>
             <div className='analytics-card'>
@@ -192,7 +224,7 @@ const CoachAthleteProgress = () => {
               <h4>{overview.avgPerformance}</h4>
               <p>Average Performance</p>
               <div className='trend-indicator trend-up'>
-                <FaArrowUp /> {overview.trends.performance} from last month
+                <FaArrowUp /> {overview.trends?.performance} from last month
               </div>
             </div>
             <div className='analytics-card'>
@@ -201,109 +233,177 @@ const CoachAthleteProgress = () => {
               <p>Attendance Rate</p>
               <div
                 className={`trend-indicator ${
-                  overview.trends.attendance >= 0 ? 'trend-up' : 'trend-down'
+                  overview.trends?.attendance < 0 ? 'trend-down' : 'trend-up'
                 }`}
               >
-                {overview.trends.attendance >= 0 ? (
-                  <FaArrowUp />
-                ) : (
+                {overview.trends?.attendance < 0 ? (
                   <FaArrowDown />
+                ) : (
+                  <FaArrowUp />
                 )}{' '}
-                {Math.abs(overview.trends.attendance)}% from last month
+                {Math.abs(overview.trends?.attendance)}% from last month
               </div>
             </div>
           </div>
         )}
         {/* Performance Progress Chart */}
-        {chartData && (
-          <div className='chart-section'>
-            <div className='chart-header'>
-              <h3 className='chart-title'>
-                <FaChartLine /> Performance Progress
-              </h3>
-              {/* Timeframe buttons can be implemented for real filtering if backend supports */}
-            </div>
-            <div className='chart-container' style={{ height: 350 }}>
-              <Line
-                data={chartData}
-                options={{ responsive: true, maintainAspectRatio: false }}
-              />
+        <div className='chart-section'>
+          <div className='chart-header'>
+            <h3 className='chart-title'>
+              <FaChartLine /> Performance Progress
+            </h3>
+            <div className='time-selector'>
+              {timeframes.map((tf) => (
+                <button
+                  key={tf.key}
+                  className={`time-btn${
+                    activeTimeframe === tf.key ? ' active' : ''
+                  }`}
+                  onClick={() => setActiveTimeframe(tf.key)}
+                >
+                  {tf.label}
+                </button>
+              ))}
             </div>
           </div>
-        )}
+          <div className='chart-container'>
+            {chartData ? (
+              <Line
+                data={chartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                  },
+                  scales: {
+                    y: {
+                      min: 0,
+                      max: 100,
+                      ticks: {
+                        callback: (value) => value + '%',
+                      },
+                      grid: { color: 'rgba(0,0,0,0.05)' },
+                    },
+                    x: { grid: { display: false } },
+                  },
+                }}
+                height={350}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', color: '#e74c3c' }}>
+                No chart data
+              </div>
+            )}
+          </div>
+        </div>
         {/* Key Metrics Section */}
-        {metrics && metrics.length > 0 && (
-          <div className='chart-section'>
-            <div className='chart-header'>
-              <h3 className='chart-title'>
-                <FaTrophy /> Key Performance Metrics
-              </h3>
-            </div>
-            <div className='metrics-container'>
-              {metrics.map((metric) => (
-                <div className='metric-card' key={metric.title}>
+        <div className='chart-section'>
+          <div className='chart-header'>
+            <h3 className='chart-title'>
+              <FaTachometerAlt /> Key Performance Metrics
+            </h3>
+          </div>
+          <div className='metrics-container'>
+            {metrics.length ? (
+              metrics.map((metric, idx) => (
+                <div className='metric-card' key={idx}>
                   <div className='metric-header'>
                     <span className='metric-title'>{metric.title}</span>
-                    <span className='metric-value'>{metric.value}%</span>
+                    <span className='metric-value'>{metric.value}</span>
                   </div>
                   <div className='progress-bar'>
                     <div
                       className='progress-fill'
-                      style={{ width: `${metric.value}%` }}
+                      style={{ width: metric.value }}
                     ></div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div style={{ color: '#e74c3c' }}>No metrics data</div>
+            )}
+          </div>
+        </div>
+        {/* Session History */}
+        <div className='chart-section'>
+          <div className='chart-header'>
+            <h3 className='chart-title'>
+              <FaHistory /> Session History
+            </h3>
+            <div className='time-selector'>
+              {sessionTimeframes.map((tf) => (
+                <button
+                  key={tf.key}
+                  className={`time-btn${
+                    sessionFilter === tf.key ? ' active' : ''
+                  }`}
+                  onClick={() => setSessionFilter(tf.key)}
+                >
+                  {tf.label}
+                </button>
               ))}
             </div>
           </div>
-        )}
-        {/* Session History */}
-        {sessions && sessions.length > 0 && (
-          <div className='chart-section'>
-            <div className='chart-header'>
-              <h3 className='chart-title'>
-                <FaHistory /> Session History
-              </h3>
-            </div>
-            <table className='data-table'>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Duration</th>
-                  <th>Focus Area</th>
-                  <th>Performance</th>
-                  <th>Coach Notes</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sessions.map((s, i) => (
-                  <tr key={i}>
-                    <td>{s.date}</td>
-                    <td>{s.duration}</td>
-                    <td>{s.focus}</td>
+          <table className='data-table'>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Duration</th>
+                <th>Focus Area</th>
+                <th>Performance</th>
+                <th>Coach Notes</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.length ? (
+                sessions.map((session, idx) => (
+                  <tr key={idx}>
+                    <td>{new Date(session.date).toLocaleDateString()}</td>
+                    <td>{session.duration}</td>
+                    <td>{session.focusArea}</td>
                     <td>
-                      {s.performance ? (
+                      {session.performance ? (
                         <>
-                          <FaTrophy style={{ color: '#f1c40f' }} />{' '}
-                          {s.performance}
+                          <i
+                            className='fas fa-star'
+                            style={{ color: '#f1c40f' }}
+                          ></i>{' '}
+                          {session.performance}
                         </>
                       ) : (
                         '-'
                       )}
                     </td>
-                    <td>{s.coachNotes}</td>
+                    <td>{session.notes || '-'}</td>
                     <td>
-                      <span className={`badge badge-${s.status}`}>
-                        {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
-                      </span>
+                      {session.status === 'completed' && (
+                        <span className='badge badge-completed'>Completed</span>
+                      )}
+                      {session.status === 'missed' && (
+                        <span className='badge badge-missed'>Missed</span>
+                      )}
+                      {session.status === 'upcoming' && (
+                        <span className='badge badge-upcoming'>Upcoming</span>
+                      )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={6}
+                    style={{ textAlign: 'center', color: '#e74c3c' }}
+                  >
+                    No session data
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Layout>
   );
