@@ -14,8 +14,8 @@ import Athlete from './pages/athelte/athelte';
 import AthleteMessages from './pages/athelte/message';
 import AthleteProgress from './pages/athelte/progress.jsx';
 import AthleteBooking from './pages/athelte/booking';
-import AthleteFeedback from './pages/athelte/feedback';
 import AthleteGeneralProgress from './pages/athelte/progress';
+import AthleteFeedback from './pages/athelte/feedback.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';

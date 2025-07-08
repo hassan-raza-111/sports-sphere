@@ -259,6 +259,14 @@ nav a:hover, nav a.active {
   justify-content: center;
   margin-top: 1.5rem;
 }
+.feedback-actions .btn {
+  width: auto !important;
+  min-width: unset !important;
+  display: inline-flex !important;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  box-sizing: border-box;
+}
 .btn {
   display: inline-block;
   padding: 0.6rem 1.5rem;
