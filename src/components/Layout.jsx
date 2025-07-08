@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logoImg from '../assets/images/Logo.png';
 import {
   FaRunning,
@@ -8,9 +8,15 @@ import {
   FaStore,
   FaHome,
   FaChartLine,
+  FaSignOutAlt,
 } from 'react-icons/fa';
 
 const Layout = ({ children, role = 'coach' }) => {
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
+  };
   // You can expand role-based nav if needed
   return (
     <div>
@@ -40,6 +46,23 @@ const Layout = ({ children, role = 'coach' }) => {
               <Link to='/coach/profile' className='profile-btn'>
                 <FaUserTie />
               </Link>
+              <button
+                onClick={handleLogout}
+                className='logout-btn'
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontWeight: 600,
+                  marginLeft: '1rem',
+                }}
+              >
+                <FaSignOutAlt /> <span>Logout</span>
+              </button>
             </>
           )}
           {/* Add nav for other roles as needed */}
