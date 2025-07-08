@@ -12,6 +12,8 @@ const vendorProfileSchema = new mongoose.Schema(
     website: String,
     description: { type: String },
     image: { type: String },
+    instagram: { type: String },
+    facebook: { type: String },
   },
   { timestamps: true }
 );

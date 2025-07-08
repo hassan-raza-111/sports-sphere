@@ -17,6 +17,7 @@ import Coach from './models/Coach.js';
 import Notification from './models/Notification.js';
 import VendorProfile from './models/VendorProfile.js';
 import dotenv from 'dotenv';
+import path from 'path';
 dotenv.config();
 
 const app = express();
@@ -288,5 +289,6 @@ app.use('/api/coaches', coachesRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/progress', athleteProgressRoutes);
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
