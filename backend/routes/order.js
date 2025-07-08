@@ -1,6 +1,7 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import PayoutRequest from '../models/PayoutRequest.js';
 
 const router = express.Router();
 
@@ -253,8 +254,17 @@ router.get('/admin/export', async (req, res) => {
 // Create a new order (checkout)
 router.post('/', async (req, res) => {
   try {
-    const { userId, products, totalAmount, paymentMethod, shippingInfo } = req.body;
-    if (!userId || !products || !Array.isArray(products) || products.length === 0 || !totalAmount || !paymentMethod || !shippingInfo) {
+    const { userId, products, totalAmount, paymentMethod, shippingInfo } =
+      req.body;
+    if (
+      !userId ||
+      !products ||
+      !Array.isArray(products) ||
+      products.length === 0 ||
+      !totalAmount ||
+      !paymentMethod ||
+      !shippingInfo
+    ) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
     const order = new Order({
@@ -301,8 +311,13 @@ router.get('/vendor/:vendorId', async (req, res) => {
       .populate('products.productId', 'name price vendorId')
       .sort({ createdAt: -1 });
     // Filter orders to only those containing products for this vendor
-    const vendorOrders = orders.filter(order =>
-      order.products.some(p => p.productId && p.productId.vendorId && p.productId.vendorId.toString() === vendorId)
+    const vendorOrders = orders.filter((order) =>
+      order.products.some(
+        (p) =>
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+      )
     );
     res.json(vendorOrders);
   } catch (error) {
@@ -317,7 +332,11 @@ router.put('/:orderId/status', async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: 'Status is required' });
-    const order = await Order.findByIdAndUpdate(orderId, { status }, { new: true })
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    )
       .populate('userId', 'name email')
       .populate('products.productId', 'name price');
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -340,6 +359,81 @@ router.get('/:orderId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching order details:', error);
     res.status(500).json({ message: 'Failed to fetch order details' });
+  }
+});
+
+// Vendor Earnings Overview
+router.get('/vendor/:vendorId/earnings', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    // Get all orders for this vendor
+    const orders = await Order.find({ 'products.productId': { $exists: true } })
+      .populate('products.productId', 'vendorId price')
+      .populate('userId', 'name email');
+    // Filter orders for this vendor
+    const vendorOrders = orders.filter((order) =>
+      order.products.some(
+        (p) =>
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+      )
+    );
+    // Calculate stats
+    let totalSales = 0,
+      pending = 0,
+      approved = 0,
+      rejected = 0;
+    vendorOrders.forEach((order) => {
+      if (order.status === 'completed') {
+        totalSales += order.totalAmount || 0;
+        approved += order.totalAmount || 0;
+      } else if (
+        order.status === 'pending' ||
+        order.status === 'process' ||
+        order.status === 'shipped'
+      ) {
+        pending += order.totalAmount || 0;
+      } else if (order.status === 'cancelled') {
+        rejected += order.totalAmount || 0;
+      }
+    });
+    res.json({ totalSales, pending, approved, rejected });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch earnings' });
+  }
+});
+
+// Vendor Payout Request
+router.post('/vendor/:vendorId/payout-request', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const { amount, paymentDetails, notes } = req.body;
+    if (!amount || amount <= 0)
+      return res.status(400).json({ message: 'Invalid amount' });
+    const payout = new PayoutRequest({
+      vendorId,
+      amount,
+      paymentDetails,
+      notes,
+    });
+    await payout.save();
+    res.status(201).json({ message: 'Payout request submitted', payout });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to submit payout request' });
+  }
+});
+
+// Vendor Payout History
+router.get('/vendor/:vendorId/payout-history', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const history = await PayoutRequest.find({ vendorId }).sort({
+      requestedAt: -1,
+    });
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch payout history' });
   }
 });
 
