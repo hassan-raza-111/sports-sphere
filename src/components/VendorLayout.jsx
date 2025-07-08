@@ -33,6 +33,12 @@ const VendorLayout = ({ children }) => {
             <FaHome /> <span>Dashboard</span>
           </Link>
           <Link
+            to='/vendor/panel'
+            className={isActive('/vendor/panel') ? 'active' : ''}
+          >
+            <span>Products</span>
+          </Link>
+          <Link
             to='/vendor/marketplace'
             className={isActive('/vendor/marketplace') ? 'active' : ''}
           >

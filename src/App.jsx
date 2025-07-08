@@ -26,6 +26,7 @@ import VendorProgress from './pages/vendor/progress';
 import VendorReport from './pages/vendor/report';
 import VendorProfile from './pages/vendor/vendor-profile';
 import VendorProfileForm from './pages/vendor/VendorProfileForm';
+import VendorPanel from './pages/vendor/VendorPanel';
 
 // Coach pages
 import CoachBooking from './pages/coach/booking';
@@ -113,6 +114,7 @@ function App() {
       <Route path='/vendor/messages' element={<VendorMessages />} />
       <Route path='/vendor/progress' element={<VendorProgress />} />
       <Route path='/vendor/report' element={<VendorReport />} />
+      <Route path='/vendor/panel' element={<VendorPanel />} />
 
       {/* Coach */}
       <Route path='/coach/dashboard' element={<CoachDashboard />} />
