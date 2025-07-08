@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import VendorLayout from '../../components/VendorLayout';
+import '../../css/vendor-profile.css';
+
+const BACKEND_URL = 'http://localhost:5000'; // Change if needed
 
 const VendorProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -31,6 +34,12 @@ const VendorProfile = () => {
       });
   }, []);
 
+  const getImageUrl = (img) => {
+    if (!img) return 'https://via.placeholder.com/130';
+    if (img.startsWith('/uploads')) return BACKEND_URL + img;
+    return img;
+  };
+
   return (
     <VendorLayout>
       <div className='vendor-profile-container'>
@@ -42,8 +51,13 @@ const VendorProfile = () => {
           <>
             <div className='profile-header'>
               <img
-                src={profile.image || 'https://via.placeholder.com/130'}
-                alt='Vendor Profile'
+                src={getImageUrl(profile.image)}
+                alt='Vendor Profile Picture'
+                id='vendorImage'
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://via.placeholder.com/130';
+                }}
               />
               <h1>{profile.userId?.name || 'No Name'}</h1>
               <p>{profile.storeName || ''}</p>
