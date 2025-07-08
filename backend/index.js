@@ -280,7 +280,7 @@ setTimeout(() => {
 app.use('/api', authRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api/feedback', feedbackRoutes);
-app.use('/api/order', orderRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/vendor-profile', vendorProfileRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/progress', progressRoutes);
