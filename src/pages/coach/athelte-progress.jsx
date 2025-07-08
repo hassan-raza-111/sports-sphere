@@ -39,6 +39,7 @@ const CoachAthleteProgress = () => {
   const [error, setError] = useState(null);
   const [activeTimeframe, setActiveTimeframe] = useState('quarter');
   const [sessionFilter, setSessionFilter] = useState('quarter');
+  const [athleteSearch, setAthleteSearch] = useState('');
 
   // Fetch athletes on mount
   useEffect(() => {
@@ -172,32 +173,45 @@ const CoachAthleteProgress = () => {
             <h3 className='athlete-selector-title'>
               <FaUsers /> Select Athlete
             </h3>
+            <div className='search-athlete'>
+              <i className='fas fa-search'></i>
+              <input
+                type='text'
+                placeholder='Search athlete...'
+                value={athleteSearch}
+                onChange={(e) => setAthleteSearch(e.target.value)}
+              />
+            </div>
           </div>
           <div className='athlete-grid'>
-            {athletes.map((athlete) => (
-              <div
-                key={athlete._id}
-                className={`athlete-card${
-                  selectedAthlete && selectedAthlete._id === athlete._id
-                    ? ' active'
-                    : ''
-                }`}
-                onClick={() => setSelectedAthlete(athlete)}
-              >
-                <img
-                  src={
-                    athlete.profileImage ||
-                    'https://randomuser.me/api/portraits/men/32.jpg'
-                  }
-                  alt={athlete.name}
-                  className='athlete-avatar'
-                />
-                <div className='athlete-info'>
-                  <h4>{athlete.name}</h4>
-                  <p>{athlete.sport}</p>
+            {athletes
+              .filter((a) =>
+                a.name.toLowerCase().includes(athleteSearch.toLowerCase())
+              )
+              .map((athlete) => (
+                <div
+                  key={athlete._id}
+                  className={`athlete-card${
+                    selectedAthlete && selectedAthlete._id === athlete._id
+                      ? ' active'
+                      : ''
+                  }`}
+                  onClick={() => setSelectedAthlete(athlete)}
+                >
+                  <img
+                    src={
+                      athlete.profileImage ||
+                      'https://randomuser.me/api/portraits/men/32.jpg'
+                    }
+                    alt={athlete.name}
+                    className='athlete-avatar'
+                  />
+                  <div className='athlete-info'>
+                    <h4>{athlete.name}</h4>
+                    <p>{athlete.sport}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
         {/* Overview Cards */}
