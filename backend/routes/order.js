@@ -250,22 +250,24 @@ router.get('/admin/export', async (req, res) => {
   }
 });
 
-// Create order (for users)
+// Create a new order (checkout)
 router.post('/', async (req, res) => {
   try {
-    const { userId, products, totalAmount, paymentMethod } = req.body;
-
+    const { userId, products, totalAmount, paymentMethod, shippingInfo } = req.body;
+    if (!userId || !products || !Array.isArray(products) || products.length === 0 || !totalAmount || !paymentMethod || !shippingInfo) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
     const order = new Order({
       userId,
       products,
       totalAmount,
       paymentMethod,
       paymentStatus: 'pending',
+      status: 'pending',
+      shippingInfo,
     });
-
     await order.save();
-
-    res.status(201).json({ message: 'Order created successfully', order });
+    res.status(201).json({ message: 'Order placed successfully', order });
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ message: 'Failed to create order' });
@@ -284,6 +286,60 @@ router.get('/user/:userId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching user orders:', error);
     res.status(500).json({ message: 'Failed to fetch user orders' });
+  }
+});
+
+// Get all orders for a vendor
+router.get('/vendor/:vendorId', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    // Find orders where any product's vendor matches vendorId
+    const orders = await Order.find({
+      'products.productId': { $exists: true },
+    })
+      .populate('userId', 'name email')
+      .populate('products.productId', 'name price vendorId')
+      .sort({ createdAt: -1 });
+    // Filter orders to only those containing products for this vendor
+    const vendorOrders = orders.filter(order =>
+      order.products.some(p => p.productId && p.productId.vendorId && p.productId.vendorId.toString() === vendorId)
+    );
+    res.json(vendorOrders);
+  } catch (error) {
+    console.error('Error fetching vendor orders:', error);
+    res.status(500).json({ message: 'Failed to fetch vendor orders' });
+  }
+});
+
+// Vendor updates order status
+router.put('/:orderId/status', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: 'Status is required' });
+    const order = await Order.findByIdAndUpdate(orderId, { status }, { new: true })
+      .populate('userId', 'name email')
+      .populate('products.productId', 'name price');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json({ message: 'Order status updated', order });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ message: 'Failed to update order status' });
+  }
+});
+
+// Get order details
+router.get('/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId)
+      .populate('userId', 'name email phone')
+      .populate('products.productId', 'name price image vendorId');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    res.status(500).json({ message: 'Failed to fetch order details' });
   }
 });
 

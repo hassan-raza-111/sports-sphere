@@ -34,6 +34,11 @@ export default function VendorPanel() {
   const [error, setError] = useState(null);
   const [editId, setEditId] = useState(null);
   const fileInputRef = useRef();
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [orderError, setOrderError] = useState(null);
+  const [orderDetail, setOrderDetail] = useState(null);
+  const [statusUpdating, setStatusUpdating] = useState(null);
 
   // Get vendorId from localStorage
   const userStr = localStorage.getItem('user');
@@ -52,6 +57,23 @@ export default function VendorPanel() {
       })
       .catch(() => setLoading(false));
   }, [vendorId]);
+
+  // Fetch vendor orders when tab is 'orders'
+  useEffect(() => {
+    if (tab !== 'orders' || !vendorId) return;
+    setOrdersLoading(true);
+    setOrderError(null);
+    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data);
+        setOrdersLoading(false);
+      })
+      .catch(() => {
+        setOrderError('Failed to fetch orders');
+        setOrdersLoading(false);
+      });
+  }, [tab, vendorId]);
 
   // Handle image preview
   const handleImageChange = (e) => {
@@ -180,6 +202,42 @@ export default function VendorPanel() {
     setProducts(await productsRes.json());
   };
 
+  // Handle status update
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    setStatusUpdating(orderId);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      // Refresh orders
+      const updatedOrders = await fetch(
+        `${BACKEND_URL}/api/orders/vendor/${vendorId}`
+      ).then((r) => r.json());
+      setOrders(updatedOrders);
+    } catch (err) {
+      alert('Status update failed');
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
+
+  // Handle view order details
+  const handleViewOrder = async (orderId) => {
+    setOrderDetail('loading');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}`);
+      if (!res.ok) throw new Error('Failed to fetch order details');
+      const data = await res.json();
+      setOrderDetail(data);
+    } catch (err) {
+      setOrderDetail(null);
+      alert('Failed to fetch order details');
+    }
+  };
+
   return (
     <VendorLayout>
       <div className='container'>
@@ -199,6 +257,12 @@ export default function VendorPanel() {
             onClick={() => setTab('analytics')}
           >
             Product Overview
+          </button>
+          <button
+            className={`tab-button${tab === 'orders' ? ' active' : ''}`}
+            onClick={() => setTab('orders')}
+          >
+            Order Management
           </button>
         </div>
 
@@ -371,6 +435,142 @@ export default function VendorPanel() {
             </table>
           )}
         </div>
+
+        {tab === 'orders' && (
+          <div>
+            <h2>Order Management</h2>
+            {ordersLoading ? (
+              <div>Loading orders...</div>
+            ) : orderError ? (
+              <div style={{ color: 'red' }}>{orderError}</div>
+            ) : (
+              <table className='table'>
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Products</th>
+                    <th>Buyer</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order._id}>
+                      <td>{order._id}</td>
+                      <td>
+                        {order.products.map((p, i) => (
+                          <div key={i}>
+                            {p.productId?.name || 'Product'} x{p.quantity}
+                          </div>
+                        ))}
+                      </td>
+                      <td>{order.userId?.name || 'N/A'}</td>
+                      <td>
+                        <select
+                          value={order.status}
+                          disabled={statusUpdating === order._id}
+                          onChange={(e) =>
+                            handleStatusUpdate(order._id, e.target.value)
+                          }
+                        >
+                          <option value='pending'>Pending</option>
+                          <option value='process'>Process</option>
+                          <option value='shipped'>Shipped</option>
+                          <option value='completed'>Completed</option>
+                          <option value='cancelled'>Cancelled</option>
+                        </select>
+                      </td>
+                      <td>{new Date(order.createdAt).toLocaleString()}</td>
+                      <td>
+                        {order.totalAmount
+                          ? `PKR ${order.totalAmount.toFixed(2)}`
+                          : '-'}
+                      </td>
+                      <td>
+                        <button onClick={() => handleViewOrder(order._id)}>
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {/* Order Details Modal */}
+            {orderDetail && orderDetail !== 'loading' && (
+              <div
+                className='modal'
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0,0,0,0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    background: '#fff',
+                    padding: 30,
+                    borderRadius: 10,
+                    minWidth: 350,
+                    maxWidth: 500,
+                  }}
+                >
+                  <h3>Order Details</h3>
+                  <div>
+                    <b>Order ID:</b> {orderDetail._id}
+                  </div>
+                  <div>
+                    <b>Buyer:</b> {orderDetail.userId?.name} (
+                    {orderDetail.userId?.email})
+                  </div>
+                  <div>
+                    <b>Status:</b> {orderDetail.status}
+                  </div>
+                  <div>
+                    <b>Date:</b>{' '}
+                    {new Date(orderDetail.createdAt).toLocaleString()}
+                  </div>
+                  <div>
+                    <b>Amount:</b> PKR {orderDetail.totalAmount?.toFixed(2)}
+                  </div>
+                  <div>
+                    <b>Products:</b>
+                    <ul>
+                      {orderDetail.products.map((p, i) => (
+                        <li key={i}>
+                          {p.productId?.name || 'Product'} x{p.quantity} (PKR{' '}
+                          {p.price})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <b>Shipping:</b>{' '}
+                    {orderDetail.shippingInfo
+                      ? JSON.stringify(orderDetail.shippingInfo)
+                      : 'N/A'}
+                  </div>
+                  <button
+                    onClick={() => setOrderDetail(null)}
+                    style={{ marginTop: 15 }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+            {orderDetail === 'loading' && <div>Loading order details...</div>}
+          </div>
+        )}
       </div>
     </VendorLayout>
   );
