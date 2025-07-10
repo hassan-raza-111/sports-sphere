@@ -16,6 +16,8 @@ import AthleteProgress from './pages/athelte/progress.jsx';
 import AthleteBooking from './pages/athelte/booking';
 import AthleteGeneralProgress from './pages/athelte/progress';
 import AthleteFeedback from './pages/athelte/feedback.jsx';
+import MarketplacePage from './pages/athelte/MarketplacePage.jsx';
+import CheckoutPage from './pages/athelte/CheckoutPage.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
@@ -102,7 +104,8 @@ function App() {
       <Route path='/athlete/feedback' element={<AthleteFeedback />} />
       <Route path='/athlete/find-coaches' element={<FindCoaches />} />
       <Route path='/athlete/progress' element={<AthleteProgress />} />
-      <Route path='/athlete/marketplace' element={<VendorMarketplace />} />
+      <Route path='/athlete/marketplace' element={<MarketplacePage />} />
+      <Route path='/athlete/checkout' element={<CheckoutPage />} />
       <Route
         path='/athlete/general-progress'
         element={<AthleteGeneralProgress />}

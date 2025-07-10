@@ -62,11 +62,19 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Get all products
+// Get all products with vendor information
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find();
-    res.json(products);
+    const products = await Product.find().populate(
+      'vendorId',
+      'name storeName'
+    );
+    const productsWithVendor = products.map((product) => ({
+      ...product.toObject(),
+      vendorName:
+        product.vendorId?.storeName || product.vendorId?.name || 'Vendor',
+    }));
+    res.json(productsWithVendor);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

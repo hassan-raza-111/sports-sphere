@@ -92,6 +92,14 @@ const AthleteLayout = ({ children }) => {
           >
             <i className='fas fa-search'></i> <span>Find Coaches</span>
           </Link>
+          <Link
+            to='/athlete/marketplace'
+            className={
+              location.pathname === '/athlete/marketplace' ? 'active' : ''
+            }
+          >
+            <i className='fas fa-store'></i> <span>Marketplace</span>
+          </Link>
           <div className='profile-dropdown'>
             <div
               className='profile-btn'
