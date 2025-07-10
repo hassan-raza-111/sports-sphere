@@ -1,326 +1,215 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/checkout.css';
 
-export default function CheckoutPage() {
-  const [paymentMethod, setPaymentMethod] = useState('jazzcash');
-  const [selectedBank, setSelectedBank] = useState('');
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [zip, setZip] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
-  const [cartItems, setCartItems] = useState([]);
+const CheckoutPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [shippingInfo, setShippingInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+  });
 
-  // Get user ID from localStorage
+  const { cartItems: stateCartItems, totalAmount: stateTotalAmount } =
+    location.state || {
+      cartItems: [],
+      totalAmount: 0,
+    };
+
+  // Get cart data from state or localStorage
+  const [cartItems, setCartItems] = useState(stateCartItems);
+  const [totalAmount, setTotalAmount] = useState(stateTotalAmount);
+
+  // If no cart items from state, try to get from localStorage
+  useEffect(() => {
+    if (!stateCartItems || stateCartItems.length === 0) {
+      const savedCart = localStorage.getItem('cartData');
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        setCartItems(parsedCart);
+        const calculatedTotal = parsedCart.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+        setTotalAmount(calculatedTotal);
+      }
+    }
+  }, [stateCartItems]);
+
+  useEffect(() => {
+    if (!cartItems || cartItems.length === 0) {
+      alert('No items in cart. Please add items to cart first.');
+      navigate('/athlete/marketplace');
+    }
+  }, [cartItems, navigate]);
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const userId = user?._id;
 
-  const totalAmount = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  // Fetch cart items on component mount
-  useEffect(() => {
-    if (userId) {
-      fetchCart();
-    }
-  }, [userId]);
-
-  const fetchCart = async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}`);
-      const data = await response.json();
-      setCartItems(data);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleCheckout = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
-    try {
-      const shippingInfo = { fullName, address, city, zip, email };
-      const products = cartItems.map((item) => ({
-        productId: item._id,
-        quantity: item.quantity,
-        price: item.price,
-      }));
-      const payload = {
-        userId,
-        products,
-        totalAmount,
-        paymentMethod,
-        shippingInfo,
-      };
-      const res = await axios.post('http://localhost:5000/api/orders', payload);
+    setError(null);
 
-      if (res.status === 201) {
-        setSuccess('Order placed successfully!');
-        // Clear cart after successful order
-        await fetch(`http://localhost:5000/api/cart/${userId}/clear`, {
-          method: 'DELETE',
-        });
-        // Redirect to marketplace after 2 seconds
-        setTimeout(() => {
-          navigate('/athlete/marketplace');
-        }, 2000);
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/payments/create-checkout-session',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId,
+            cartItems,
+            shippingInfo,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = result.url;
+      } else {
+        setError('Failed to create checkout session');
       }
     } catch (err) {
-      setError('Order placement failed. Please try again.');
-    } finally {
-      setLoading(false);
+      setError('Payment processing failed. Please try again.');
     }
-  };
 
-  useEffect(() => {
-    // Hide bank selection if not 'bank' method
-    const bankSelection = document.querySelector('.bank-selection');
-    if (paymentMethod === 'bank') {
-      bankSelection.style.display = 'block';
-    } else {
-      bankSelection.style.display = 'none';
-    }
-  }, [paymentMethod]);
+    setLoading(false);
+  };
 
   return (
     <AthleteLayout>
       <div className='checkout-container'>
-        <h2 className='checkout-heading'>
-          <i className='fas fa-shopping-cart'></i> Checkout
-        </h2>
+        <div className='checkout-content'>
+          <h1>Checkout</h1>
 
-        <div className='checkout-form'>
-          <form onSubmit={handleSubmit}>
-            {/* Contact Information */}
-            <div className='form-section'>
-              <h3>
-                <i className='fas fa-user'></i> Contact Information
-              </h3>
-              <div className='form-group'>
-                <label htmlFor='email'>Email Address</label>
-                <input
-                  type='email'
-                  id='email'
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Shipping Address */}
-            <div className='form-section'>
-              <h3>
-                <i className='fas fa-truck'></i> Shipping Address
-              </h3>
-              <div className='form-group'>
-                <label htmlFor='full-name'>Full Name</label>
-                <input
-                  type='text'
-                  id='full-name'
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-              <div className='form-group'>
-                <label htmlFor='address'>Address</label>
-                <input
-                  type='text'
-                  id='address'
-                  required
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
-              <div className='form-row'>
-                <div className='form-group'>
-                  <label htmlFor='city'>City</label>
-                  <input
-                    type='text'
-                    id='city'
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor='zip'>ZIP Code</label>
-                  <input
-                    type='text'
-                    id='zip'
-                    required
-                    value={zip}
-                    onChange={(e) => setZip(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Method */}
-            <div className='form-section'>
-              <h3>
-                <i className='fas fa-credit-card'></i> Payment Method
-              </h3>
-              <div className='payment-methods'>
-                {/* JazzCash */}
-                <div
-                  className={`payment-method ${
-                    paymentMethod === 'jazzcash' ? 'active' : ''
-                  }`}
-                  onClick={() => setPaymentMethod('jazzcash')}
-                >
-                  <i className='fas fa-mobile-alt'></i>
-                  <div>JazzCash</div>
-                </div>
-
-                {/* EasyPaisa */}
-                <div
-                  className={`payment-method ${
-                    paymentMethod === 'easypaisa' ? 'active' : ''
-                  }`}
-                  onClick={() => setPaymentMethod('easypaisa')}
-                >
-                  <i className='fas fa-wallet'></i>
-                  <div>EasyPaisa</div>
-                </div>
-
-                {/* Bank Transfer */}
-                <div
-                  className={`payment-method ${
-                    paymentMethod === 'bank' ? 'active' : ''
-                  }`}
-                  onClick={() => setPaymentMethod('bank')}
-                >
-                  <i className='fas fa-university'></i>
-                  <div>Bank Transfer</div>
-                </div>
-              </div>
-
-              {/* Bank Selection - conditional rendering */}
-              <div
-                className='bank-selection'
-                style={{ display: paymentMethod === 'bank' ? 'block' : 'none' }}
-              >
-                <h4>Select Your Bank</h4>
-                <div className='bank-options'>
-                  {['hbl', 'ubl', 'mcb', 'alfalah', 'meezan', 'askari'].map(
-                    (bank) => (
-                      <div
-                        key={bank}
-                        className={`bank-option ${
-                          selectedBank === bank ? 'active' : ''
-                        }`}
-                        onClick={() => setSelectedBank(bank)}
-                      >
-                        <span>
-                          {bank.charAt(0).toUpperCase() + bank.slice(1)}
-                        </span>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Card Details */}
-              <div className='form-group'>
-                <label htmlFor='card-number'>Card Number</label>
-                <input
-                  type='text'
-                  id='card-number'
-                  placeholder='1234 5678 9012 3456'
-                  required
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                />
-              </div>
-              <div className='form-row'>
-                <div className='form-group'>
-                  <label htmlFor='expiry'>Expiry Date</label>
-                  <input
-                    type='text'
-                    id='expiry'
-                    placeholder='MM/YY'
-                    required
-                    value={expiry}
-                    onChange={(e) => setExpiry(e.target.value)}
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor='cvv'>CVV</label>
-                  <input
-                    type='text'
-                    id='cvv'
-                    placeholder='123'
-                    required
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button type='submit' className='btn' disabled={loading}>
-              <i className='fas fa-lock'></i>{' '}
-              {loading ? 'Placing Order...' : 'Complete Order'}
-            </button>
-            {success && (
-              <div style={{ color: 'green', marginTop: 10 }}>{success}</div>
-            )}
-            {error && (
-              <div style={{ color: 'red', marginTop: 10 }}>{error}</div>
-            )}
-          </form>
-        </div>
-
-        {/* Order Summary */}
-        <div className='order-summary'>
-          <h3>
-            <i className='fas fa-receipt'></i> Order Summary
-          </h3>
-          <div className='order-items'>
+          <div className='order-summary'>
+            <h3>Order Summary</h3>
             {cartItems.map((item, index) => (
-              <div key={index} className='order-item'>
-                <span>
-                  {item.name} x{item.quantity}
-                </span>
-                <span>PKR {(item.price * item.quantity).toFixed(2)}</span>
+              <div key={index} className='cart-item'>
+                <img src={item.image} alt={item.name} />
+                <div className='item-details'>
+                  <h4>{item.name}</h4>
+                  <p>Quantity: {item.quantity}</p>
+                  <p className='price'>Rs. {item.price}</p>
+                </div>
               </div>
             ))}
-            <div className='order-item'>
-              <span>Shipping</span>
-              <span>Free</span>
-            </div>
-            <div className='order-item'>
-              <span>Tax</span>
-              <span>PKR {(totalAmount * 0.15).toFixed(2)}</span>
+            <div className='total'>
+              <h3>Total: Rs. {totalAmount}</h3>
             </div>
           </div>
-          <div className='order-total'>
-            <span>Total</span>
-            <span>PKR {(totalAmount + totalAmount * 0.15).toFixed(2)}</span>
-          </div>
-          <div className='secure-checkout'>
-            <i className='fas fa-lock'></i>
-            <span>Secure Checkout</span>
-          </div>
+
+          <form onSubmit={handleCheckout} className='checkout-form'>
+            <div className='shipping-info'>
+              <h3>Shipping Information</h3>
+              <div className='form-row'>
+                <input
+                  type='text'
+                  placeholder='Full Name'
+                  value={shippingInfo.name}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, name: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  type='email'
+                  placeholder='Email'
+                  value={shippingInfo.email}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, email: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className='form-row'>
+                <input
+                  type='tel'
+                  placeholder='Phone'
+                  value={shippingInfo.phone}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, phone: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className='form-row'>
+                <input
+                  type='text'
+                  placeholder='Address'
+                  value={shippingInfo.address}
+                  onChange={(e) =>
+                    setShippingInfo({
+                      ...shippingInfo,
+                      address: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className='form-row'>
+                <input
+                  type='text'
+                  placeholder='City'
+                  value={shippingInfo.city}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, city: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  type='text'
+                  placeholder='Postal Code'
+                  value={shippingInfo.postalCode}
+                  onChange={(e) =>
+                    setShippingInfo({
+                      ...shippingInfo,
+                      postalCode: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className='payment-section'>
+              <h3>Payment Information</h3>
+              <div className='stripe-info'>
+                <p>You will be redirected to Stripe's secure payment page</p>
+                <div className='payment-icons'>
+                  <i className='fab fa-cc-visa'></i>
+                  <i className='fab fa-cc-mastercard'></i>
+                  <i className='fab fa-cc-amex'></i>
+                </div>
+              </div>
+            </div>
+
+            {error && <div className='error-message'>{error}</div>}
+
+            <button type='submit' disabled={loading} className='pay-button'>
+              {loading
+                ? 'Processing...'
+                : `Proceed to Payment - Rs. ${totalAmount}`}
+            </button>
+          </form>
         </div>
       </div>
     </AthleteLayout>
   );
-}
+};
+
+export default CheckoutPage;

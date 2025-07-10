@@ -76,8 +76,15 @@ const MarketplacePage = () => {
       const response = await fetch(`http://localhost:5000/api/cart/${userId}`);
       const data = await response.json();
       setCart(data);
+      // Save cart data to localStorage for persistence
+      localStorage.setItem('cartData', JSON.stringify(data));
     } catch (error) {
       console.error('Error fetching cart:', error);
+      // Try to get cart data from localStorage as fallback
+      const savedCart = localStorage.getItem('cartData');
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
     }
   };
 
@@ -160,7 +167,14 @@ const MarketplacePage = () => {
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    navigate('/athlete/checkout');
+
+    // Pass cart data to checkout page
+    navigate('/athlete/checkout', {
+      state: {
+        cartItems: cart,
+        totalAmount: getCartTotal(),
+      },
+    });
   };
 
   const getImageUrl = (imagePath) => {
