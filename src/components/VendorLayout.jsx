@@ -10,13 +10,12 @@ import {
   FaChartLine,
   FaUser,
   FaSignOutAlt,
-  FaCaretDown,
 } from 'react-icons/fa';
 
 const VendorLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const isActive = (path) => location.pathname === path;
 
   // Get user info from localStorage
@@ -28,10 +27,6 @@ const VendorLayout = ({ children }) => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
-  };
-
-  const toggleProfileDropdown = () => {
-    setShowProfileDropdown(!showProfileDropdown);
   };
 
   return (
@@ -85,89 +80,20 @@ const VendorLayout = ({ children }) => {
           </Link>
 
           {/* Profile Dropdown */}
-          <div className='profile-dropdown' style={{ position: 'relative' }}>
-            <button
-              onClick={toggleProfileDropdown}
+          <div className='profile-dropdown'>
+            <div
               className='profile-btn'
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'inherit',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                borderRadius: '20px',
-                transition: 'background-color 0.3s',
-              }}
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
-              <img
-                src={userImage}
-                alt='Profile'
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                }}
-              />
-              <span style={{ fontWeight: 600 }}>{user?.name || 'User'}</span>
-              <FaCaretDown />
-            </button>
-
-            {showProfileDropdown && (
-              <div
-                className='dropdown-menu'
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  background: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  minWidth: '180px',
-                  zIndex: 1000,
-                  marginTop: '5px',
-                }}
-              >
-                <Link
-                  to='/vendor/profile'
-                  onClick={() => setShowProfileDropdown(false)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '12px 16px',
-                    color: '#333',
-                    textDecoration: 'none',
-                    borderBottom: '1px solid #eee',
-                  }}
-                >
-                  <FaUser />
-                  <span>Profile</span>
+              <FaUser />
+            </div>
+            {showProfileMenu && (
+              <div className='profile-menu'>
+                <Link to='/vendor/profile'>
+                  <FaUser /> My Profile
                 </Link>
-                <button
-                  onClick={() => {
-                    setShowProfileDropdown(false);
-                    handleLogout();
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '12px 16px',
-                    color: '#e74c3c',
-                    background: 'none',
-                    border: 'none',
-                    width: '100%',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <FaSignOutAlt />
-                  <span>Logout</span>
+                <button onClick={handleLogout} className='logout-btn'>
+                  <FaSignOutAlt /> Logout
                 </button>
               </div>
             )}
