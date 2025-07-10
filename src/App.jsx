@@ -27,6 +27,9 @@ import VendorReport from './pages/vendor/report';
 import VendorProfile from './pages/vendor/vendor-profile';
 import VendorProfileForm from './pages/vendor/VendorProfileForm';
 import VendorPanel from './pages/vendor/VendorPanel';
+import OrderManagement from './pages/vendor/OrderManagement';
+import EarningsOverview from './pages/vendor/EarningsOverview';
+import FeedbackManagement from './pages/vendor/FeedbackManagement';
 
 // Coach pages
 import CoachBooking from './pages/coach/booking';
@@ -115,6 +118,12 @@ function App() {
       <Route path='/vendor/progress' element={<VendorProgress />} />
       <Route path='/vendor/report' element={<VendorReport />} />
       <Route path='/vendor/panel' element={<VendorPanel />} />
+      <Route path='/vendor/orders' element={<OrderManagement />} />
+      <Route path='/vendor/earnings' element={<EarningsOverview />} />
+      <Route
+        path='/vendor/feedback-management'
+        element={<FeedbackManagement />}
+      />
 
       {/* Coach */}
       <Route path='/coach/dashboard' element={<CoachDashboard />} />

@@ -34,26 +34,6 @@ export default function VendorPanel() {
   const [error, setError] = useState(null);
   const [editId, setEditId] = useState(null);
   const fileInputRef = useRef();
-  const [orders, setOrders] = useState([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [orderError, setOrderError] = useState(null);
-  const [orderDetail, setOrderDetail] = useState(null);
-  const [statusUpdating, setStatusUpdating] = useState(null);
-  const [earnings, setEarnings] = useState(null);
-  const [earningsLoading, setEarningsLoading] = useState(false);
-  const [earningsError, setEarningsError] = useState(null);
-  const [payoutAmount, setPayoutAmount] = useState('');
-  const [payoutNotes, setPayoutNotes] = useState('');
-  const [payoutLoading, setPayoutLoading] = useState(false);
-  const [payoutSuccess, setPayoutSuccess] = useState('');
-  const [payoutError, setPayoutError] = useState('');
-  const [payoutHistory, setPayoutHistory] = useState([]);
-  const [payoutHistoryLoading, setPayoutHistoryLoading] = useState(false);
-  const [feedbackTabLoading, setFeedbackTabLoading] = useState(false);
-  const [feedbackTabError, setFeedbackTabError] = useState(null);
-  const [feedbackList, setFeedbackList] = useState([]);
-  const [replying, setReplying] = useState({});
-  const [replyText, setReplyText] = useState({});
 
   // Get vendorId from localStorage
   const userStr = localStorage.getItem('user');
@@ -72,66 +52,6 @@ export default function VendorPanel() {
       })
       .catch(() => setLoading(false));
   }, [vendorId]);
-
-  // Fetch vendor orders when tab is 'orders'
-  useEffect(() => {
-    if (tab !== 'orders' || !vendorId) return;
-    setOrdersLoading(true);
-    setOrderError(null);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setOrders(data);
-        setOrdersLoading(false);
-      })
-      .catch(() => {
-        setOrderError('Failed to fetch orders');
-        setOrdersLoading(false);
-      });
-  }, [tab, vendorId]);
-
-  // Fetch vendor earnings when tab is 'earnings'
-  useEffect(() => {
-    if (tab !== 'earnings' || !vendorId) return;
-    setEarningsLoading(true);
-    setEarningsError(null);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}/earnings`)
-      .then((res) => res.json())
-      .then((data) => {
-        setEarnings(data);
-        setEarningsLoading(false);
-      })
-      .catch(() => {
-        setEarningsError('Failed to fetch earnings');
-        setEarningsLoading(false);
-      });
-    // Fetch payout history
-    setPayoutHistoryLoading(true);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-history`)
-      .then((res) => res.json())
-      .then((data) => {
-        setPayoutHistory(data);
-        setPayoutHistoryLoading(false);
-      })
-      .catch(() => setPayoutHistoryLoading(false));
-  }, [tab, vendorId]);
-
-  // Fetch vendor feedback when tab is 'feedback'
-  useEffect(() => {
-    if (tab !== 'feedback' || !vendorId) return;
-    setFeedbackTabLoading(true);
-    setFeedbackTabError(null);
-    fetch(`${BACKEND_URL}/api/feedback/vendor/${vendorId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setFeedbackList(data);
-        setFeedbackTabLoading(false);
-      })
-      .catch(() => {
-        setFeedbackTabError('Failed to fetch feedback');
-        setFeedbackTabLoading(false);
-      });
-  }, [tab, vendorId]);
 
   // Handle image preview
   const handleImageChange = (e) => {
@@ -261,100 +181,6 @@ export default function VendorPanel() {
   };
 
   // Handle status update
-  const handleStatusUpdate = async (orderId, newStatus) => {
-    setStatusUpdating(orderId);
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error('Failed to update status');
-      // Refresh orders
-      const updatedOrders = await fetch(
-        `${BACKEND_URL}/api/orders/vendor/${vendorId}`
-      ).then((r) => r.json());
-      setOrders(updatedOrders);
-    } catch (err) {
-      alert('Status update failed');
-    } finally {
-      setStatusUpdating(null);
-    }
-  };
-
-  // Handle view order details
-  const handleViewOrder = async (orderId) => {
-    setOrderDetail('loading');
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}`);
-      if (!res.ok) throw new Error('Failed to fetch order details');
-      const data = await res.json();
-      setOrderDetail(data);
-    } catch (err) {
-      setOrderDetail(null);
-      alert('Failed to fetch order details');
-    }
-  };
-
-  // Handle payout request
-  const handlePayoutRequest = async (e) => {
-    e.preventDefault();
-    setPayoutLoading(true);
-    setPayoutSuccess('');
-    setPayoutError('');
-    try {
-      const res = await fetch(
-        `${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-request`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: Number(payoutAmount),
-            notes: payoutNotes,
-          }),
-        }
-      );
-      if (!res.ok) throw new Error('Failed to submit payout request');
-      setPayoutSuccess('Payout request submitted!');
-      setPayoutAmount('');
-      setPayoutNotes('');
-      // Refresh payout history
-      const history = await fetch(
-        `${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-history`
-      ).then((r) => r.json());
-      setPayoutHistory(history);
-    } catch (err) {
-      setPayoutError('Failed to submit payout request');
-    } finally {
-      setPayoutLoading(false);
-    }
-  };
-
-  const handleReplyChange = (id, value) => {
-    setReplyText((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleReplySubmit = async (id) => {
-    setReplying((prev) => ({ ...prev, [id]: true }));
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/feedback/${id}/reply`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reply: replyText[id] }),
-      });
-      if (!res.ok) throw new Error('Failed to submit reply');
-      // Refresh feedback list
-      const updated = await fetch(
-        `${BACKEND_URL}/api/feedback/vendor/${vendorId}`
-      ).then((r) => r.json());
-      setFeedbackList(updated);
-      setReplyText((prev) => ({ ...prev, [id]: '' }));
-    } catch (err) {
-      alert('Failed to submit reply');
-    } finally {
-      setReplying((prev) => ({ ...prev, [id]: false }));
-    }
-  };
 
   return (
     <VendorLayout>
@@ -375,24 +201,6 @@ export default function VendorPanel() {
             onClick={() => setTab('analytics')}
           >
             Product Overview
-          </button>
-          <button
-            className={`tab-button${tab === 'orders' ? ' active' : ''}`}
-            onClick={() => setTab('orders')}
-          >
-            Order Management
-          </button>
-          <button
-            className={`tab-button${tab === 'earnings' ? ' active' : ''}`}
-            onClick={() => setTab('earnings')}
-          >
-            Earnings
-          </button>
-          <button
-            className={`tab-button${tab === 'feedback' ? ' active' : ''}`}
-            onClick={() => setTab('feedback')}
-          >
-            Feedback
           </button>
         </div>
 

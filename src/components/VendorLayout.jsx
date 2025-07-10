@@ -57,8 +57,8 @@ const VendorLayout = ({ children }) => {
             <FaEnvelope /> <span>Messages</span>
           </Link>
           <Link
-            to='/vendor/feedback'
-            className={isActive('/vendor/feedback') ? 'active' : ''}
+            to='/vendor/feedback-management'
+            className={isActive('/vendor/feedback-management') ? 'active' : ''}
           >
             <span>Feedback</span>
           </Link>
