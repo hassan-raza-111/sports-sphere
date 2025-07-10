@@ -39,24 +39,22 @@ const VendorLayout = ({ children }) => {
             <span>Products</span>
           </Link>
           <Link
-            to='/vendor/marketplace'
-            className={isActive('/vendor/marketplace') ? 'active' : ''}
+            to='/vendor/orders'
+            className={isActive('/vendor/orders') ? 'active' : ''}
           >
-            <FaStore /> <span>Marketplace</span>
+            <span>Orders</span>
+          </Link>
+          <Link
+            to='/vendor/earnings'
+            className={isActive('/vendor/earnings') ? 'active' : ''}
+          >
+            <span>Earnings</span>
           </Link>
           <Link
             to='/vendor/messages'
             className={isActive('/vendor/messages') ? 'active' : ''}
           >
             <FaEnvelope /> <span>Messages</span>
-          </Link>
-          <Link
-            to='/vendor/profile'
-            className={
-              isActive('/vendor/profile') ? 'profile-btn active' : 'profile-btn'
-            }
-          >
-            <FaUser /> <span>Profile</span>
           </Link>
           <Link
             to='/vendor/feedback'
@@ -71,10 +69,12 @@ const VendorLayout = ({ children }) => {
             <span>Progress</span>
           </Link>
           <Link
-            to='/vendor/report'
-            className={isActive('/vendor/report') ? 'active' : ''}
+            to='/vendor/profile'
+            className={
+              isActive('/vendor/profile') ? 'profile-btn active' : 'profile-btn'
+            }
           >
-            <span>Report</span>
+            <FaUser /> <span>Profile</span>
           </Link>
           <button
             onClick={handleLogout}
