@@ -38,3 +38,4 @@ backend/.env.development.local
 backend/.env.test.local
 
 .env
+/backend/.env
