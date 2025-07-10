@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaHome,
@@ -8,12 +8,15 @@ import {
   FaRunning,
   FaUsers,
   FaChartBar,
+  FaUser,
+  FaSignOutAlt,
 } from 'react-icons/fa';
 import logoImg from '../assets/images/Logo.png';
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -159,23 +162,26 @@ const AdminLayout = ({ children }) => {
               5
             </span>
           </Link>
-          <button
-            onClick={handleLogout}
-            style={{
-              fontWeight: 600,
-              color: '#e74c3c',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '1rem',
-              marginLeft: '1.5rem',
-            }}
-          >
-            <FaRunning /> <span>Logout</span>
-          </button>
+
+          {/* Profile Dropdown */}
+          <div className='profile-dropdown'>
+            <div
+              className='profile-btn'
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              <FaUser />
+            </div>
+            {showProfileMenu && (
+              <div className='profile-menu'>
+                <Link to='/admin/profile'>
+                  <FaUser /> My Profile
+                </Link>
+                <button onClick={handleLogout} className='logout-btn'>
+                  <FaSignOutAlt /> Logout
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoImg from '../assets/images/Logo.png';
 import {
@@ -9,14 +9,18 @@ import {
   FaHome,
   FaChartLine,
   FaSignOutAlt,
+  FaUser,
 } from 'react-icons/fa';
 
 const Layout = ({ children, role = 'coach' }) => {
   const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
   };
+
   // You can expand role-based nav if needed
   return (
     <div>
@@ -43,26 +47,26 @@ const Layout = ({ children, role = 'coach' }) => {
               <Link to='/coach/athlete-progress'>
                 <FaChartLine /> <span>Coach Progress</span>
               </Link>
-              <Link to='/coach/profile' className='profile-btn'>
-                <FaUserTie />
-              </Link>
-              <button
-                onClick={handleLogout}
-                className='logout-btn'
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  fontWeight: 600,
-                  marginLeft: '1rem',
-                }}
-              >
-                <FaSignOutAlt /> <span>Logout</span>
-              </button>
+
+              {/* Profile Dropdown */}
+              <div className='profile-dropdown'>
+                <div
+                  className='profile-btn'
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <FaUser />
+                </div>
+                {showProfileMenu && (
+                  <div className='profile-menu'>
+                    <Link to='/coach/profile'>
+                      <FaUser /> My Profile
+                    </Link>
+                    <button onClick={handleLogout} className='logout-btn'>
+                      <FaSignOutAlt /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
           {/* Add nav for other roles as needed */}
