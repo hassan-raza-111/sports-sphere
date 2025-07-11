@@ -3,6 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/marketplace.css';
 
+// Add this for notification
+const Notification = ({ message, onClose }) => (
+  <div className="cart-notification">
+    {message}
+    <button onClick={onClose} className="close-btn">&times;</button>
+  </div>
+);
+
 const MarketplacePage = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -11,6 +19,7 @@ const MarketplacePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
   // Get user ID from localStorage
@@ -106,6 +115,8 @@ const MarketplacePage = () => {
 
       if (response.ok) {
         fetchCart(); // Refresh cart from server
+        setNotification('Product added to cart!');
+        setTimeout(() => setNotification(null), 2000);
       } else {
         const error = await response.json();
         alert(error.message || 'Failed to add item to cart');
@@ -195,6 +206,9 @@ const MarketplacePage = () => {
 
   return (
     <AthleteLayout>
+      {notification && (
+        <Notification message={notification} onClose={() => setNotification(null)} />
+      )}
       <div className='marketplace-container'>
         <div className='marketplace-header'>
           <h2>
