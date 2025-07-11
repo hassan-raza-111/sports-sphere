@@ -35,7 +35,7 @@ function AdminPaymentManagement() {
 
   const fetchPaymentStats = async () => {
     try {
-      const response = await fetch('/api/order/admin/stats');
+      const response = await fetch('/api/orders/admin/stats');
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -56,7 +56,7 @@ function AdminPaymentManagement() {
         params.append('paymentStatus', activeTab);
       }
 
-      const response = await fetch(`/api/order/admin?${params}`);
+      const response = await fetch(`/api/orders/admin?${params}`);
       const data = await response.json();
       setOrders(data.orders);
       setTotalPages(data.pagination.totalPages);
@@ -84,7 +84,7 @@ function AdminPaymentManagement() {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/order/admin/export');
+      const response = await fetch('/api/orders/admin/export');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
