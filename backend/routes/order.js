@@ -1,7 +1,6 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
-import PayoutRequest from '../models/PayoutRequest.js';
 import { Parser as CsvParser } from 'json2csv';
 import PDFDocument from 'pdfkit';
 
@@ -403,98 +402,6 @@ router.get('/vendor/:vendorId/earnings', async (req, res) => {
     res.json({ totalSales, pending, approved, rejected });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch earnings' });
-  }
-});
-
-// Vendor Payout Request
-router.post('/vendor/:vendorId/payout-request', async (req, res) => {
-  try {
-    const { vendorId } = req.params;
-    const { amount, paymentDetails, notes } = req.body;
-    if (!amount || amount <= 0)
-      return res.status(400).json({ message: 'Invalid amount' });
-    const payout = new PayoutRequest({
-      vendorId,
-      amount,
-      paymentDetails,
-      notes,
-    });
-    await payout.save();
-    res.status(201).json({ message: 'Payout request submitted', payout });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to submit payout request' });
-  }
-});
-
-// Vendor Payout History
-router.get('/vendor/:vendorId/payout-history', async (req, res) => {
-  try {
-    const { vendorId } = req.params;
-    const history = await PayoutRequest.find({ vendorId }).sort({
-      requestedAt: -1,
-    });
-    res.json(history);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch payout history' });
-  }
-});
-
-// Vendor Analytics
-router.get('/vendor/:vendorId/analytics', async (req, res) => {
-  try {
-    const { vendorId } = req.params;
-    // Get all orders for this vendor
-    const orders = await Order.find({ 'products.productId': { $exists: true } })
-      .populate('products.productId', 'vendorId name price')
-      .populate('userId', 'name email');
-    // Filter orders for this vendor
-    const vendorOrders = orders.filter((order) =>
-      order.products.some(
-        (p) =>
-          p.productId &&
-          p.productId.vendorId &&
-          p.productId.vendorId.toString() === vendorId
-      )
-    );
-    // Sales over time (by month)
-    const salesByMonth = {};
-    vendorOrders.forEach((order) => {
-      const month = order.createdAt.toISOString().slice(0, 7); // YYYY-MM
-      salesByMonth[month] =
-        (salesByMonth[month] || 0) + (order.totalAmount || 0);
-    });
-    // Best-selling products
-    const productSales = {};
-    vendorOrders.forEach((order) => {
-      order.products.forEach((p) => {
-        if (
-          p.productId &&
-          p.productId.vendorId &&
-          p.productId.vendorId.toString() === vendorId
-        ) {
-          const name = p.productId.name;
-          productSales[name] = (productSales[name] || 0) + p.quantity;
-        }
-      });
-    });
-    // Order trends (orders per month)
-    const ordersByMonth = {};
-    vendorOrders.forEach((order) => {
-      const month = order.createdAt.toISOString().slice(0, 7);
-      ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
-    });
-    res.json({
-      salesByMonth,
-      productSales,
-      ordersByMonth,
-      totalSales: vendorOrders.reduce(
-        (sum, o) => sum + (o.totalAmount || 0),
-        0
-      ),
-      totalOrders: vendorOrders.length,
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch analytics' });
   }
 });
 

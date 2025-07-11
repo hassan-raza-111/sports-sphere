@@ -36,9 +36,9 @@ export default function EarningsOverview() {
         setEarningsError('Failed to fetch earnings');
         setEarningsLoading(false);
       });
-    // Fetch payout history
+    // Fetch payout history from new endpoint
     setPayoutHistoryLoading(true);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-history`)
+    fetch(`${BACKEND_URL}/api/payout-requests/vendor/${vendorId}/history`)
       .then((res) => res.json())
       .then((data) => {
         setPayoutHistory(data);
@@ -54,7 +54,7 @@ export default function EarningsOverview() {
     setPayoutSuccess('');
     try {
       const res = await fetch(
-        `${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-request`,
+        `${BACKEND_URL}/api/payout-requests/vendor/${vendorId}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -70,7 +70,7 @@ export default function EarningsOverview() {
       setPayoutNotes('');
       // Refresh payout history
       const historyRes = await fetch(
-        `${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-history`
+        `${BACKEND_URL}/api/payout-requests/vendor/${vendorId}/history`
       );
       const historyData = await historyRes.json();
       setPayoutHistory(historyData);
@@ -199,19 +199,40 @@ export default function EarningsOverview() {
               </tr>
             </thead>
             <tbody>
-              {payoutHistory.map((p, i) => (
-                <tr key={i}>
-                  <td>PKR {p.amount?.toFixed(2)}</td>
-                  <td>{p.status}</td>
-                  <td>{new Date(p.requestedAt).toLocaleString()}</td>
-                  <td>
-                    {p.processedAt
-                      ? new Date(p.processedAt).toLocaleString()
-                      : '-'}
+              {payoutHistory.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center' }}>
+                    No payout requests found.
                   </td>
-                  <td>{p.notes || '-'}</td>
                 </tr>
-              ))}
+              ) : (
+                payoutHistory.map((p) => (
+                  <tr key={p._id}>
+                    <td>{p.amount}</td>
+                    <td
+                      style={{
+                        textTransform: 'capitalize',
+                        fontWeight: 600,
+                        color:
+                          p.status === 'approved'
+                            ? 'green'
+                            : p.status === 'rejected'
+                            ? 'red'
+                            : '#f39c12',
+                      }}
+                    >
+                      {p.status}
+                    </td>
+                    <td>{new Date(p.requestedAt).toLocaleString()}</td>
+                    <td>
+                      {p.processedAt
+                        ? new Date(p.processedAt).toLocaleString()
+                        : '-'}
+                    </td>
+                    <td>{p.notes || '-'}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}

@@ -15,6 +15,7 @@ import cartRoutes from './routes/cart.js';
 import paymentRoutes from './routes/payments.js';
 import notificationsRoutes from './routes/notifications.js';
 import athleteProgressRoutes from './routes/athleteProgress.js';
+import payoutRequestsRouter from './routes/payoutRequests.js';
 import Coach from './models/Coach.js';
 import Notification from './models/Notification.js';
 import VendorProfile from './models/VendorProfile.js';
@@ -293,6 +294,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/progress', athleteProgressRoutes);
+app.use('/api/payout-requests', payoutRequestsRouter);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));

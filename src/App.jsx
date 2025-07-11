@@ -52,6 +52,7 @@ import AdminAddUser from './pages/admin/admin-add-user.jsx';
 import ProfilePage from './pages/athelte/ProfilePage.jsx';
 import FindCoaches from './pages/athelte/find-coaches.jsx';
 import CoachAthleteProgress from './pages/coach/athelte-progress.jsx';
+import AdminPayouts from './pages/admin/admin-payouts.jsx';
 
 function App() {
   return (
@@ -150,6 +151,7 @@ function App() {
         path='/admin/payment-management'
         element={<AdminPaymentManagement />}
       />
+      <Route path='/admin/payouts' element={<AdminPayouts />} />
       <Route path='/admin/report' element={<AdminReport />} />
       <Route path='/admin/user-management' element={<AdminUserManagement />} />
       <Route path='/admin/add-user' element={<AdminAddUser />} />

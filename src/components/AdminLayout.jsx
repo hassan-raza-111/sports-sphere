@@ -10,6 +10,7 @@ import {
   FaChartBar,
   FaUser,
   FaSignOutAlt,
+  FaUniversity,
 } from 'react-icons/fa';
 import logoImg from '../assets/images/Logo.png';
 
@@ -119,6 +120,19 @@ const AdminLayout = ({ children }) => {
             }}
           >
             <FaMoneyBillWave /> <span>Payments</span>
+          </Link>
+          <Link
+            to='/admin/payouts'
+            style={{
+              fontWeight: 600,
+              color: isActive('/admin/payouts') ? '#e74c3c' : '#2c3e50',
+              transition: 'color 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <FaUniversity /> <span>Payouts</span>
           </Link>
           <Link
             to='/admin/user-management'
