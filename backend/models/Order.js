@@ -37,7 +37,7 @@ const orderSchema = new mongoose.Schema(
     // Payment fields for admin management
     paymentMethod: {
       type: String,
-      enum: ['credit_card', 'debit_card', 'bank_transfer', 'paypal'],
+      enum: ['stripe'],
       required: true,
     },
     paymentStatus: {
