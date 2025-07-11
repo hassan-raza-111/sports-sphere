@@ -578,4 +578,16 @@ router.get('/vendor/:vendorId/report.pdf', async (req, res) => {
   }
 });
 
+// GET /api/orders?userId=...
+router.get('/', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ message: 'User ID required' });
+    const orders = await Order.find({ userId }).sort({ paymentDate: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching orders' });
+  }
+});
+
 export default router;

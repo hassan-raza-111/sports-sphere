@@ -19,6 +19,7 @@ import AthleteFeedback from './pages/athelte/feedback.jsx';
 import MarketplacePage from './pages/athelte/MarketplacePage.jsx';
 import CheckoutPage from './pages/athelte/CheckoutPage.jsx';
 import CheckoutSuccess from './pages/athelte/CheckoutSuccess.jsx';
+import MyOrders from './pages/athelte/MyOrders.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
@@ -112,6 +113,7 @@ function App() {
         path='/athlete/general-progress'
         element={<AthleteGeneralProgress />}
       />
+      <Route path='/athlete/orders' element={<MyOrders />} />
 
       {/* Vendor */}
       <Route path='/vendor/dashboard' element={<Vendor />} />

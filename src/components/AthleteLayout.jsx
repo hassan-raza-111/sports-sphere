@@ -100,6 +100,12 @@ const AthleteLayout = ({ children }) => {
           >
             <i className='fas fa-store'></i> <span>Marketplace</span>
           </Link>
+          <Link
+            to='/athlete/orders'
+            className={location.pathname === '/athlete/orders' ? 'active' : ''}
+          >
+            <i className='fas fa-shopping-cart'></i> <span>My Orders</span>
+          </Link>
           <div className='profile-dropdown'>
             <div
               className='profile-btn'
