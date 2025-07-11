@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/checkout.css';
@@ -9,16 +9,18 @@ const CheckoutSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [orderId, setOrderId] = useState(null);
   const [error, setError] = useState(null);
+  const calledRef = useRef(false); // Prevent double API call
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-
-    if (sessionId) {
+    if (sessionId && !calledRef.current) {
+      calledRef.current = true;
       confirmOrder(sessionId);
-    } else {
+    } else if (!sessionId) {
       setError('No session ID found');
       setLoading(false);
     }
+    // eslint-disable-next-line
   }, [searchParams]);
 
   const confirmOrder = async (sessionId) => {

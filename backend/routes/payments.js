@@ -178,6 +178,18 @@ router.post('/confirm-order', async (req, res) => {
     const shippingInfo = JSON.parse(session.metadata.shippingInfo);
     const totalAmount = session.amount_total / 100; // Convert from cents
 
+    // 🟢 CHECK FOR EXISTING ORDER
+    const existingOrder = await Order.findOne({
+      transactionId: session.payment_intent,
+    });
+    if (existingOrder) {
+      return res.json({
+        success: true,
+        orderId: existingOrder._id,
+        message: 'Order already placed',
+      });
+    }
+
     // Create order
     const order = new Order({
       userId,
