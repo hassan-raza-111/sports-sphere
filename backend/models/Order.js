@@ -73,6 +73,11 @@ const orderSchema = new mongoose.Schema(
     processedAt: {
       type: Date,
     },
+    // Shipping information
+    shippingInfo: {
+      type: Object,
+      required: true,
+    },
   },
   { timestamps: true }
 );

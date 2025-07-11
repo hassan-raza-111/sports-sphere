@@ -583,7 +583,9 @@ router.get('/', async (req, res) => {
   try {
     const { userId } = req.query;
     if (!userId) return res.status(400).json({ message: 'User ID required' });
-    const orders = await Order.find({ userId }).sort({ paymentDate: -1 });
+    const orders = await Order.find({ userId })
+      .populate('products.productId', 'name price image')
+      .sort({ paymentDate: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching orders' });

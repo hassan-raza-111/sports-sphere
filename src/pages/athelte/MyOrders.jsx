@@ -2,9 +2,93 @@ import React, { useEffect, useState } from 'react';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/orders.css';
 
+const OrderDetailModal = ({ order, onClose }) => {
+  if (!order) return null;
+  return (
+    <div className='order-modal-backdrop'>
+      <div className='order-modal'>
+        <button className='close-modal-btn' onClick={onClose}>
+          &times;
+        </button>
+        <h3>Order Details</h3>
+        <div className='order-modal-section'>
+          <strong>Order ID:</strong> {order._id}
+        </div>
+        <div className='order-modal-section'>
+          <strong>Date:</strong> {new Date(order.paymentDate).toLocaleString()}
+        </div>
+        <div className='order-modal-section'>
+          <strong>Payment Status:</strong> {order.paymentStatus}
+        </div>
+        <div className='order-modal-section'>
+          <strong>Payment Method:</strong> {order.paymentMethod}
+        </div>
+        <div className='order-modal-section'>
+          <strong>Total:</strong> Rs. {order.totalAmount}
+        </div>
+        {/* <div className='order-modal-section'>
+          <strong>Shipping Info:</strong>
+          <div className='shipping-info-modal'>
+            {order.shippingInfo ? (
+              typeof order.shippingInfo === 'object' ? (
+                <ul>
+                  {Object.entries(order.shippingInfo).map(([key, value]) => (
+                    <li key={key}>
+                      <b>{key.charAt(0).toUpperCase() + key.slice(1)}:</b>{' '}
+                      {value}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span>{order.shippingInfo}</span>
+              )
+            ) : (
+              <span>No shipping info available</span>
+            )}
+          </div>
+        </div> */}
+        <div className='order-modal-section'>
+          <strong>Order Status:</strong> {order.status}
+        </div>
+        <div className='order-modal-section'>
+          <strong>Products:</strong>
+          <div className='order-products-list'>
+            {order.products.map((p, idx) => (
+              <div className='order-product-item' key={idx}>
+                <div className='order-product-img'>
+                  {p.image ? (
+                    <img
+                      src={
+                        p.image.startsWith('http')
+                          ? p.image
+                          : `http://localhost:5000${p.image}`
+                      }
+                      alt={p.name || p.productId}
+                    />
+                  ) : (
+                    <div className='no-img'>No Image</div>
+                  )}
+                </div>
+                <div className='order-product-info'>
+                  <div>
+                    <b>{p.name || p.productId}</b>
+                  </div>
+                  <div>Qty: {p.quantity}</div>
+                  <div>Price: Rs. {p.price}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -36,10 +120,11 @@ const MyOrders = () => {
               <tr>
                 <th>Order ID</th>
                 <th>Date</th>
-                <th>Products</th>
                 <th>Total</th>
                 <th>Payment</th>
                 <th>Status</th>
+                <th>Order Status</th>
+                <th>Details</th>
               </tr>
             </thead>
             <tbody>
@@ -47,21 +132,27 @@ const MyOrders = () => {
                 <tr key={order._id}>
                   <td>{order._id.slice(-6).toUpperCase()}</td>
                   <td>{new Date(order.paymentDate).toLocaleString()}</td>
-                  <td>
-                    {order.products.map((p, idx) => (
-                      <div key={idx}>
-                        {p.quantity} x {p.name || p.productId}
-                      </div>
-                    ))}
-                  </td>
                   <td>Rs. {order.totalAmount}</td>
                   <td>{order.paymentStatus}</td>
                   <td>{order.paymentMethod}</td>
+                  <td>{order.status}</td>
+                  <td>
+                    <button
+                      className='view-details-btn'
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      View Details
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
       </div>
     </AthleteLayout>
   );

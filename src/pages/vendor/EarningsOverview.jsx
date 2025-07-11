@@ -54,7 +54,7 @@ export default function EarningsOverview() {
     setPayoutSuccess('');
     try {
       const res = await fetch(
-        `${BACKEND_URL}/api/orders/vendor/${vendorId}/payout`,
+        `${BACKEND_URL}/api/orders/vendor/${vendorId}/payout-request`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
