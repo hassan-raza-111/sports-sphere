@@ -253,7 +253,7 @@ const CoachBookings = () => {
               }}
               onClick={() => setActiveTab('pending')}
             >
-              <FaClock /> Pending Sessions ({bookings.length})
+              <FaClock /> Ready to Conduct ({bookings.length})
             </button>
             <button
               style={{
@@ -262,7 +262,7 @@ const CoachBookings = () => {
               }}
               onClick={() => setActiveTab('conducted')}
             >
-              <FaClock /> Conducted Sessions ({conductedBookings.length})
+              <FaClock /> Currently Conducting ({conductedBookings.length})
             </button>
             <button
               style={{
@@ -289,8 +289,8 @@ const CoachBookings = () => {
             bookings.length === 0 ? (
               <div style={styles.emptyContainer}>
                 <FaCheckCircle />
-                <p>No pending session requests.</p>
-                <small>All sessions have been processed.</small>
+                <p>No sessions ready to conduct.</p>
+                <small>Pending and accepted sessions will appear here.</small>
               </div>
             ) : (
               <div style={styles.bookingsGrid}>
@@ -362,57 +362,61 @@ const CoachBookings = () => {
                         </button>
                       )}
 
-                      <button
-                        style={{
-                          ...styles.btn,
-                          ...styles.acceptBtn,
-                          opacity: acceptingId === booking._id ? 0.7 : 1,
-                        }}
-                        disabled={
-                          acceptingId === booking._id ||
-                          rejectingId === booking._id ||
-                          completingId === booking._id
-                        }
-                        onClick={() => handleAccept(booking._id)}
-                      >
-                        {acceptingId === booking._id ? (
-                          <>
-                            <div style={styles.spinner}></div>
-                            Accepting...
-                          </>
-                        ) : (
-                          <>
-                            <FaCheck />
-                            Accept Session
-                          </>
-                        )}
-                      </button>
+                      {booking.status === 'pending' && (
+                        <>
+                          <button
+                            style={{
+                              ...styles.btn,
+                              ...styles.acceptBtn,
+                              opacity: acceptingId === booking._id ? 0.7 : 1,
+                            }}
+                            disabled={
+                              acceptingId === booking._id ||
+                              rejectingId === booking._id ||
+                              completingId === booking._id
+                            }
+                            onClick={() => handleAccept(booking._id)}
+                          >
+                            {acceptingId === booking._id ? (
+                              <>
+                                <div style={styles.spinner}></div>
+                                Accepting...
+                              </>
+                            ) : (
+                              <>
+                                <FaCheck />
+                                Accept Session
+                              </>
+                            )}
+                          </button>
 
-                      <button
-                        style={{
-                          ...styles.btn,
-                          ...styles.rejectBtn,
-                          opacity: rejectingId === booking._id ? 0.7 : 1,
-                        }}
-                        disabled={
-                          rejectingId === booking._id ||
-                          acceptingId === booking._id ||
-                          completingId === booking._id
-                        }
-                        onClick={() => handleReject(booking._id)}
-                      >
-                        {rejectingId === booking._id ? (
-                          <>
-                            <div style={styles.spinner}></div>
-                            Rejecting...
-                          </>
-                        ) : (
-                          <>
-                            <FaTimes />
-                            Reject Session
-                          </>
-                        )}
-                      </button>
+                          <button
+                            style={{
+                              ...styles.btn,
+                              ...styles.rejectBtn,
+                              opacity: rejectingId === booking._id ? 0.7 : 1,
+                            }}
+                            disabled={
+                              rejectingId === booking._id ||
+                              acceptingId === booking._id ||
+                              completingId === booking._id
+                            }
+                            onClick={() => handleReject(booking._id)}
+                          >
+                            {rejectingId === booking._id ? (
+                              <>
+                                <div style={styles.spinner}></div>
+                                Rejecting...
+                              </>
+                            ) : (
+                              <>
+                                <FaTimes />
+                                Reject Session
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -547,34 +551,6 @@ const CoachBookings = () => {
                     >
                       <FaEye /> View Details
                     </button>
-
-                    {booking.status === 'accepted' && (
-                      <button
-                        style={{
-                          ...styles.btn,
-                          ...styles.completeBtn,
-                          opacity: completingId === booking._id ? 0.7 : 1,
-                        }}
-                        disabled={
-                          completingId === booking._id ||
-                          acceptingId === booking._id ||
-                          rejectingId === booking._id
-                        }
-                        onClick={() => handleComplete(booking._id)}
-                      >
-                        {completingId === booking._id ? (
-                          <>
-                            <div style={styles.spinner}></div>
-                            Completing...
-                          </>
-                        ) : (
-                          <>
-                            <FaCheckCircle />
-                            Complete Session
-                          </>
-                        )}
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}

@@ -222,13 +222,13 @@ router.post('/:id/reject', async (req, res) => {
   }
 });
 
-// Get pending sessions for coach
+// Get pending and accepted sessions for coach (sessions ready to be conducted)
 router.get('/coach/:coachId/pending', async (req, res) => {
   try {
     const bookings = await Booking.find({
       coach: req.params.coachId,
-      status: 'pending',
-      paymentStatus: 'authorized',
+      status: { $in: ['pending', 'accepted'] },
+      paymentStatus: { $in: ['authorized', 'captured'] },
     }).populate('athlete', 'name email');
 
     res.json({ bookings });
