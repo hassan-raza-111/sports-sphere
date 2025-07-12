@@ -7,10 +7,11 @@ const bookingSchema = new mongoose.Schema(
     date: { type: String, required: true },
     time: { type: String, required: true },
     notes: String,
+    amount: { type: Number, required: true }, // Add amount field
     paymentIntentId: { type: String },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'authorized', 'captured', 'failed'],
+      enum: ['pending', 'authorized', 'captured', 'failed', 'refunded'],
       default: 'pending',
     },
     status: {
@@ -18,6 +19,13 @@ const bookingSchema = new mongoose.Schema(
       enum: ['pending', 'completed', 'cancelled'],
       default: 'pending',
     },
+    // Additional fields for tracking
+    acceptedAt: { type: Date },
+    rejectedAt: { type: Date },
+    capturedAt: { type: Date },
+    refundedAt: { type: Date },
+    refundId: { type: String },
+    refundReason: { type: String },
   },
   { timestamps: true }
 );

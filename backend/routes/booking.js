@@ -2,6 +2,7 @@ import express from 'express';
 import Booking from '../models/Booking.js';
 import Stripe from 'stripe';
 import { STRIPE_SECRET_KEY } from '../config.js';
+import bodyParser from 'body-parser';
 
 const router = express.Router();
 const stripe = new Stripe(STRIPE_SECRET_KEY);
@@ -39,11 +40,63 @@ router.post('/', async (req, res) => {
       notes,
       paymentIntentId: paymentIntent.id,
       paymentStatus: 'authorized',
+      amount: amount, // Add amount field
     });
     await booking.save();
     res.status(201).json({ message: 'Booking created', booking });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Create Stripe Checkout Session for session booking
+router.post('/create-checkout-session', async (req, res) => {
+  try {
+    const { coach, athlete, date, time, notes, amount } = req.body;
+    if (!coach || !athlete || !date || !time || !amount) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    // Create a PaymentIntent with manual capture
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'pkr',
+            product_data: {
+              name: 'Coaching Session',
+              description: `Session with Coach ${coach}`,
+            },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      payment_intent_data: {
+        capture_method: 'manual',
+        metadata: {
+          coach,
+          athlete,
+          date,
+          time,
+          notes,
+        },
+      },
+      success_url: `http://localhost:5173/athlete/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: 'http://localhost:5173/athlete/booking',
+      metadata: {
+        coach,
+        athlete,
+        date,
+        time,
+        notes,
+      },
+    });
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ message: 'Error creating checkout session' });
   }
 });
 
@@ -59,16 +112,350 @@ router.post('/:id/accept', async (req, res) => {
         .status(400)
         .json({ message: 'Payment is not authorized or already captured.' });
     }
+    if (booking.status !== 'pending') {
+      return res
+        .status(400)
+        .json({ message: 'Session is not in pending status.' });
+    }
+
     // Capture the payment
     const paymentIntent = await stripe.paymentIntents.capture(
       booking.paymentIntentId
     );
+
+    // Update booking status
     booking.paymentStatus = 'captured';
-    booking.status = 'completed'; // Optionally mark as completed
+    booking.status = 'completed';
+    booking.acceptedAt = new Date();
     await booking.save();
-    res.json({ message: 'Session accepted and payment captured', booking });
+
+    res.json({
+      message: 'Session accepted and payment captured',
+      booking,
+      paymentIntent,
+    });
   } catch (err) {
+    console.error('Error accepting booking:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Coach rejects a session and payment is refunded
+router.post('/:id/reject', async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    if (booking.paymentStatus !== 'authorized') {
+      return res
+        .status(400)
+        .json({ message: 'Payment is not authorized or already processed.' });
+    }
+    if (booking.status !== 'pending') {
+      return res
+        .status(400)
+        .json({ message: 'Session is not in pending status.' });
+    }
+
+    // Refund the payment
+    const refund = await stripe.refunds.create({
+      payment_intent: booking.paymentIntentId,
+    });
+
+    // Update booking status
+    booking.paymentStatus = 'refunded';
+    booking.status = 'cancelled';
+    booking.rejectedAt = new Date();
+    booking.refundId = refund.id;
+    await booking.save();
+
+    res.json({
+      message: 'Session rejected and payment refunded',
+      booking,
+      refund,
+    });
+  } catch (err) {
+    console.error('Error rejecting booking:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Get pending sessions for coach
+router.get('/coach/:coachId/pending', async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      coach: req.params.coachId,
+      status: 'pending',
+      paymentStatus: 'authorized',
+    }).populate('athlete', 'name email');
+
+    res.json({ bookings });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch pending sessions' });
+  }
+});
+
+// Get all bookings for admin management
+router.get('/admin', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, paymentStatus, search } = req.query;
+
+    let query = {};
+    if (status) query.status = status;
+    if (paymentStatus) query.paymentStatus = paymentStatus;
+    if (search) {
+      query.$or = [
+        { athlete: { $regex: search, $options: 'i' } },
+        { coach: { $regex: search, $options: 'i' } },
+        { paymentIntentId: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const bookings = await Booking.find(query)
+      .populate('athlete', 'name email')
+      .populate('coach', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Booking.countDocuments(query);
+
+    res.json({
+      bookings,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: parseInt(limit),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch bookings' });
+  }
+});
+
+// Admin manually capture payment
+router.post('/admin/:id/capture', async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    if (booking.paymentStatus !== 'authorized') {
+      return res
+        .status(400)
+        .json({ message: 'Payment is not authorized or already captured.' });
+    }
+
+    // Capture the payment
+    const paymentIntent = await stripe.paymentIntents.capture(
+      booking.paymentIntentId
+    );
+
+    // Update booking status
+    booking.paymentStatus = 'captured';
+    booking.status = 'completed';
+    booking.capturedAt = new Date();
+    await booking.save();
+
+    res.json({
+      message: 'Payment captured successfully',
+      booking,
+      paymentIntent,
+    });
+  } catch (err) {
+    console.error('Error capturing payment:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Admin manually refund payment
+router.post('/admin/:id/refund', async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    if (
+      booking.paymentStatus !== 'captured' &&
+      booking.paymentStatus !== 'authorized'
+    ) {
+      return res.status(400).json({ message: 'Payment cannot be refunded.' });
+    }
+
+    // Refund the payment
+    const refund = await stripe.refunds.create({
+      payment_intent: booking.paymentIntentId,
+      reason: reason || 'requested_by_customer',
+    });
+
+    // Update booking status
+    booking.paymentStatus = 'refunded';
+    booking.status = 'cancelled';
+    booking.refundedAt = new Date();
+    booking.refundId = refund.id;
+    booking.refundReason = reason;
+    await booking.save();
+
+    res.json({
+      message: 'Payment refunded successfully',
+      booking,
+      refund,
+    });
+  } catch (err) {
+    console.error('Error refunding payment:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Get booking statistics for admin
+router.get('/admin/stats', async (req, res) => {
+  try {
+    const totalBookings = await Booking.countDocuments();
+    const pendingBookings = await Booking.countDocuments({ status: 'pending' });
+    const completedBookings = await Booking.countDocuments({
+      status: 'completed',
+    });
+    const capturedPayments = await Booking.countDocuments({
+      paymentStatus: 'captured',
+    });
+    const authorizedPayments = await Booking.countDocuments({
+      paymentStatus: 'authorized',
+    });
+    const refundedPayments = await Booking.countDocuments({
+      paymentStatus: 'refunded',
+    });
+
+    // Calculate total revenue
+    const revenueData = await Booking.aggregate([
+      { $match: { paymentStatus: 'captured' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+
+    const totalRevenue = revenueData[0]?.total || 0;
+
+    res.json({
+      totalBookings,
+      pendingBookings,
+      completedBookings,
+      capturedPayments,
+      authorizedPayments,
+      refundedPayments,
+      totalRevenue,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch booking statistics' });
+  }
+});
+
+// Stripe webhook endpoint
+router.post(
+  '/webhook',
+  bodyParser.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      try {
+        // Only create booking if not already exists for this paymentIntent
+        const existing = await Booking.findOne({
+          paymentIntentId: session.payment_intent,
+        });
+        if (!existing) {
+          const meta = session.metadata || {};
+          const booking = new Booking({
+            coach: meta.coach,
+            athlete: meta.athlete,
+            date: meta.date,
+            time: meta.time,
+            notes: meta.notes,
+            paymentIntentId: session.payment_intent,
+            paymentStatus: 'authorized',
+            status: 'pending',
+            amount: session.amount_total / 100, // Convert from cents
+          });
+          await booking.save();
+          console.log('Booking created from Stripe webhook:', booking._id);
+        }
+      } catch (err) {
+        console.error('Error creating booking from webhook:', err);
+        return res.status(500).send('Webhook handler failed');
+      }
+    }
+    res.json({ received: true });
+  }
+);
+
+// Confirm session booking after Stripe Checkout success (no webhook)
+router.post('/confirm-session-booking', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ message: 'Session ID is required' });
+    }
+    // Retrieve session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    // Debug log
+    console.log('Stripe session:', session);
+    // Retrieve payment intent for manual capture status
+    let paymentIntent = null;
+    if (session.payment_intent) {
+      paymentIntent = await stripe.paymentIntents.retrieve(
+        session.payment_intent
+      );
+      console.log('Stripe paymentIntent:', paymentIntent);
+    }
+    // Accept if session.payment_status is 'paid' OR paymentIntent.status is 'requires_capture'
+    if (
+      session.payment_status !== 'paid' &&
+      (!paymentIntent || paymentIntent.status !== 'requires_capture')
+    ) {
+      return res.status(400).json({ message: 'Payment not completed' });
+    }
+    // Check if booking already exists
+    const existing = await Booking.findOne({
+      paymentIntentId: session.payment_intent,
+    });
+    if (existing) {
+      return res.json({
+        success: true,
+        booking: existing,
+        message: 'Booking already exists',
+      });
+    }
+    // Create booking from session metadata
+    const meta = session.metadata || {};
+    const booking = new Booking({
+      coach: meta.coach,
+      athlete: meta.athlete,
+      date: meta.date,
+      time: meta.time,
+      notes: meta.notes,
+      paymentIntentId: session.payment_intent,
+      paymentStatus: 'authorized',
+      status: 'pending',
+      amount: session.amount_total / 100, // Convert from cents
+    });
+    await booking.save();
+    res.json({ success: true, booking });
+  } catch (err) {
+    console.error('Error confirming session booking:', err);
+    res.status(500).json({ message: 'Failed to confirm session booking' });
   }
 });
 

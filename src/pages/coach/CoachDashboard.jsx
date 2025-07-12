@@ -10,6 +10,8 @@ import {
   FaClock,
   FaChalkboardTeacher,
   FaUser,
+  FaBell,
+  FaCalendarCheck,
 } from 'react-icons/fa';
 
 function CoachDashboard() {
@@ -19,6 +21,7 @@ function CoachDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pendingSessions, setPendingSessions] = useState([]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -34,10 +37,12 @@ function CoachDashboard() {
     Promise.all([
       fetch(`/api/coaches/${coachId}/upcoming-sessions`).then((r) => r.json()),
       fetch(`/api/coaches/${coachId}/dashboard-stats`).then((r) => r.json()),
+      fetch(`/api/booking/coach/${coachId}/pending`).then((r) => r.json()),
     ])
-      .then(([sessionsData, statsData]) => {
+      .then(([sessionsData, statsData, pendingData]) => {
         setSessions(sessionsData);
         setStats(statsData);
+        setPendingSessions(pendingData.bookings || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -67,33 +72,310 @@ function CoachDashboard() {
         <FaChalkboardTeacher /> Welcome, {coachName}!
       </h2>
 
-      <section className='feature-section card-box'>
-        <div className='card'>
-          <h3>
-            <FaChartBar /> Progress Reports
+      {/* Pending Sessions Notification */}
+      {pendingSessions.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+            border: '2px solid #ffc107',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <FaBell style={{ fontSize: '1.5rem', color: '#ffc107' }} />
+            <div>
+              <h3 style={{ margin: 0, color: '#856404', fontSize: '1.2rem' }}>
+                Pending Session Requests
+              </h3>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#856404' }}>
+                You have {pendingSessions.length} pending session request(s)
+                waiting for your response.
+              </p>
+            </div>
+          </div>
+          <Link
+            to='/coach/booking'
+            style={{
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#ffc107',
+              color: '#856404',
+              borderRadius: '5px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <FaCalendarCheck />
+            Review Requests
+          </Link>
+        </div>
+      )}
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats?.upcomingSessions || 0}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Upcoming Sessions
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats?.avgRating || 'N/A'}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Average Rating
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats?.retention || '0'}%
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Athlete Retention
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {stats?.newAthletes || 0}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            New Athletes
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaChartBar
+            style={{ fontSize: '3rem', color: '#e74c3c', marginBottom: '1rem' }}
+          />
+          <h3
+            style={{
+              fontSize: '1.5rem',
+              color: '#2c3e50',
+              marginBottom: '1rem',
+            }}
+          >
+            Analytics
           </h3>
-          <p>
-            Monitor athlete performance with detailed analytics and easily track
-            their training journey.
+          <p
+            style={{
+              color: '#7f8c8d',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+            }}
+          >
+            View detailed analytics and performance metrics.
           </p>
-          <Link to='/coach/athlete-progress' className='btn secondary'>
-            <FaFileAlt /> View Progress
+          <Link
+            to='/coach/analytics'
+            style={{
+              display: 'inline-block',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '5px',
+              fontWeight: 600,
+              transition: 'background-color 0.3s, transform 0.2s',
+              textDecoration: 'none',
+            }}
+          >
+            View Analytics
           </Link>
         </div>
 
-        <div className='card'>
-          <h3>
-            <FaComments /> Athlete Communication
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaComments
+            style={{ fontSize: '3rem', color: '#e74c3c', marginBottom: '1rem' }}
+          />
+          <h3
+            style={{
+              fontSize: '1.5rem',
+              color: '#2c3e50',
+              marginBottom: '1rem',
+            }}
+          >
+            Messages
           </h3>
-          <p>
-            Stay connected through instant messaging, share training plans, and
-            provide session feedback in real time.
+          <p
+            style={{
+              color: '#7f8c8d',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+            }}
+          >
+            Communicate with your athletes and manage conversations.
           </p>
-          <Link to='/coach/messages' className='btn primary'>
-            <FaInbox /> Go to Messages
+          <Link
+            to='/coach/message'
+            style={{
+              display: 'inline-block',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '5px',
+              fontWeight: 600,
+              transition: 'background-color 0.3s, transform 0.2s',
+              textDecoration: 'none',
+            }}
+          >
+            View Messages
           </Link>
         </div>
-      </section>
+
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaFileAlt
+            style={{ fontSize: '3rem', color: '#e74c3c', marginBottom: '1rem' }}
+          />
+          <h3
+            style={{
+              fontSize: '1.5rem',
+              color: '#2c3e50',
+              marginBottom: '1rem',
+            }}
+          >
+            Session Management
+          </h3>
+          <p
+            style={{
+              color: '#7f8c8d',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6',
+            }}
+          >
+            Manage pending session requests and upcoming bookings.
+          </p>
+          <Link
+            to='/coach/booking'
+            style={{
+              display: 'inline-block',
+              padding: '0.8rem 1.5rem',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '5px',
+              fontWeight: 600,
+              transition: 'background-color 0.3s, transform 0.2s',
+              textDecoration: 'none',
+            }}
+          >
+            Manage Sessions
+          </Link>
+        </div>
+      </div>
 
       <section className='sessions-section'>
         <h3>
@@ -130,25 +412,6 @@ function CoachDashboard() {
           )}
         </div>
       </section>
-
-      <div className='stats-overview'>
-        <div className='stat-card'>
-          <div className='value'>{stats?.upcomingSessions ?? '-'}</div>
-          <div className='label'>Upcoming Sessions</div>
-        </div>
-        <div className='stat-card'>
-          <div className='value'>{stats?.avgRating ?? '-'}</div>
-          <div className='label'>Average Rating</div>
-        </div>
-        <div className='stat-card'>
-          <div className='value'>{stats?.retention ?? '-'}%</div>
-          <div className='label'>Athlete Retention</div>
-        </div>
-        <div className='stat-card'>
-          <div className='value'>{stats?.newAthletes ?? '-'}</div>
-          <div className='label'>New Athletes</div>
-        </div>
-      </div>
     </Layout>
   );
 }

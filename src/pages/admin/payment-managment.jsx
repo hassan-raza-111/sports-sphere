@@ -11,57 +11,95 @@ import {
   FaCreditCard,
   FaUniversity,
   FaEye,
+  FaCheck,
+  FaTimes,
+  FaCalendar,
+  FaUser,
 } from 'react-icons/fa';
 
 function AdminPaymentManagement() {
   const [activeTab, setActiveTab] = useState('all');
   const [orders, setOrders] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     pendingPayments: 0,
     refundedAmount: 0,
     totalTransactions: 0,
+    sessionRevenue: 0,
+    pendingSessions: 0,
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('7');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedType, setSelectedType] = useState('all'); // 'all', 'orders', 'sessions'
 
   useEffect(() => {
     fetchPaymentStats();
-    fetchOrders();
-  }, [activeTab, searchTerm, dateFilter, currentPage]);
+    fetchData();
+  }, [activeTab, searchTerm, dateFilter, currentPage, selectedType]);
 
   const fetchPaymentStats = async () => {
     try {
-      const response = await fetch('/api/orders/admin/stats');
-      const data = await response.json();
-      setStats(data);
+      const [orderStats, bookingStats] = await Promise.all([
+        fetch('/api/orders/admin/stats').then((r) => r.json()),
+        fetch('/api/booking/admin/stats').then((r) => r.json()),
+      ]);
+
+      setStats({
+        ...orderStats,
+        sessionRevenue: bookingStats.totalRevenue || 0,
+        pendingSessions: bookingStats.pendingBookings || 0,
+        totalRevenue:
+          (orderStats.totalRevenue || 0) + (bookingStats.totalRevenue || 0),
+        totalTransactions:
+          (orderStats.totalTransactions || 0) +
+          (bookingStats.totalBookings || 0),
+      });
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage,
-        limit: 10,
-        search: searchTerm,
-      });
 
-      if (activeTab !== 'all') {
-        params.append('paymentStatus', activeTab);
+      if (selectedType === 'all' || selectedType === 'orders') {
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: 10,
+          search: searchTerm,
+        });
+
+        if (activeTab !== 'all') {
+          params.append('paymentStatus', activeTab);
+        }
+
+        const response = await fetch(`/api/orders/admin?${params}`);
+        const data = await response.json();
+        setOrders(data.orders || []);
       }
 
-      const response = await fetch(`/api/orders/admin?${params}`);
-      const data = await response.json();
-      setOrders(data.orders);
-      setTotalPages(data.pagination.totalPages);
+      if (selectedType === 'all' || selectedType === 'sessions') {
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: 10,
+          search: searchTerm,
+        });
+
+        if (activeTab !== 'all') {
+          params.append('paymentStatus', activeTab);
+        }
+
+        const response = await fetch(`/api/booking/admin?${params}`);
+        const data = await response.json();
+        setBookings(data.bookings || []);
+      }
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -69,6 +107,11 @@ function AdminPaymentManagement() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (type) => {
+    setSelectedType(type);
     setCurrentPage(1);
   };
 
@@ -94,6 +137,66 @@ function AdminPaymentManagement() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting orders:', error);
+    }
+  };
+
+  const handleCapturePayment = async (id, type) => {
+    try {
+      const endpoint =
+        type === 'session'
+          ? `/api/booking/admin/${id}/capture`
+          : `/api/orders/admin/${id}`;
+      const method = type === 'session' ? 'POST' : 'PUT';
+      const body = type === 'session' ? {} : { paymentStatus: 'completed' };
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: method === 'PUT' ? JSON.stringify(body) : undefined,
+      });
+
+      if (response.ok) {
+        fetchData(); // Refresh data
+        alert('Payment captured successfully!');
+      } else {
+        alert('Failed to capture payment');
+      }
+    } catch (error) {
+      console.error('Error capturing payment:', error);
+      alert('Error capturing payment');
+    }
+  };
+
+  const handleRefundPayment = async (id, type) => {
+    const reason = prompt('Enter refund reason:');
+    if (!reason) return;
+
+    try {
+      const endpoint =
+        type === 'session'
+          ? `/api/booking/admin/${id}/refund`
+          : `/api/orders/admin/${id}`;
+      const method = type === 'session' ? 'POST' : 'PUT';
+      const body =
+        type === 'session'
+          ? { reason }
+          : { paymentStatus: 'refunded', refundReason: reason };
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        fetchData(); // Refresh data
+        alert('Payment refunded successfully!');
+      } else {
+        alert('Failed to refund payment');
+      }
+    } catch (error) {
+      console.error('Error refunding payment:', error);
+      alert('Error refunding payment');
     }
   };
 
@@ -127,8 +230,10 @@ function AdminPaymentManagement() {
   const getStatusClass = (status) => {
     switch (status) {
       case 'completed':
+      case 'captured':
         return 'completed';
       case 'pending':
+      case 'authorized':
         return 'pending';
       case 'failed':
         return 'failed';
@@ -142,7 +247,7 @@ function AdminPaymentManagement() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'PKR',
     }).format(amount);
   };
 
@@ -153,6 +258,372 @@ function AdminPaymentManagement() {
       day: 'numeric',
     });
   };
+
+  const renderOrdersTable = () => (
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ borderBottom: '2px solid #ecf0f1' }}>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Order ID
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Customer
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Amount
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Payment Method
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Status
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Date
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.map((order) => (
+          <tr key={order._id} style={{ borderBottom: '1px solid #ecf0f1' }}>
+            <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 500 }}>
+              #{order._id.slice(-8)}
+            </td>
+            <td style={{ padding: '1rem', color: '#2c3e50' }}>
+              {order.userId?.name || 'Unknown User'}
+            </td>
+            <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 600 }}>
+              {formatCurrency(order.totalAmount)}
+            </td>
+            <td style={{ padding: '1rem', color: '#2c3e50' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                {getPaymentMethodIcon(order.paymentMethod)}
+                {getPaymentMethodText(order.paymentMethod)}
+              </div>
+            </td>
+            <td style={{ padding: '1rem' }}>
+              <span
+                style={{
+                  padding: '0.3rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor:
+                    order.paymentStatus === 'completed'
+                      ? '#d5f4e6'
+                      : order.paymentStatus === 'pending'
+                      ? '#fef9e7'
+                      : order.paymentStatus === 'failed'
+                      ? '#fadbd8'
+                      : '#e8f4fd',
+                  color:
+                    order.paymentStatus === 'completed'
+                      ? '#27ae60'
+                      : order.paymentStatus === 'pending'
+                      ? '#f39c12'
+                      : order.paymentStatus === 'failed'
+                      ? '#e74c3c'
+                      : '#3498db',
+                }}
+              >
+                {order.paymentStatus.charAt(0).toUpperCase() +
+                  order.paymentStatus.slice(1)}
+              </span>
+            </td>
+            <td style={{ padding: '1rem', color: '#7f8c8d' }}>
+              {formatDate(order.createdAt)}
+            </td>
+            <td style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                  }}
+                  title='View Details'
+                >
+                  <FaEye />
+                </button>
+                {order.paymentStatus === 'pending' && (
+                  <button
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: '#27ae60',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                    title='Capture Payment'
+                    onClick={() => handleCapturePayment(order._id, 'order')}
+                  >
+                    <FaCheck />
+                  </button>
+                )}
+                {order.paymentStatus !== 'refunded' && (
+                  <button
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                    title='Refund Payment'
+                    onClick={() => handleRefundPayment(order._id, 'order')}
+                  >
+                    <FaTimes />
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderSessionsTable = () => (
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ borderBottom: '2px solid #ecf0f1' }}>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Session ID
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Athlete
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Coach
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Amount
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Date & Time
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Status
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {bookings.map((booking) => (
+          <tr key={booking._id} style={{ borderBottom: '1px solid #ecf0f1' }}>
+            <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 500 }}>
+              #{booking._id.slice(-8)}
+            </td>
+            <td style={{ padding: '1rem', color: '#2c3e50' }}>
+              {booking.athlete?.name || 'Unknown Athlete'}
+            </td>
+            <td style={{ padding: '1rem', color: '#2c3e50' }}>
+              {booking.coach?.name || 'Unknown Coach'}
+            </td>
+            <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 600 }}>
+              {formatCurrency(booking.amount)}
+            </td>
+            <td style={{ padding: '1rem', color: '#7f8c8d' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <FaCalendar />
+                {formatDate(booking.date)} at {booking.time}
+              </div>
+            </td>
+            <td style={{ padding: '1rem' }}>
+              <span
+                style={{
+                  padding: '0.3rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor:
+                    booking.paymentStatus === 'captured'
+                      ? '#d5f4e6'
+                      : booking.paymentStatus === 'authorized'
+                      ? '#fef9e7'
+                      : booking.paymentStatus === 'failed'
+                      ? '#fadbd8'
+                      : '#e8f4fd',
+                  color:
+                    booking.paymentStatus === 'captured'
+                      ? '#27ae60'
+                      : booking.paymentStatus === 'authorized'
+                      ? '#f39c12'
+                      : booking.paymentStatus === 'failed'
+                      ? '#e74c3c'
+                      : '#3498db',
+                }}
+              >
+                {booking.paymentStatus.charAt(0).toUpperCase() +
+                  booking.paymentStatus.slice(1)}
+              </span>
+            </td>
+            <td style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                  }}
+                  title='View Details'
+                >
+                  <FaEye />
+                </button>
+                {booking.paymentStatus === 'authorized' && (
+                  <button
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: '#27ae60',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                    title='Capture Payment'
+                    onClick={() => handleCapturePayment(booking._id, 'session')}
+                  >
+                    <FaCheck />
+                  </button>
+                )}
+                {booking.paymentStatus !== 'refunded' && (
+                  <button
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                    title='Refund Payment'
+                    onClick={() => handleRefundPayment(booking._id, 'session')}
+                  >
+                    <FaTimes />
+                  </button>
+                )}
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 
   return (
     <AdminLayout>
@@ -221,7 +692,7 @@ function AdminPaymentManagement() {
               marginBottom: '0.5rem',
             }}
           >
-            {stats.pendingPayments}
+            {stats.pendingPayments + stats.pendingSessions}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Pending Payments
@@ -287,7 +758,7 @@ function AdminPaymentManagement() {
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         }}
       >
-        {/* Tabs */}
+        {/* Type Tabs */}
         <div
           style={{
             display: 'flex',
@@ -297,7 +768,43 @@ function AdminPaymentManagement() {
           }}
         >
           {[
-            { key: 'all', label: 'All Orders' },
+            { key: 'all', label: 'All Transactions' },
+            { key: 'orders', label: 'Product Orders' },
+            { key: 'sessions', label: 'Session Bookings' },
+          ].map((type) => (
+            <button
+              key={type.key}
+              onClick={() => handleTypeChange(type.key)}
+              style={{
+                padding: '0.8rem 1.5rem',
+                border: 'none',
+                background: 'none',
+                color: selectedType === type.key ? '#e74c3c' : '#7f8c8d',
+                fontWeight: selectedType === type.key ? 600 : 400,
+                borderBottom:
+                  selectedType === type.key
+                    ? '3px solid #e74c3c'
+                    : '3px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+              }}
+            >
+              {type.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Status Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '2rem',
+            borderBottom: '2px solid #ecf0f1',
+          }}
+        >
+          {[
+            { key: 'all', label: 'All Status' },
             { key: 'completed', label: 'Completed' },
             { key: 'pending', label: 'Pending' },
             { key: 'failed', label: 'Failed' },
@@ -329,17 +836,19 @@ function AdminPaymentManagement() {
         <div
           style={{
             display: 'flex',
-            gap: '1rem',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginBottom: '2rem',
             flexWrap: 'wrap',
+            gap: '1rem',
           }}
         >
-          <div style={{ flex: 1, minWidth: '300px' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <div style={{ position: 'relative' }}>
               <FaSearch
                 style={{
                   position: 'absolute',
-                  left: '1rem',
+                  left: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   color: '#7f8c8d',
@@ -347,35 +856,34 @@ function AdminPaymentManagement() {
               />
               <input
                 type='text'
-                placeholder='Search orders...'
+                placeholder='Search transactions...'
                 value={searchTerm}
                 onChange={handleSearch}
                 style={{
-                  width: '100%',
                   padding: '0.8rem 1rem 0.8rem 2.5rem',
-                  border: '1px solid #ddd',
+                  border: '2px solid #e1e5eb',
                   borderRadius: '5px',
                   fontSize: '1rem',
+                  width: '300px',
                 }}
               />
             </div>
+            <select
+              value={dateFilter}
+              onChange={handleDateFilterChange}
+              style={{
+                padding: '0.8rem 1rem',
+                border: '2px solid #e1e5eb',
+                borderRadius: '5px',
+                fontSize: '1rem',
+              }}
+            >
+              <option value='7'>Last 7 days</option>
+              <option value='30'>Last 30 days</option>
+              <option value='90'>Last 90 days</option>
+              <option value='all'>All time</option>
+            </select>
           </div>
-          <select
-            value={dateFilter}
-            onChange={handleDateFilterChange}
-            style={{
-              padding: '0.8rem 1rem',
-              border: '1px solid #ddd',
-              borderRadius: '5px',
-              fontSize: '1rem',
-              minWidth: '150px',
-            }}
-          >
-            <option value='7'>Last 7 days</option>
-            <option value='30'>Last 30 days</option>
-            <option value='90'>Last 90 days</option>
-            <option value='365'>Last year</option>
-          </select>
           <button
             onClick={handleExport}
             style={{
@@ -395,201 +903,59 @@ function AdminPaymentManagement() {
           </button>
         </div>
 
-        {/* Orders Table */}
+        {/* Transactions Table */}
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ecf0f1' }}>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Order ID
-                </th>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Customer
-                </th>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Amount
-                </th>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Payment Method
-                </th>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Status
-                </th>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Date
-                </th>
-                <th
-                  style={{
-                    padding: '1rem',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan='7'
-                    style={{
-                      padding: '2rem',
-                      textAlign: 'center',
-                      color: '#7f8c8d',
-                    }}
-                  >
-                    Loading orders...
-                  </td>
-                </tr>
-              ) : orders.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan='7'
-                    style={{
-                      padding: '2rem',
-                      textAlign: 'center',
-                      color: '#7f8c8d',
-                    }}
-                  >
-                    No orders found
-                  </td>
-                </tr>
-              ) : (
-                orders.map((order) => (
-                  <tr
-                    key={order._id}
-                    style={{ borderBottom: '1px solid #ecf0f1' }}
-                  >
-                    <td
-                      style={{
-                        padding: '1rem',
-                        color: '#2c3e50',
-                        fontWeight: 500,
-                      }}
-                    >
-                      #{order._id.slice(-8)}
-                    </td>
-                    <td style={{ padding: '1rem', color: '#2c3e50' }}>
-                      {order.userId?.name || 'Unknown User'}
-                    </td>
-                    <td
-                      style={{
-                        padding: '1rem',
-                        color: '#2c3e50',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {formatCurrency(order.totalAmount)}
-                    </td>
-                    <td style={{ padding: '1rem', color: '#2c3e50' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                        }}
-                      >
-                        {getPaymentMethodIcon(order.paymentMethod)}
-                        {getPaymentMethodText(order.paymentMethod)}
-                      </div>
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      <span
-                        style={{
-                          padding: '0.3rem 0.8rem',
-                          borderRadius: '20px',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          backgroundColor:
-                            order.paymentStatus === 'completed'
-                              ? '#d5f4e6'
-                              : order.paymentStatus === 'pending'
-                              ? '#fef9e7'
-                              : order.paymentStatus === 'failed'
-                              ? '#fadbd8'
-                              : '#e8f4fd',
-                          color:
-                            order.paymentStatus === 'completed'
-                              ? '#27ae60'
-                              : order.paymentStatus === 'pending'
-                              ? '#f39c12'
-                              : order.paymentStatus === 'failed'
-                              ? '#e74c3c'
-                              : '#3498db',
-                        }}
-                      >
-                        {order.paymentStatus.charAt(0).toUpperCase() +
-                          order.paymentStatus.slice(1)}
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem', color: '#7f8c8d' }}>
-                      {formatDate(order.createdAt)}
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      <button
-                        style={{
-                          padding: '0.5rem',
-                          backgroundColor: '#3498db',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '5px',
-                          cursor: 'pointer',
-                        }}
-                        title='View Details'
-                      >
-                        <FaEye />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+          {loading ? (
+            <div
+              style={{
+                padding: '2rem',
+                textAlign: 'center',
+                color: '#7f8c8d',
+              }}
+            >
+              Loading transactions...
+            </div>
+          ) : selectedType === 'sessions' ? (
+            renderSessionsTable()
+          ) : selectedType === 'orders' ? (
+            renderOrdersTable()
+          ) : (
+            <>
+              {bookings.length > 0 && (
+                <>
+                  <h3 style={{ marginBottom: '1rem', color: '#2c3e50' }}>
+                    Session Bookings
+                  </h3>
+                  {renderSessionsTable()}
+                </>
               )}
-            </tbody>
-          </table>
+              {orders.length > 0 && (
+                <>
+                  <h3
+                    style={{
+                      marginBottom: '1rem',
+                      color: '#2c3e50',
+                      marginTop: '2rem',
+                    }}
+                  >
+                    Product Orders
+                  </h3>
+                  {renderOrdersTable()}
+                </>
+              )}
+              {bookings.length === 0 && orders.length === 0 && (
+                <div
+                  style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: '#7f8c8d',
+                  }}
+                >
+                  No transactions found
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Pagination */}
@@ -608,11 +974,11 @@ function AdminPaymentManagement() {
               disabled={currentPage === 1}
               style={{
                 padding: '0.5rem 1rem',
-                border: '1px solid #ddd',
-                backgroundColor: currentPage === 1 ? '#f8f9fa' : 'white',
-                color: currentPage === 1 ? '#6c757d' : '#2c3e50',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                border: '1px solid #e1e5eb',
+                backgroundColor: 'white',
                 borderRadius: '5px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                color: currentPage === 1 ? '#bdc3c7' : '#2c3e50',
               }}
             >
               <FaChevronLeft />
@@ -627,12 +993,11 @@ function AdminPaymentManagement() {
               disabled={currentPage === totalPages}
               style={{
                 padding: '0.5rem 1rem',
-                border: '1px solid #ddd',
-                backgroundColor:
-                  currentPage === totalPages ? '#f8f9fa' : 'white',
-                color: currentPage === totalPages ? '#6c757d' : '#2c3e50',
-                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                border: '1px solid #e1e5eb',
+                backgroundColor: 'white',
                 borderRadius: '5px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                color: currentPage === totalPages ? '#bdc3c7' : '#2c3e50',
               }}
             >
               <FaChevronRight />

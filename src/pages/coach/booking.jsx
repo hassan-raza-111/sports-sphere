@@ -7,6 +7,7 @@ const CoachBookings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [acceptingId, setAcceptingId] = useState('');
+  const [rejectingId, setRejectingId] = useState('');
 
   // Get coach ID from localStorage
   const userStr = localStorage.getItem('user');
@@ -17,7 +18,7 @@ const CoachBookings = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`/api/booking?coach=${coachId}&status=pending`);
+        const res = await fetch(`/api/booking/coach/${coachId}/pending`);
         if (!res.ok) throw new Error('Failed to fetch bookings');
         const data = await res.json();
         setBookings(data.bookings || []);
@@ -39,6 +40,7 @@ const CoachBookings = () => {
       });
       if (!res.ok) throw new Error('Failed to accept booking');
       setBookings((prev) => prev.filter((b) => b._id !== bookingId));
+      alert('Session accepted successfully! Payment has been captured.');
     } catch (err) {
       setError('Failed to accept booking.');
     } finally {
@@ -46,56 +48,149 @@ const CoachBookings = () => {
     }
   };
 
+  const handleReject = async (bookingId) => {
+    setRejectingId(bookingId);
+    setError('');
+    try {
+      const res = await fetch(`/api/booking/${bookingId}/reject`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed to reject booking');
+      setBookings((prev) => prev.filter((b) => b._id !== bookingId));
+      alert('Session rejected successfully! Payment has been refunded.');
+    } catch (err) {
+      setError('Failed to reject booking.');
+    } finally {
+      setRejectingId('');
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (timeStr) => {
+    return timeStr;
+  };
+
+  const formatAmount = (amount) => {
+    return `PKR ${amount}`;
+  };
+
   return (
     <Layout role='coach'>
       <div style={styles.body}>
         <main style={styles.bookingContainer}>
-          <h2 style={styles.bookingHeading}>Pending Session Requests</h2>
+          <h2 style={styles.bookingHeading}>
+            <i className='fas fa-clock'></i> Pending Session Requests
+          </h2>
           {loading ? (
-            <div>Loading...</div>
+            <div style={styles.loadingContainer}>
+              <div style={styles.loadingSpinner}></div>
+              <p>Loading pending sessions...</p>
+            </div>
           ) : error ? (
-            <div style={{ color: '#e74c3c' }}>{error}</div>
+            <div style={styles.errorContainer}>
+              <i className='fas fa-exclamation-triangle'></i>
+              <span>{error}</span>
+            </div>
           ) : bookings.length === 0 ? (
-            <div>No pending bookings.</div>
+            <div style={styles.emptyContainer}>
+              <i className='fas fa-check-circle'></i>
+              <p>No pending session requests.</p>
+              <small>All sessions have been processed.</small>
+            </div>
           ) : (
-            <table
-              style={{
-                width: '100%',
-                background: 'white',
-                borderRadius: 8,
-                boxShadow: '0 2px 8px #eee',
-                marginTop: 20,
-              }}
-            >
-              <thead>
-                <tr>
-                  <th>Athlete</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Notes</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((b) => (
-                  <tr key={b._id}>
-                    <td>{b.athlete}</td>
-                    <td>{b.date}</td>
-                    <td>{b.time}</td>
-                    <td>{b.notes || '-'}</td>
-                    <td>
-                      <button
-                        style={styles.btn}
-                        disabled={acceptingId === b._id}
-                        onClick={() => handleAccept(b._id)}
-                      >
-                        {acceptingId === b._id ? 'Accepting...' : 'Accept'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div style={styles.bookingsGrid}>
+              {bookings.map((booking) => (
+                <div key={booking._id} style={styles.bookingCard}>
+                  <div style={styles.bookingHeader}>
+                    <div style={styles.athleteInfo}>
+                      <i className='fas fa-user'></i>
+                      <span>{booking.athlete?.name || 'Athlete'}</span>
+                    </div>
+                    <div style={styles.amount}>
+                      {formatAmount(booking.amount)}
+                    </div>
+                  </div>
+
+                  <div style={styles.bookingDetails}>
+                    <div style={styles.detailItem}>
+                      <i className='fas fa-calendar'></i>
+                      <span>{formatDate(booking.date)}</span>
+                    </div>
+                    <div style={styles.detailItem}>
+                      <i className='fas fa-clock'></i>
+                      <span>{formatTime(booking.time)}</span>
+                    </div>
+                    {booking.notes && (
+                      <div style={styles.detailItem}>
+                        <i className='fas fa-sticky-note'></i>
+                        <span>{booking.notes}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={styles.bookingActions}>
+                    <button
+                      style={{
+                        ...styles.btn,
+                        ...styles.acceptBtn,
+                        opacity: acceptingId === booking._id ? 0.7 : 1,
+                      }}
+                      disabled={
+                        acceptingId === booking._id ||
+                        rejectingId === booking._id
+                      }
+                      onClick={() => handleAccept(booking._id)}
+                    >
+                      {acceptingId === booking._id ? (
+                        <>
+                          <i className='fas fa-spinner fa-spin'></i>
+                          Accepting...
+                        </>
+                      ) : (
+                        <>
+                          <i className='fas fa-check'></i>
+                          Accept Session
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      style={{
+                        ...styles.btn,
+                        ...styles.rejectBtn,
+                        opacity: rejectingId === booking._id ? 0.7 : 1,
+                      }}
+                      disabled={
+                        rejectingId === booking._id ||
+                        acceptingId === booking._id
+                      }
+                      onClick={() => handleReject(booking._id)}
+                    >
+                      {rejectingId === booking._id ? (
+                        <>
+                          <i className='fas fa-spinner fa-spin'></i>
+                          Rejecting...
+                        </>
+                      ) : (
+                        <>
+                          <i className='fas fa-times'></i>
+                          Reject Session
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </main>
       </div>
@@ -110,59 +205,9 @@ const styles = {
     lineHeight: 1.6,
     minHeight: '100vh',
   },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '1.5rem 5%',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    position: 'fixed',
-    width: '100%',
-    top: 0,
-    zIndex: 100,
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  },
-  logo: { display: 'flex', alignItems: 'center', gap: 10 },
-  logoImg: { height: 40, width: 'auto' },
-  logoText: {
-    fontSize: '1.8rem',
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    fontStyle: 'italic',
-  },
-  nav: { display: 'flex', gap: '1.5rem', alignItems: 'center' },
-  navLink: {
-    fontWeight: 600,
-    color: '#2c3e50',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-  },
-  badge: {
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    borderRadius: '50%',
-    width: 20,
-    height: 20,
-    fontSize: '0.7rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 5,
-  },
-  profileBtn: {
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    width: 36,
-    height: 36,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   bookingContainer: {
     padding: '140px 5% 60px',
-    maxWidth: 800,
+    maxWidth: 1200,
     margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
@@ -178,59 +223,111 @@ const styles = {
     textShadow: '1px 1px 3px rgba(0,0,0,0.5)',
     textAlign: 'center',
   },
-  bookingForm: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 10,
-    padding: '2rem',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-    borderLeft: '4px solid #e74c3c',
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem',
+    color: 'white',
+    fontSize: '1.1rem',
+  },
+  loadingSpinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid rgba(255, 255, 255, 0.3)',
+    borderTop: '4px solid white',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  errorContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    color: '#e74c3c',
+    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    padding: '1rem',
+    borderRadius: '8px',
+    border: '1px solid rgba(231, 76, 60, 0.3)',
+  },
+  emptyContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem',
+    color: 'white',
+    textAlign: 'center',
+  },
+  bookingsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+    gap: '1.5rem',
     width: '100%',
   },
-  formGroup: { marginBottom: '1.5rem' },
-  input: {
-    width: '100%',
-    padding: '0.8rem 1rem',
-    border: '2px solid #e1e5eb',
-    borderRadius: 5,
-    fontSize: '1rem',
+  bookingCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    borderLeft: '4px solid #e74c3c',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+  },
+  bookingHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem',
+    paddingBottom: '1rem',
+    borderBottom: '1px solid #ecf0f1',
+  },
+  athleteInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+  amount: {
+    fontSize: '1.2rem',
+    fontWeight: '700',
+    color: '#e74c3c',
+  },
+  bookingDetails: {
+    marginBottom: '1.5rem',
+  },
+  detailItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '0.5rem',
+    color: '#7f8c8d',
+  },
+  bookingActions: {
+    display: 'flex',
+    gap: '1rem',
   },
   btn: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '0.8rem 1.5rem',
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    borderRadius: 5,
-    fontWeight: 600,
+    borderRadius: '8px',
+    fontWeight: '600',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '1.1rem',
-    gap: 10,
-    width: '100%',
+    fontSize: '1rem',
+    gap: '8px',
+    flex: 1,
+    transition: 'all 0.3s',
   },
-  footer: {
-    backgroundColor: 'rgba(44, 62, 80, 0.9)',
+  acceptBtn: {
+    backgroundColor: '#27ae60',
     color: 'white',
-    padding: '2rem 5%',
-    marginTop: '3rem',
   },
-  footerContent: {
-    maxWidth: 1200,
-    margin: '0 auto',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  rejectBtn: {
+    backgroundColor: '#e74c3c',
+    color: 'white',
   },
-  footerLogo: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-  },
-  description: { marginBottom: '1.5rem', color: '#2c3e50', fontSize: '1rem' },
-  copyright: { fontSize: '0.9rem' },
 };
 
 export default CoachBookings;

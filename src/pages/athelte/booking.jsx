@@ -143,14 +143,10 @@ const BookingPage = () => {
       setErrorMsg('User not logged in.');
       return;
     }
-    if (!paymentMethodId) {
-      setShowPayment(true);
-      setErrorMsg('Please authorize payment first.');
-      return;
-    }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/booking', {
+      // Call backend to create Stripe Checkout Session
+      const res = await fetch('/api/booking/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,20 +156,18 @@ const BookingPage = () => {
           time,
           notes,
           amount,
-          paymentMethodId,
         }),
       });
-      if (!res.ok) throw new Error('Failed to book session');
-      setSuccessMsg('Session booked successfully! Awaiting coach acceptance.');
-      setSelectedCoach('');
-      setDate('');
-      setTime('');
-      setNotes('');
-      setCoachDescription('');
-      setPaymentMethodId('');
-      setShowPayment(false);
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setErrorMsg(data.message || 'Failed to start payment.');
+        setSubmitting(false);
+        return;
+      }
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (err) {
-      setErrorMsg('Failed to book session. Please try again.');
+      setErrorMsg('Failed to start payment. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -273,25 +267,7 @@ const BookingPage = () => {
                 {successMsg}
               </div>
             )}
-            {/* Payment Section */}
-            {showPayment && amount > 0 && (
-              <Elements
-                stripe={loadStripe(
-                  process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY ||
-                    'pk_test_your_publishable_key'
-                )}
-              >
-                <PaymentSection
-                  amount={amount}
-                  submitting={submitting}
-                  onPaymentSuccess={(pmId) => {
-                    setPaymentMethodId(pmId);
-                    setShowPayment(false);
-                    setErrorMsg('');
-                  }}
-                />
-              </Elements>
-            )}
+            {/* Payment handled via Stripe Checkout redirect */}
             <button
               type='submit'
               className='btn'
