@@ -3,6 +3,7 @@ import Booking from '../models/Booking.js';
 import Stripe from 'stripe';
 import { STRIPE_SECRET_KEY } from '../config.js';
 import bodyParser from 'body-parser';
+import Progress from '../models/Progress.js';
 
 const router = express.Router();
 const stripe = new Stripe(STRIPE_SECRET_KEY);
@@ -107,32 +108,58 @@ router.post('/:id/accept', async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    if (booking.paymentStatus !== 'authorized') {
-      return res
-        .status(400)
-        .json({ message: 'Payment is not authorized or already captured.' });
-    }
     if (booking.status !== 'pending') {
       return res
         .status(400)
         .json({ message: 'Session is not in pending status.' });
     }
 
+    // Always fetch latest paymentIntent status from Stripe
+    let paymentIntent;
+    if (booking.paymentIntentId) {
+      paymentIntent = await stripe.paymentIntents.retrieve(
+        booking.paymentIntentId
+      );
+    }
+
+    // If Stripe says already captured, sync local status and accept
+    if (
+      paymentIntent &&
+      (paymentIntent.status === 'succeeded' ||
+        paymentIntent.status === 'captured')
+    ) {
+      booking.paymentStatus = 'captured';
+      booking.status = 'accepted';
+      booking.acceptedAt = new Date();
+      await booking.save();
+      return res.json({
+        message: 'Session accepted (payment was already captured on Stripe)',
+        booking,
+      });
+    }
+
+    if (booking.paymentStatus !== 'authorized') {
+      return res
+        .status(400)
+        .json({ message: 'Payment is not authorized or already captured.' });
+    }
+
     // Capture the payment
-    const paymentIntent = await stripe.paymentIntents.capture(
+    const capturedIntent = await stripe.paymentIntents.capture(
       booking.paymentIntentId
     );
 
-    // Update booking status
+    // Update booking status to 'accepted'
     booking.paymentStatus = 'captured';
-    booking.status = 'completed';
+    booking.status = 'accepted';
     booking.acceptedAt = new Date();
     await booking.save();
 
     res.json({
-      message: 'Session accepted and payment captured',
+      message:
+        'Session accepted and payment captured. Coach can now conduct the session.',
       booking,
-      paymentIntent,
+      paymentIntent: capturedIntent,
     });
   } catch (err) {
     console.error('Error accepting booking:', err);
@@ -145,23 +172,37 @@ router.post('/:id/reject', async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
+      console.error('Reject Error: Booking not found for id', req.params.id);
       return res.status(404).json({ message: 'Booking not found' });
     }
     if (booking.paymentStatus !== 'authorized') {
+      console.error(
+        'Reject Error: Payment not authorized or already processed.',
+        booking
+      );
       return res
         .status(400)
         .json({ message: 'Payment is not authorized or already processed.' });
     }
     if (booking.status !== 'pending') {
+      console.error('Reject Error: Session is not in pending status.', booking);
       return res
         .status(400)
         .json({ message: 'Session is not in pending status.' });
     }
 
     // Refund the payment
-    const refund = await stripe.refunds.create({
-      payment_intent: booking.paymentIntentId,
-    });
+    let refund;
+    try {
+      refund = await stripe.refunds.create({
+        payment_intent: booking.paymentIntentId,
+      });
+    } catch (stripeErr) {
+      console.error('Stripe refund error:', stripeErr);
+      return res
+        .status(500)
+        .json({ message: 'Stripe refund failed', error: stripeErr.message });
+    }
 
     // Update booking status
     booking.paymentStatus = 'refunded';
@@ -486,6 +527,122 @@ router.get('/athlete/:id/bookings/completed', async (req, res) => {
   }
 });
 
+// Coach completes a session
+router.put('/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completionNotes, performance, focusArea } = req.body;
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (
+      booking.status !== 'accepted' &&
+      booking.status !== 'conducted' &&
+      booking.status !== 'pending'
+    ) {
+      return res.status(400).json({
+        message:
+          'Session can only be completed if it is accepted, conducted, or pending',
+      });
+    }
+
+    // Update booking status to completed
+    booking.status = 'completed';
+    booking.completionNotes = completionNotes;
+    booking.performance = performance;
+    booking.focusArea = focusArea;
+    booking.completedAt = new Date();
+    await booking.save();
+
+    // Create a Progress entry for the athlete
+    await Progress.create({
+      userId: booking.athlete,
+      date: booking.date,
+      duration: booking.duration || '60 min',
+      focusArea: focusArea || 'General',
+      performance: performance || 0,
+      coachNotes: completionNotes || '',
+      status: 'completed',
+    });
+
+    res.json({
+      message: 'Session completed successfully',
+      booking,
+    });
+  } catch (err) {
+    console.error('Error completing session:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Coach starts conducting a session
+router.put('/:id/conduct', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sessionNotes } = req.body;
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.status !== 'accepted') {
+      return res.status(400).json({
+        message: 'Session can only be conducted if it is accepted',
+      });
+    }
+
+    // Update booking status to conducted
+    booking.status = 'conducted';
+    booking.sessionNotes = sessionNotes;
+    booking.conductedAt = new Date();
+    await booking.save();
+
+    res.json({
+      message: 'Session is now being conducted',
+      booking,
+    });
+  } catch (err) {
+    console.error('Error starting session conduction:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Get conducted sessions for coach
+router.get('/coach/:coachId/conducted', async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      coach: req.params.coachId,
+      status: 'conducted',
+    })
+      .populate('athlete', 'name email')
+      .sort({ conductedAt: -1 });
+
+    res.json({ bookings });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch conducted sessions' });
+  }
+});
+
+// Get completed sessions for coach
+router.get('/coach/:coachId/completed', async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      coach: req.params.coachId,
+      status: 'completed',
+    })
+      .populate('athlete', 'name email')
+      .sort({ completedAt: -1 });
+
+    res.json({ bookings });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch completed sessions' });
+  }
+});
+
 // Get current bookings count for an athlete
 router.get('/athlete/:id/bookings/current', async (req, res) => {
   try {
@@ -524,6 +681,19 @@ router.get('/athlete/:id/recent', async (req, res) => {
     res.json({ bookings: formattedBookings });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch recent bookings' });
+  }
+});
+
+// Get all sessions for an athlete
+router.get('/athlete/:id/all', async (req, res) => {
+  try {
+    const bookings = await Booking.find({ athlete: req.params.id }).sort({
+      date: -1,
+      time: -1,
+    });
+    res.json({ bookings });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 });
 

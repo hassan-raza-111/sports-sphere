@@ -21,6 +21,7 @@ import CheckoutPage from './pages/athelte/CheckoutPage.jsx';
 import CheckoutSuccess from './pages/athelte/CheckoutSuccess.jsx';
 import BookingSuccess from './pages/athelte/BookingSuccess.jsx';
 import MyOrders from './pages/athelte/MyOrders.jsx';
+import MySessions from './pages/athelte/MySessions.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
@@ -117,6 +118,7 @@ function App() {
         element={<AthleteGeneralProgress />}
       />
       <Route path='/athlete/orders' element={<MyOrders />} />
+      <Route path='/athlete/sessions' element={<MySessions />} />
 
       {/* Vendor */}
       <Route path='/vendor/dashboard' element={<Vendor />} />

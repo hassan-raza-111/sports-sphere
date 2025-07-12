@@ -16,7 +16,7 @@ const bookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'completed', 'cancelled'],
+      enum: ['pending', 'accepted', 'conducted', 'completed', 'cancelled'],
       default: 'pending',
     },
     // Additional fields for tracking

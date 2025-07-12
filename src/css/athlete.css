@@ -627,3 +627,131 @@
         right: -50px;
       }
     }
+
+/* Athlete Sessions Page Styles */
+.athlete-sessions-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+.athlete-sessions-heading {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.athlete-sessions-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.athlete-sessions-tab {
+  padding: 0.7rem 1.5rem;
+  background: #f4f4f4;
+  border: none;
+  border-radius: 5px 5px 0 0;
+  color: #2c3e50;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.athlete-sessions-tab.active {
+  background: #e74c3c;
+  color: #fff;
+}
+.athlete-sessions-loading,
+.athlete-sessions-error,
+.athlete-sessions-empty {
+  text-align: center;
+  color: #e74c3c;
+  margin: 2rem 0;
+  font-size: 1.1rem;
+}
+.athlete-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.athlete-session-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #eee;
+  padding: 1.2rem 1.5rem;
+  border-left: 4px solid #e74c3c;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.athlete-session-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.athlete-session-label {
+  font-weight: 600;
+  color: #7f8c8d;
+  min-width: 80px;
+}
+.athlete-session-value {
+  color: #2c3e50;
+}
+.athlete-session-status {
+  font-weight: 700;
+  padding: 0.2rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  margin-left: 0.5rem;
+}
+.status-pending {
+  background: #fef9e7;
+  color: #f39c12;
+}
+.status-completed {
+  background: #d5f4e6;
+  color: #27ae60;
+}
+.status-cancelled {
+  background: #fadbd8;
+  color: #e74c3c;
+}
+.athlete-session-payment {
+  font-weight: 600;
+  padding: 0.2rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  margin-left: 0.5rem;
+}
+.payment-authorized {
+  background: #fef9e7;
+  color: #f39c12;
+}
+.payment-captured {
+  background: #d5f4e6;
+  color: #27ae60;
+}
+.payment-refunded {
+  background: #fadbd8;
+  color: #e74c3c;
+}
+.payment-pending {
+  background: #f4f4f4;
+  color: #7f8c8d;
+}
+.payment-failed {
+  background: #f8d7da;
+  color: #c0392b;
+}
+@media (max-width: 600px) {
+  .athlete-sessions-container {
+    padding: 1rem 0.2rem;
+  }
+  .athlete-session-card {
+    padding: 1rem 0.5rem;
+  }
+  .athlete-sessions-heading {
+    font-size: 1.3rem;
+  }
+}
