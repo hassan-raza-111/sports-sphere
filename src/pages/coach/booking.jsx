@@ -48,40 +48,41 @@ const CoachBookings = () => {
     fetchCoachId();
   }, [userId]);
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        // Fetch pending sessions
-        const pendingRes = await fetch(`/api/booking/coach/${coachId}/pending`);
-        if (!pendingRes.ok) throw new Error('Failed to fetch pending bookings');
-        const pendingData = await pendingRes.json();
-        setBookings(pendingData.bookings || []);
+  const fetchBookings = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // Fetch pending sessions
+      const pendingRes = await fetch(`/api/booking/coach/${coachId}/pending`);
+      if (!pendingRes.ok) throw new Error('Failed to fetch pending bookings');
+      const pendingData = await pendingRes.json();
+      setBookings(pendingData.bookings || []);
 
-        // Fetch conducted sessions
-        const conductedRes = await fetch(
-          `/api/booking/coach/${coachId}/conducted`
-        );
-        if (conductedRes.ok) {
-          const conductedData = await conductedRes.json();
-          setConductedBookings(conductedData.bookings || []);
-        }
-
-        // Fetch completed sessions
-        const completedRes = await fetch(
-          `/api/booking/coach/${coachId}/completed`
-        );
-        if (completedRes.ok) {
-          const completedData = await completedRes.json();
-          setCompletedBookings(completedData.bookings || []);
-        }
-      } catch (err) {
-        setError('Failed to load bookings.');
-      } finally {
-        setLoading(false);
+      // Fetch conducted sessions
+      const conductedRes = await fetch(
+        `/api/booking/coach/${coachId}/conducted`
+      );
+      if (conductedRes.ok) {
+        const conductedData = await conductedRes.json();
+        setConductedBookings(conductedData.bookings || []);
       }
-    };
+
+      // Fetch completed sessions
+      const completedRes = await fetch(
+        `/api/booking/coach/${coachId}/completed`
+      );
+      if (completedRes.ok) {
+        const completedData = await completedRes.json();
+        setCompletedBookings(completedData.bookings || []);
+      }
+    } catch (err) {
+      setError('Failed to load bookings.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (coachId) fetchBookings();
   }, [coachId]);
 
@@ -93,10 +94,21 @@ const CoachBookings = () => {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to accept booking');
-      setBookings((prev) => prev.filter((b) => b._id !== bookingId));
+
+      // Update the session status locally
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking._id === bookingId
+            ? { ...booking, status: 'accepted' }
+            : booking
+        )
+      );
+
       alert(
         'Session accepted successfully! Payment has been captured. You can now conduct the session.'
       );
+      // Refresh data to ensure UI is in sync
+      await fetchBookings();
     } catch (err) {
       setError('Failed to accept booking.');
     } finally {
@@ -131,20 +143,24 @@ const CoachBookings = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'completed',
           completionNotes: 'Session completed successfully',
         }),
       });
       if (!res.ok) throw new Error('Failed to complete session');
 
-      // Move from pending to completed
-      const completedSession = bookings.find((b) => b._id === bookingId);
+      // Move from conducted to completed
+      const completedSession = conductedBookings.find(
+        (b) => b._id === bookingId
+      );
       if (completedSession) {
-        setCompletedBookings((prev) => [completedSession, ...prev]);
-        setBookings((prev) => prev.filter((b) => b._id !== bookingId));
+        const updatedSession = { ...completedSession, status: 'completed' };
+        setCompletedBookings((prev) => [updatedSession, ...prev]);
+        setConductedBookings((prev) => prev.filter((b) => b._id !== bookingId));
       }
 
       alert('Session completed successfully!');
+      // Refresh data to ensure UI is in sync
+      await fetchBookings();
     } catch (err) {
       setError('Failed to complete session.');
     } finally {
@@ -170,11 +186,14 @@ const CoachBookings = () => {
       // Move from accepted to conducted
       const conductedSession = bookings.find((b) => b._id === bookingId);
       if (conductedSession) {
-        setConductedBookings((prev) => [conductedSession, ...prev]);
+        const updatedSession = { ...conductedSession, status: 'conducted' };
+        setConductedBookings((prev) => [updatedSession, ...prev]);
         setBookings((prev) => prev.filter((b) => b._id !== bookingId));
       }
 
       alert('Session is now being conducted!');
+      // Refresh data to ensure UI is in sync
+      await fetchBookings();
     } catch (err) {
       setError('Failed to start conducting session.');
     } finally {

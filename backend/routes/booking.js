@@ -545,7 +545,8 @@ router.put('/:id/complete', async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          'Session can only be completed if it is accepted, conducted, or pending',
+          'Session can only be completed if it is accepted, conducted, or pending. Current status: ' +
+          booking.status,
       });
     }
 
