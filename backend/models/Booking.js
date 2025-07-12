@@ -7,6 +7,12 @@ const bookingSchema = new mongoose.Schema(
     date: { type: String, required: true },
     time: { type: String, required: true },
     notes: String,
+    paymentIntentId: { type: String },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'authorized', 'captured', 'failed'],
+      default: 'pending',
+    },
     status: {
       type: String,
       enum: ['pending', 'completed', 'cancelled'],

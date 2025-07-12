@@ -16,6 +16,7 @@ export default function CoachProfileEdit() {
     about: '',
     certifications: '',
     specialties: '',
+    hourlyRate: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,6 +44,7 @@ export default function CoachProfileEdit() {
           about: data.about || '',
           certifications: (data.certifications || []).join(', '),
           specialties: (data.specialties || []).join(', '),
+          hourlyRate: data.hourlyRate || '',
         });
         setLoading(false);
       })
@@ -67,6 +69,7 @@ export default function CoachProfileEdit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          hourlyRate: Number(form.hourlyRate),
           certifications: form.certifications
             .split(',')
             .map((s) => s.trim())
@@ -156,6 +159,15 @@ export default function CoachProfileEdit() {
             value={form.profileImage}
             onChange={handleChange}
             placeholder='Profile Image URL'
+          />
+          <input
+            name='hourlyRate'
+            type='number'
+            value={form.hourlyRate}
+            onChange={handleChange}
+            placeholder='Session Price (PKR)'
+            min={0}
+            required
           />
           <textarea
             name='about'

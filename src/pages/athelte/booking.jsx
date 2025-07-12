@@ -2,6 +2,68 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/booking.css';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+
+function PaymentSection({ amount, onPaymentSuccess, submitting }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handlePayment = async () => {
+    setError(null);
+    setLoading(true);
+    if (!stripe || !elements) {
+      setError('Stripe not loaded');
+      setLoading(false);
+      return null;
+    }
+    const cardElement = elements.getElement(CardElement);
+    const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    });
+    if (pmError) {
+      setError(pmError.message);
+      setLoading(false);
+      return null;
+    }
+    setLoading(false);
+    onPaymentSuccess(paymentMethod.id);
+    return paymentMethod.id;
+  };
+
+  return (
+    <div className='form-group'>
+      <label>Card Details</label>
+      <div
+        style={{
+          border: '1px solid #ccc',
+          padding: 10,
+          borderRadius: 6,
+          marginBottom: 10,
+        }}
+      >
+        <CardElement options={{ style: { base: { fontSize: '16px' } } }} />
+      </div>
+      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+      <button
+        type='button'
+        className='btn'
+        disabled={loading || submitting}
+        onClick={handlePayment}
+      >
+        {loading ? 'Processing...' : `Authorize Payment (PKR ${amount})`}
+      </button>
+    </div>
+  );
+}
 
 const BookingPage = () => {
   const [coaches, setCoaches] = useState([]);
@@ -14,6 +76,9 @@ const BookingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethodId, setPaymentMethodId] = useState('');
+  const [amount, setAmount] = useState(0);
   const navigate = useNavigate();
 
   // Get athlete ID from localStorage
@@ -37,17 +102,20 @@ const BookingPage = () => {
     fetchCoaches();
   }, []);
 
-  // Set coach description when coach is selected
+  // Set coach description and amount when coach is selected
   useEffect(() => {
     if (!selectedCoach) {
       setCoachDescription('');
+      setAmount(0);
       return;
     }
     const coach = coaches.find((c) => c._id === selectedCoach);
     if (coach) {
       setCoachDescription(coach.bio || coach.about || '');
+      setAmount(coach.hourlyRate || 0);
     } else {
       setCoachDescription('');
+      setAmount(0);
     }
   }, [selectedCoach, coaches]);
 
@@ -75,6 +143,11 @@ const BookingPage = () => {
       setErrorMsg('User not logged in.');
       return;
     }
+    if (!paymentMethodId) {
+      setShowPayment(true);
+      setErrorMsg('Please authorize payment first.');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch('/api/booking', {
@@ -86,15 +159,19 @@ const BookingPage = () => {
           date,
           time,
           notes,
+          amount,
+          paymentMethodId,
         }),
       });
       if (!res.ok) throw new Error('Failed to book session');
-      setSuccessMsg('Session booked successfully!');
+      setSuccessMsg('Session booked successfully! Awaiting coach acceptance.');
       setSelectedCoach('');
       setDate('');
       setTime('');
       setNotes('');
       setCoachDescription('');
+      setPaymentMethodId('');
+      setShowPayment(false);
     } catch (err) {
       setErrorMsg('Failed to book session. Please try again.');
     } finally {
@@ -147,6 +224,12 @@ const BookingPage = () => {
                 {coachDescription}
               </div>
             )}
+            {amount === 0 && selectedCoach && (
+              <div style={{ color: '#e74c3c', marginBottom: 10 }}>
+                This coach cannot be booked for paid sessions. Please select
+                another coach.
+              </div>
+            )}
             <div className='form-group'>
               <label htmlFor='date'>Session Date</label>
               <input
@@ -190,11 +273,35 @@ const BookingPage = () => {
                 {successMsg}
               </div>
             )}
+            {/* Payment Section */}
+            {showPayment && amount > 0 && (
+              <Elements
+                stripe={loadStripe(
+                  process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY ||
+                    'pk_test_your_publishable_key'
+                )}
+              >
+                <PaymentSection
+                  amount={amount}
+                  submitting={submitting}
+                  onPaymentSuccess={(pmId) => {
+                    setPaymentMethodId(pmId);
+                    setShowPayment(false);
+                    setErrorMsg('');
+                  }}
+                />
+              </Elements>
+            )}
             <button
               type='submit'
               className='btn'
               disabled={
-                submitting || loadingCoaches || !selectedCoach || !date || !time
+                submitting ||
+                loadingCoaches ||
+                !selectedCoach ||
+                !date ||
+                !time ||
+                amount === 0
               }
             >
               <i className='fas fa-lock'></i>{' '}

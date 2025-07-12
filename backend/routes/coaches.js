@@ -179,6 +179,7 @@ router.put('/:id/profile', async (req, res) => {
       'about',
       'certifications',
       'specialties',
+      'hourlyRate',
     ];
     const updateData = {};
     for (const key of allowedFields) {
