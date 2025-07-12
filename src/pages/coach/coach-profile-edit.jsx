@@ -107,6 +107,9 @@ export default function CoachProfileEdit() {
     <Layout role='coach'>
       <div className='profile-container'>
         <h2>Edit Coach Profile</h2>
+        <div style={{ marginBottom: 16, fontWeight: 'bold', color: '#2c3e50' }}>
+          Current Session Price: PKR {form.hourlyRate || 0}
+        </div>
         <form
           onSubmit={handleSubmit}
           style={{
@@ -160,6 +163,9 @@ export default function CoachProfileEdit() {
             onChange={handleChange}
             placeholder='Profile Image URL'
           />
+          <label htmlFor='hourlyRate' style={{ fontWeight: 'bold' }}>
+            Session Price (PKR)
+          </label>
           <input
             name='hourlyRate'
             type='number'

@@ -74,6 +74,11 @@ const CoachProfile = () => {
                 <FaCertificate /> Certified
               </span>
             </h2>
+            <div
+              style={{ fontWeight: 'bold', color: '#e74c3c', marginBottom: 8 }}
+            >
+              Session Price: PKR {coach.hourlyRate || 0}
+            </div>
             <p>
               <FaUserTie /> Professional {coach.sports || 'Coach'}
             </p>
