@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logoImg from '../assets/images/Logo.png';
 import {
   FaRunning,
@@ -14,7 +14,28 @@ import {
 
 const Layout = ({ children, role = 'coach' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setShowProfileMenu(false);
+      }
+    }
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -34,22 +55,39 @@ const Layout = ({ children, role = 'coach' }) => {
         <nav>
           {role === 'coach' && (
             <>
-              <Link to='/coach/dashboard' className='active'>
+              <Link
+                to='/coach/dashboard'
+                className={
+                  location.pathname === '/coach/dashboard' ? 'active' : ''
+                }
+              >
                 <FaHome /> <span>Home</span>
               </Link>
-              <Link to='/coach/messages'>
+              {/* Marketplace link removed */}
+              <Link
+                to='/coach/messages'
+                className={
+                  location.pathname === '/coach/messages' ? 'active' : ''
+                }
+              >
                 <FaEnvelope /> <span>Messages</span>
                 <span className='notification-badge'>3</span>
               </Link>
-              <Link to='/coach/athlete-progress'>
+              <Link
+                to='/coach/athlete-progress'
+                className={
+                  location.pathname === '/coach/athlete-progress'
+                    ? 'active'
+                    : ''
+                }
+              >
                 <FaChartLine /> <span>Coach Progress</span>
               </Link>
-
               {/* Profile Dropdown */}
-              <div className='profile-dropdown'>
+              <div className='profile-dropdown' ref={profileDropdownRef}>
                 <div
                   className='profile-btn'
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  onClick={() => setShowProfileMenu((prev) => !prev)}
                 >
                   <FaUser />
                 </div>

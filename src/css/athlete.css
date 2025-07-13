@@ -220,11 +220,6 @@
       min-width: 200px;
       z-index: 1000;
       margin-top: 0.5rem;
-      display: none;
-    }
-
-    .profile-dropdown:hover .profile-menu {
-      display: block;
     }
 
     .profile-menu a,
