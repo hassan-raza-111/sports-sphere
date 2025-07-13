@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import VendorLayout from '../../components/VendorLayout';
-import '../../css/vendor-profile.css';
+import '../../css/profile.css';
 
-const BACKEND_URL = 'http://localhost:5000'; // Change if needed
+const BACKEND_URL = 'http://localhost:5000';
 
 const VendorProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -42,56 +42,94 @@ const VendorProfile = () => {
 
   return (
     <VendorLayout>
-      <div className='vendor-profile-container'>
+      <div className='profile-container'>
         {loading ? (
-          <div>Loading...</div>
+          <div className='loading-container'>
+            <div className='loading-spinner'></div>
+            <p>Loading profile...</p>
+          </div>
         ) : error ? (
-          <div style={{ color: 'red' }}>{error}</div>
+          <div className='error-message'>{error}</div>
         ) : profile ? (
           <>
+            {/* Profile Header */}
             <div className='profile-header'>
               <img
                 src={getImageUrl(profile.image)}
-                alt='Vendor Profile Picture'
-                id='vendorImage'
+                alt='Vendor Profile'
+                className='profile-image'
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = 'https://via.placeholder.com/130';
                 }}
               />
-              <h1>{profile.userId?.name || 'No Name'}</h1>
-              <p>{profile.storeName || ''}</p>
-              <Link to='/vendor/profile/edit' className='edit-profile-btn'>
-                Edit Profile
-              </Link>
-            </div>
-            <div className='info-section'>
-              <div className='info-title'>Email</div>
-              <div className='info-value'>{profile.userId?.email || ''}</div>
-            </div>
-            <div className='info-section'>
-              <div className='info-title'>Phone</div>
-              <div className='info-value'>{profile.userId?.phone || ''}</div>
-            </div>
-            <div className='info-section'>
-              <div className='info-title'>Bio</div>
-              <div className='info-value'>{profile.description || ''}</div>
-            </div>
-            <div className='info-section'>
-              <div className='info-title'>Social Links</div>
-              <div className='social-icons'>
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    Website
-                  </a>
-                )}
-                {/* Add more social links if available in schema */}
+              <div className='profile-info'>
+                <h2>{profile.userId?.name || 'No Name'}</h2>
+                <p>
+                  <i className='fas fa-store'></i> {profile.storeName || '-'}
+                </p>
+                <p>
+                  <i className='fas fa-envelope'></i>{' '}
+                  {profile.userId?.email || '-'}
+                </p>
+                <p>
+                  <i className='fas fa-phone'></i>{' '}
+                  {profile.userId?.phone || '-'}
+                </p>
+                <div className='profile-buttons'>
+                  <Link to='/vendor/profile/edit' className='btn'>
+                    <i className='fas fa-user-edit'></i> Edit Profile
+                  </Link>
+                  {profile.website && (
+                    <a
+                      href={profile.website}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='btn secondary'
+                    >
+                      <i className='fas fa-globe'></i> Website
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* About Section */}
+            <div className='profile-section'>
+              <h3>
+                <i className='fas fa-info-circle'></i> About
+              </h3>
+              <p>{profile.description || '-'}</p>
+            </div>
+
+            {/* Social Section */}
+            {(profile.instagram || profile.facebook) && (
+              <div className='profile-section'>
+                <h3>
+                  <i className='fas fa-share-alt'></i> Social Links
+                </h3>
+                <div className='social-icons'>
+                  {profile.instagram && (
+                    <a
+                      href={profile.instagram}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <i className='fab fa-instagram'></i>
+                    </a>
+                  )}
+                  {profile.facebook && (
+                    <a
+                      href={profile.facebook}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <i className='fab fa-facebook'></i>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         ) : null}
       </div>
