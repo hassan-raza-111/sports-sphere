@@ -312,7 +312,7 @@ function CoachDashboard() {
             View detailed analytics and performance metrics.
           </p>
           <Link
-            to='/coach/analytics'
+            to='/coach/athlete-progress'
             style={{
               display: 'inline-block',
               padding: '0.8rem 1.5rem',
@@ -360,7 +360,7 @@ function CoachDashboard() {
             Communicate with your athletes and manage conversations.
           </p>
           <Link
-            to='/coach/message'
+            to='/coach/messages'
             style={{
               display: 'inline-block',
               padding: '0.8rem 1.5rem',

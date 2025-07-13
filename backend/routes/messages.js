@@ -48,6 +48,11 @@ router.get('/conversations/:userId', async (req, res) => {
           User.findById(partnerId).select('name email profileImage role')
         );
       }
+
+      // Count unread messages (messages received by current user that are not read)
+      if (message.receiver === userId && !message.read) {
+        conversations[partnerId].unreadCount++;
+      }
     });
 
     // Get user details for all conversation partners
@@ -114,6 +119,28 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Error sending message:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Mark messages as read
+router.put('/mark-read/:senderId/:receiverId', async (req, res) => {
+  try {
+    const { senderId, receiverId } = req.params;
+
+    // Mark messages as read where receiver is the current user
+    await Message.updateMany(
+      {
+        sender: { $in: [senderId, receiverId] },
+        receiver: senderId, // Only mark messages received by current user
+        read: false,
+      },
+      { read: true }
+    );
+
+    res.json({ success: true, message: 'Messages marked as read' });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 });
 

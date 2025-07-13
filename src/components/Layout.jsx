@@ -37,9 +37,6 @@ const Layout = ({ children, role = 'coach' }) => {
               <Link to='/coach/dashboard' className='active'>
                 <FaHome /> <span>Home</span>
               </Link>
-              <Link to='/coach/marketplace'>
-                <FaStore /> <span>Marketplace</span>
-              </Link>
               <Link to='/coach/messages'>
                 <FaEnvelope /> <span>Messages</span>
                 <span className='notification-badge'>3</span>

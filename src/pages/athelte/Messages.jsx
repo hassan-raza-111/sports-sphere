@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../../context/SocketContext';
+import AthleteLayout from '../../components/AthleteLayout';
 import logo from '../../assets/images/Logo.png';
 
 const messagesStyles = `
@@ -241,7 +243,7 @@ const messagesStyles = `
   }
 
   .unread-badge {
-    background-color: #e74c3c;
+    background-color: #3498db;
     color: white;
     border-radius: 50%;
     width: 20px;
@@ -251,6 +253,7 @@ const messagesStyles = `
     align-items: center;
     justify-content: center;
     margin-left: 0.5rem;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
   }
 
   .chat-container {
@@ -501,6 +504,65 @@ const messagesStyles = `
     margin-right: 1rem;
   }
 
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+  }
+
+  .typing-indicator span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #bdc3c7;
+    animation: typing 1.4s infinite ease-in-out;
+  }
+
+  .typing-indicator span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes typing {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .connection-status {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    z-index: 1000;
+    transition: all 0.3s;
+  }
+
+  .connection-status.connected {
+    background-color: #27ae60;
+    color: white;
+  }
+
+  .connection-status.disconnected {
+    background-color: #e74c3c;
+    color: white;
+  }
+
+  .connection-status.error {
+    background-color: #f39c12;
+    color: white;
+  }
+
   /* Responsive adjustments */
   @media (max-width: 992px) {
     .messages-container {
@@ -541,6 +603,13 @@ const messagesStyles = `
 
 const Messages = () => {
   const navigate = useNavigate();
+  const {
+    socket,
+    isConnected,
+    connectionError,
+    joinRoom,
+    sendMessage: socketSendMessage,
+  } = useSocket();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -550,6 +619,8 @@ const Messages = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
+  const [typingUsers, setTypingUsers] = useState(new Set());
+  const messagesEndRef = useRef(null);
 
   // Get current user from localStorage
   useEffect(() => {
@@ -579,6 +650,95 @@ const Messages = () => {
       fetchAvailableUsers();
     }
   }, [showNewMessage, currentUser]);
+
+  // Socket event listeners
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    // Join user's room
+    const userId = currentUser._id || currentUser.id;
+    joinRoom(userId);
+
+    // Listen for new messages
+    socket.on('new_message', (data) => {
+      console.log('New message received:', data);
+      const { message } = data;
+
+      // Check if this message is for the currently open conversation
+      const isCurrentConversation =
+        selectedConversation &&
+        (message.sender === selectedConversation.partnerId ||
+          message.receiver === selectedConversation.partnerId);
+
+      if (isCurrentConversation) {
+        // Add message to current conversation
+        setMessages((prev) => [...prev, message]);
+      } else {
+        // Update unread count for the conversation
+        setConversations((prev) =>
+          prev.map((conv) => {
+            if (
+              conv.partnerId === message.sender ||
+              conv.partnerId === message.receiver
+            ) {
+              return {
+                ...conv,
+                unreadCount: (conv.unreadCount || 0) + 1,
+                lastMessage: message.content,
+                lastMessageTime: message.timestamp,
+              };
+            }
+            return conv;
+          })
+        );
+      }
+
+      // Update conversations list
+      fetchConversations(userId);
+    });
+
+    // Listen for message sent confirmation
+    socket.on('message_sent', (data) => {
+      console.log('Message sent successfully:', data);
+      if (data.success) {
+        setMessages((prev) => [...prev, data.message]);
+        setNewMessage('');
+      }
+    });
+
+    // Listen for typing indicators
+    socket.on('user_typing', (data) => {
+      const { sender, isTyping } = data;
+      if (isTyping) {
+        setTypingUsers((prev) => new Set([...prev, sender]));
+      } else {
+        setTypingUsers((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(sender);
+          return newSet;
+        });
+      }
+    });
+
+    // Listen for conversation updates
+    socket.on('conversation_updated', (data) => {
+      console.log('Conversation updated:', data);
+      const userId = currentUser._id || currentUser.id;
+      fetchConversations(userId);
+    });
+
+    return () => {
+      socket.off('new_message');
+      socket.off('message_sent');
+      socket.off('user_typing');
+      socket.off('conversation_updated');
+    };
+  }, [socket, currentUser, selectedConversation]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const fetchConversations = async (userId) => {
     try {
@@ -641,39 +801,53 @@ const Messages = () => {
 
     try {
       const userId = currentUser._id || currentUser.id;
-      const response = await fetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sender: userId,
-          receiver: selectedConversation.partnerId,
-          content: newMessage.trim(),
-        }),
-      });
+      const messageData = {
+        sender: userId,
+        receiver: selectedConversation.partnerId,
+        content: newMessage.trim(),
+      };
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json();
-      setMessages((prev) => [...prev, data.messageObj]);
+      // Only send via socket for real-time
+      socketSendMessage(messageData);
       setNewMessage('');
 
-      // Update conversations list
-      fetchConversations(userId);
+      // Update conversations list after a short delay
+      setTimeout(() => {
+        fetchConversations(userId);
+      }, 500);
     } catch (err) {
       setError('Failed to send message');
       console.error('Error sending message:', err);
     }
   };
 
-  const handleConversationSelect = (conversation) => {
+  const handleConversationSelect = async (conversation) => {
     setSelectedConversation(conversation);
+
+    // Clear unread count for this conversation
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.partnerId === conversation.partnerId
+          ? { ...conv, unreadCount: 0 }
+          : conv
+      )
+    );
+
     if (currentUser) {
       const userId = currentUser._id || currentUser.id;
       fetchMessages(userId, conversation.partnerId);
+
+      // Mark messages as read
+      try {
+        await fetch(
+          `http://localhost:5000/api/messages/mark-read/${userId}/${conversation.partnerId}`,
+          {
+            method: 'PUT',
+          }
+        );
+      } catch (err) {
+        console.error('Error marking messages as read:', err);
+      }
     }
   };
 
@@ -745,41 +919,21 @@ const Messages = () => {
   }
 
   return (
-    <>
+    <AthleteLayout>
       <style dangerouslySetInnerHTML={{ __html: messagesStyles }} />
 
-      <header>
-        <div className='logo'>
-          <img src={logo} alt='Sport Sphere Logo' className='logo-img' />
-          <div className='logo-text'>Sports Sphere</div>
-        </div>
-        <nav>
-          <a
-            href='/'
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/');
-            }}
-          >
-            <i className='fas fa-home'></i> Home
-          </a>
-          <a
-            href='/athlete-dashboard'
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/athlete-dashboard');
-            }}
-          >
-            <i className='fas fa-user-shield'></i> Dashboard
-          </a>
-          <a href='/messages' className='active'>
-            <i className='fas fa-envelope'></i> Messages
-          </a>
-          <a href='/profile' className='profile-btn'>
-            <i className='fas fa-user'></i>
-          </a>
-        </nav>
-      </header>
+      {/* Connection Status */}
+      <div
+        className={`connection-status ${
+          isConnected ? 'connected' : connectionError ? 'error' : 'disconnected'
+        }`}
+      >
+        {isConnected
+          ? '🟢 Connected'
+          : connectionError
+          ? '⚠️ Backend Offline'
+          : '🔴 Disconnected'}
+      </div>
 
       <main className='messages-container'>
         <div className='conversation-list'>
@@ -903,6 +1057,20 @@ const Messages = () => {
                     </div>
                   );
                 })}
+
+                {/* Typing indicator */}
+                {typingUsers.has(selectedConversation.partnerId) && (
+                  <div className='message message-received'>
+                    <div className='typing-indicator'>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Auto-scroll anchor */}
+                <div ref={messagesEndRef} />
               </div>
 
               <div className='chat-input'>
@@ -979,7 +1147,7 @@ const Messages = () => {
           </div>
         </div>
       )}
-    </>
+    </AthleteLayout>
   );
 };
 

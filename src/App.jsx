@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import './css/find-coaches.css';
+import { SocketProvider } from './context/SocketContext';
 
 import Home from './pages/Home';
 import Login from './pages/login';
@@ -58,111 +59,116 @@ import AdminPayouts from './pages/admin/admin-payouts.jsx';
 
 function App() {
   return (
-    <Routes>
-      {/* General - Protected from logged-in users */}
-      <Route
-        path='/'
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path='/login'
-        element={
-          <ProtectedRoute>
-            <Login />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path='/register'
-        element={
-          <ProtectedRoute>
-            <Register />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path='/forgot-password'
-        element={
-          <ProtectedRoute>
-            <ForgotPassword />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path='/reset-password/:token'
-        element={
-          <ProtectedRoute>
-            <ResetPassword />
-          </ProtectedRoute>
-        }
-      />
+    <SocketProvider>
+      <Routes>
+        {/* General - Protected from logged-in users */}
+        <Route
+          path='/'
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/login'
+          element={
+            <ProtectedRoute>
+              <Login />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/register'
+          element={
+            <ProtectedRoute>
+              <Register />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/forgot-password'
+          element={
+            <ProtectedRoute>
+              <ForgotPassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/reset-password/:token'
+          element={
+            <ProtectedRoute>
+              <ResetPassword />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Athlete */}
-      <Route path='/athlete/dashboard' element={<Athlete />} />
-      <Route path='/athlete/profile' element={<ProfilePage />} />
-      <Route path='/athlete/messages' element={<AthleteMessages />} />
-      <Route path='/athlete/booking' element={<AthleteBooking />} />
-      <Route path='/athlete/booking/success' element={<BookingSuccess />} />
-      <Route path='/athlete/feedback' element={<AthleteFeedback />} />
-      <Route path='/athlete/find-coaches' element={<FindCoaches />} />
-      <Route path='/athlete/progress' element={<AthleteProgress />} />
-      <Route path='/athlete/marketplace' element={<MarketplacePage />} />
-      <Route path='/athlete/checkout' element={<CheckoutPage />} />
-      <Route path='/athlete/checkout/success' element={<CheckoutSuccess />} />
-      <Route
-        path='/athlete/general-progress'
-        element={<AthleteGeneralProgress />}
-      />
-      <Route path='/athlete/orders' element={<MyOrders />} />
-      <Route path='/athlete/sessions' element={<MySessions />} />
+        {/* Athlete */}
+        <Route path='/athlete/dashboard' element={<Athlete />} />
+        <Route path='/athlete/profile' element={<ProfilePage />} />
+        <Route path='/athlete/messages' element={<AthleteMessages />} />
+        <Route path='/athlete/booking' element={<AthleteBooking />} />
+        <Route path='/athlete/booking/success' element={<BookingSuccess />} />
+        <Route path='/athlete/feedback' element={<AthleteFeedback />} />
+        <Route path='/athlete/find-coaches' element={<FindCoaches />} />
+        <Route path='/athlete/progress' element={<AthleteProgress />} />
+        <Route path='/athlete/marketplace' element={<MarketplacePage />} />
+        <Route path='/athlete/checkout' element={<CheckoutPage />} />
+        <Route path='/athlete/checkout/success' element={<CheckoutSuccess />} />
+        <Route
+          path='/athlete/general-progress'
+          element={<AthleteGeneralProgress />}
+        />
+        <Route path='/athlete/orders' element={<MyOrders />} />
+        <Route path='/athlete/sessions' element={<MySessions />} />
 
-      {/* Vendor */}
-      <Route path='/vendor/dashboard' element={<Vendor />} />
-      <Route path='/vendor/profile' element={<VendorProfile />} />
-      <Route path='/vendor/profile/edit' element={<VendorProfileForm />} />
-      <Route path='/vendor/feedback' element={<VendorFeedback />} />
-      <Route path='/vendor/marketplace' element={<VendorMarketplace />} />
-      <Route path='/vendor/messages' element={<VendorMessages />} />
-      <Route path='/vendor/progress' element={<VendorProgress />} />
-      <Route path='/vendor/report' element={<VendorReport />} />
-      <Route path='/vendor/panel' element={<VendorPanel />} />
-      <Route path='/vendor/orders' element={<OrderManagement />} />
-      <Route path='/vendor/earnings' element={<EarningsOverview />} />
-      <Route
-        path='/vendor/feedback-management'
-        element={<FeedbackManagement />}
-      />
+        {/* Vendor */}
+        <Route path='/vendor/dashboard' element={<Vendor />} />
+        <Route path='/vendor/profile' element={<VendorProfile />} />
+        <Route path='/vendor/profile/edit' element={<VendorProfileForm />} />
+        <Route path='/vendor/feedback' element={<VendorFeedback />} />
+        <Route path='/vendor/marketplace' element={<VendorMarketplace />} />
+        <Route path='/vendor/messages' element={<VendorMessages />} />
+        <Route path='/vendor/progress' element={<VendorProgress />} />
+        <Route path='/vendor/report' element={<VendorReport />} />
+        <Route path='/vendor/panel' element={<VendorPanel />} />
+        <Route path='/vendor/orders' element={<OrderManagement />} />
+        <Route path='/vendor/earnings' element={<EarningsOverview />} />
+        <Route
+          path='/vendor/feedback-management'
+          element={<FeedbackManagement />}
+        />
 
-      {/* Coach */}
-      <Route path='/coach/dashboard' element={<CoachDashboard />} />
-      <Route path='/coach/profile' element={<CoachProfile />} />
-      <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
-      <Route path='/coach/marketplace' element={<CoachMarketplace />} />
-      <Route path='/coach/messages' element={<CoachMessages />} />
-      <Route path='/coach/booking' element={<CoachBooking />} />
-      <Route
-        path='/coach/athlete-progress'
-        element={<CoachAthleteProgress />}
-      />
+        {/* Coach */}
+        <Route path='/coach/dashboard' element={<CoachDashboard />} />
+        <Route path='/coach/profile' element={<CoachProfile />} />
+        <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
+        <Route path='/coach/marketplace' element={<CoachMarketplace />} />
+        <Route path='/coach/messages' element={<CoachMessages />} />
+        <Route path='/coach/booking' element={<CoachBooking />} />
+        <Route
+          path='/coach/athlete-progress'
+          element={<CoachAthleteProgress />}
+        />
 
-      {/* Admin */}
-      <Route path='/admin/dashboard' element={<Admin />} />
-      <Route
-        path='/admin/payment-management'
-        element={<AdminPaymentManagement />}
-      />
-      <Route path='/admin/payouts' element={<AdminPayouts />} />
-      <Route path='/admin/report' element={<AdminReport />} />
-      <Route path='/admin/user-management' element={<AdminUserManagement />} />
-      <Route path='/admin/add-user' element={<AdminAddUser />} />
+        {/* Admin */}
+        <Route path='/admin/dashboard' element={<Admin />} />
+        <Route
+          path='/admin/payment-management'
+          element={<AdminPaymentManagement />}
+        />
+        <Route path='/admin/payouts' element={<AdminPayouts />} />
+        <Route path='/admin/report' element={<AdminReport />} />
+        <Route
+          path='/admin/user-management'
+          element={<AdminUserManagement />}
+        />
+        <Route path='/admin/add-user' element={<AdminAddUser />} />
 
-      {/* Not Found (404) */}
-      <Route path='*' element={<NotFound />} />
-    </Routes>
+        {/* Not Found (404) */}
+        <Route path='*' element={<NotFound />} />
+      </Routes>
+    </SocketProvider>
   );
 }
 
