@@ -53,31 +53,41 @@ const OrderDetailModal = ({ order, onClose }) => {
         <div className='order-modal-section'>
           <strong>Products:</strong>
           <div className='order-products-list'>
-            {order.products.map((p, idx) => (
-              <div className='order-product-item' key={idx}>
-                <div className='order-product-img'>
-                  {p.image ? (
-                    <img
-                      src={
-                        p.image.startsWith('http')
-                          ? p.image
-                          : `http://localhost:5000${p.image}`
-                      }
-                      alt={p.name || p.productId}
-                    />
-                  ) : (
-                    <div className='no-img'>No Image</div>
-                  )}
-                </div>
-                <div className='order-product-info'>
-                  <div>
-                    <b>{p.name || p.productId}</b>
+            {order.products.map((p, idx) => {
+              // Support both populated and non-populated product fields
+              const prod =
+                p.productId && typeof p.productId === 'object'
+                  ? p.productId
+                  : {};
+              const name = prod.name || p.name || p.productId || 'Product';
+              const image = prod.image || p.image || '';
+              const price = prod.price || p.price || '-';
+              return (
+                <div className='order-product-item' key={idx}>
+                  <div className='order-product-img'>
+                    {image ? (
+                      <img
+                        src={
+                          image.startsWith('http')
+                            ? image
+                            : `http://localhost:5000${image}`
+                        }
+                        alt={name}
+                      />
+                    ) : (
+                      <div className='no-img'>No Image</div>
+                    )}
                   </div>
-                  <div>Qty: {p.quantity}</div>
-                  <div>Price: Rs. {p.price}</div>
+                  <div className='order-product-info'>
+                    <div>
+                      <b>{name}</b>
+                    </div>
+                    <div>Qty: {p.quantity}</div>
+                    <div>Price: Rs. {price}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
