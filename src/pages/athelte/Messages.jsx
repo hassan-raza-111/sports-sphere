@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import logo from '../../assets/images/Logo.png';
 
 const messagesStyles = `
-  /* Reset and base styles */
   * {
     margin: 0;
     padding: 0;
@@ -12,8 +13,8 @@ const messagesStyles = `
   body {
     color: #333;
     line-height: 1.6;
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-      url('https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                url('https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
     min-height: 100vh;
   }
 
@@ -22,7 +23,7 @@ const messagesStyles = `
     color: inherit;
   }
 
-  /* Header Styles */
+  /* Header styles - matching previous pages */
   header {
     display: flex;
     justify-content: space-between;
@@ -50,7 +51,7 @@ const messagesStyles = `
   .logo-text {
     font-size: 1.8rem;
     font-weight: bold;
-    color: #2c3e50;   
+    color: #2c3e50;
     font-style: italic;
   }
 
@@ -69,8 +70,7 @@ const messagesStyles = `
     gap: 5px;
   }
 
-  nav a:hover,
-  nav a.active {
+  nav a:hover, nav a.active {
     color: #e74c3c;
   }
 
@@ -103,58 +103,115 @@ const messagesStyles = `
     background-color: #c0392b;
   }
 
-  /* Messages Page Styles */
-  main {
-    padding-top: 140px;
+  /* Messages page styles */
+  .messages-container {
+    padding: 140px 5% 60px;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 140px 5% 60px;
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-
-  .sidebar {
-    flex: 1;
-    min-width: 280px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    border-left: 4px solid #e74c3c;
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+    height: calc(100vh - 200px);
   }
 
   .conversation-list {
-    max-height: 600px;
-    overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #e74c3c;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .conversation-header {
+    padding: 1.5rem;
+    background-color: #e74c3c;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .new-message-btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+  }
+
+  .new-message-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .conversation-search {
     padding: 1rem;
+    border-bottom: 1px solid #e1e5eb;
+  }
+
+  .conversation-search input {
+    width: 100%;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
+    border: 2px solid #e1e5eb;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%237f8c8d' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 1rem center;
+  }
+
+  .conversation-search input:focus {
+    border-color: #e74c3c;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+  }
+
+  .conversation-items {
+    flex: 1;
+    overflow-y: auto;
   }
 
   .conversation-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e1e5eb;
+    cursor: pointer;
+    transition: all 0.3s;
     display: flex;
     align-items: center;
-    padding: 1rem;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    position: relative;
-    transition: background 0.3s;
+    gap: 1rem;
   }
 
   .conversation-item:hover {
     background-color: #f8f9fa;
   }
 
-  .conversation-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+  .conversation-item.active {
     background-color: #e74c3c;
+    color: white;
+  }
+
+  .conversation-item.active .conversation-name,
+  .conversation-item.active .conversation-preview {
+    color: white;
+  }
+
+  .conversation-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #2c3e50;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    margin-right: 10px;
+    flex-shrink: 0;
   }
 
   .conversation-info {
@@ -165,15 +222,14 @@ const messagesStyles = `
   .conversation-name {
     font-weight: 600;
     color: #2c3e50;
+    margin-bottom: 0.3rem;
     display: flex;
     justify-content: space-between;
-    align-items: center;
   }
 
   .conversation-time {
     font-size: 0.8rem;
     color: #7f8c8d;
-    margin-left: 0.5rem;
   }
 
   .conversation-preview {
@@ -182,7 +238,6 @@ const messagesStyles = `
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-top: 4px;
   }
 
   .unread-badge {
@@ -199,9 +254,7 @@ const messagesStyles = `
   }
 
   .chat-container {
-    flex: 2;
-    min-width: 300px;
-    background: rgba(255, 255, 255, 0.95);
+    background-color: rgba(255, 255, 255, 0.95);
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -210,144 +263,248 @@ const messagesStyles = `
   }
 
   .chat-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #ddd;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e1e5eb;
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: #fff;
+    gap: 1rem;
+    background: white;
   }
 
-  .chat-header img {
-    width: 30px;
-    height: 30px;
+  .chat-avatar {
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    object-fit: cover;
+    background-color: #e74c3c;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
   }
 
-  .chat-title {
+  .chat-user-info {
+    flex: 1;
+  }
+
+  .chat-name {
     font-weight: 600;
     color: #2c3e50;
+    font-size: 1.1rem;
   }
 
-  .chat-subtitle {
-    font-size: 0.85rem;
+  .chat-status {
+    font-size: 0.9rem;
     color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
-  .chat-body {
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: #27ae60;
+    border-radius: 50%;
+  }
+
+  .chat-messages {
     flex: 1;
     padding: 1.5rem;
     overflow-y: auto;
     background: #f8f9fa;
-    border-bottom: 1px solid #ddd;
+    max-height: 400px;
   }
 
   .message {
-    display: flex;
-    margin-bottom: 1.5rem;
-    align-items: start;
-    gap: 1rem;
+    margin-bottom: 1rem;
+    max-width: 70%;
+    word-wrap: break-word;
   }
 
-  .message.user {
-    justify-content: flex-end;
+  .message-received {
+    align-self: flex-start;
+    background-color: white;
+    color: #2c3e50;
+    border: 1px solid #e1e5eb;
+    border-radius: 15px;
+    border-bottom-left-radius: 5px;
+    padding: 0.8rem 1rem;
   }
 
-  .message.user .message-content {
+  .message-sent {
+    align-self: flex-end;
     background-color: #e74c3c;
     color: white;
-    border-radius: 15px 5px 5px 15px;
-    max-width: 70%;
+    border-radius: 15px;
+    border-bottom-right-radius: 5px;
+    padding: 0.8rem 1rem;
     margin-left: auto;
   }
 
-  .message.other .message-content {
-    background-color: white;
-    color: #333;
-    border-radius: 5px 15px 15px 5px;
-    max-width: 70%;
+  .message-time {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    opacity: 0.7;
   }
 
-  .message-content {
-    padding: 1rem 1.2rem;
-    border-radius: 5px;
-    font-size: 0.95rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  .message-received .message-time {
+    text-align: left;
   }
 
-  .chat-footer {
-    padding: 1rem 1.5rem;
-    background: #fff;
-    border-top: 1px solid #ddd;
-  }
-
-  .chat-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+  .message-sent .message-time {
+    text-align: right;
   }
 
   .chat-input {
-    flex: 1;
-    padding: 0.8rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    resize: none;
+    padding: 1rem;
+    border-top: 1px solid #e1e5eb;
+    display: flex;
+    gap: 0.8rem;
+    background: white;
   }
 
-  .chat-input:focus {
+  .chat-input input {
+    flex: 1;
+    padding: 0.8rem 1.2rem;
+    border: 2px solid #e1e5eb;
+    border-radius: 25px;
+    font-size: 1rem;
+    transition: all 0.3s;
     outline: none;
+  }
+
+  .chat-input input:focus {
     border-color: #e74c3c;
     box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
   }
 
   .send-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     background-color: #e74c3c;
     color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s;
-    flex-shrink: 0;
   }
 
   .send-btn:hover {
     background-color: #c0392b;
   }
 
-  /* Empty Chat Placeholder */
-  .empty-chat {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 400px;
-    color: #7f8c8d;
-    font-size: 1.1rem;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    border-left: 4px solid #e74c3c;
+  .send-btn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
   }
 
-  .empty-chat i {
-    font-size: 2.5rem;
+  .no-conversation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #7f8c8d;
+  }
+
+  .error {
     color: #e74c3c;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #7f8c8d;
+  }
+
+  .user-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .user-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e1e5eb;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .user-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e74c3c;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
   }
 
   /* Responsive adjustments */
   @media (max-width: 992px) {
-    main {
-      flex-direction: column;
-    }
-    .sidebar {
-      margin-bottom: 20px;
+    .messages-container {
+      grid-template-columns: 300px 1fr;
     }
   }
 
@@ -366,209 +523,463 @@ const messagesStyles = `
 
     .messages-container {
       padding-top: 160px;
+      grid-template-columns: 1fr;
+      height: auto;
     }
 
-    .chat-header img {
-      width: 30px;
-      height: 30px;
-    }
-
-    .chat-input {
-      font-size: 0.9rem;
+    .conversation-list {
+      display: none;
     }
   }
 
   @media (max-width: 576px) {
-    .conversation-name {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .conversation-time {
-      font-size: 0.75rem;
-      margin-left: 0;
-      margin-top: 5px;
-    }
-
-    .footer-content {
-      flex-direction: column;
-      gap: 1rem;
-      text-align: center;
+    .message {
+      max-width: 85%;
     }
   }
 `;
 
 const Messages = () => {
+  const navigate = useNavigate();
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+
+  // Get current user from localStorage
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    console.log('User from localStorage:', user);
+    if (!user) {
+      console.log('No user found, redirecting to login');
+      navigate('/login');
+      return;
+    }
+    console.log('Setting current user:', user);
+    setCurrentUser(user);
+    // Check if user has _id, if not try id
+    const userId = user._id || user.id;
+    console.log('User ID:', userId);
+    if (userId) {
+      fetchConversations(userId);
+    } else {
+      console.error('No user ID found');
+      setError('User ID not found');
+    }
+  }, [navigate]);
+
+  // Fetch available users when modal is opened
+  useEffect(() => {
+    if (showNewMessage && currentUser) {
+      fetchAvailableUsers();
+    }
+  }, [showNewMessage, currentUser]);
+
+  const fetchConversations = async (userId) => {
+    try {
+      setLoading(true);
+      console.log('Fetching conversations for user:', userId);
+      const response = await fetch(
+        `http://localhost:5000/api/messages/conversations/${userId}`
+      );
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        throw new Error('Failed to fetch conversations');
+      }
+      const data = await response.json();
+      console.log('Conversations data:', data);
+      setConversations(data);
+    } catch (err) {
+      setError('Failed to load conversations');
+      console.error('Error fetching conversations:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAvailableUsers = async () => {
+    if (!currentUser) return;
+    try {
+      const userId = currentUser._id || currentUser.id;
+      const response = await fetch(
+        `http://localhost:5000/api/messages/users/${userId}/${currentUser.role}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+      setAvailableUsers(data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  };
+
+  const fetchMessages = async (senderId, receiverId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/messages/${senderId}/${receiverId}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+      const data = await response.json();
+      setMessages(data);
+    } catch (err) {
+      setError('Failed to load messages');
+      console.error('Error fetching messages:', err);
+    }
+  };
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedConversation || !currentUser) return;
+
+    try {
+      const userId = currentUser._id || currentUser.id;
+      const response = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: userId,
+          receiver: selectedConversation.partnerId,
+          content: newMessage.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
+      setMessages((prev) => [...prev, data.messageObj]);
+      setNewMessage('');
+
+      // Update conversations list
+      fetchConversations(userId);
+    } catch (err) {
+      setError('Failed to send message');
+      console.error('Error sending message:', err);
+    }
+  };
+
+  const handleConversationSelect = (conversation) => {
+    setSelectedConversation(conversation);
+    if (currentUser) {
+      const userId = currentUser._id || currentUser.id;
+      fetchMessages(userId, conversation.partnerId);
+    }
+  };
+
+  const startNewConversation = async (userId) => {
+    if (!currentUser) return;
+
+    try {
+      const currentUserId = currentUser._id || currentUser.id;
+      // Create a new conversation by sending an initial message
+      const response = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: currentUserId,
+          receiver: userId,
+          content: 'Hello! I would like to start a conversation.',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start conversation');
+      }
+
+      // Refresh conversations and select the new one
+      await fetchConversations(currentUserId);
+      setShowNewMessage(false);
+
+      // Find the new conversation and select it
+      const newConversation = conversations.find(
+        (conv) => conv.partnerId === userId
+      );
+      if (newConversation) {
+        handleConversationSelect(newConversation);
+      }
+    } catch (err) {
+      console.error('Error starting conversation:', err);
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  if (!currentUser) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div>
-      {/* Inject CSS dynamically */}
+    <>
       <style dangerouslySetInnerHTML={{ __html: messagesStyles }} />
 
       <header>
-        <a href="/index.html" className="logo">
-          <img
-            src="/assets/images/Logo.png"
-            alt="Sport Sphere Logo"
-            className="logo-img"
-          />
-          <div>
-            <div className="logo-text">Sports Sphere</div>
-          </div>
-        </a>
+        <div className='logo'>
+          <img src={logo} alt='Sport Sphere Logo' className='logo-img' />
+          <div className='logo-text'>Sports Sphere</div>
+        </div>
         <nav>
-          <a href="/index.html">
-            <i className="fas fa-home"></i> Home
+          <a
+            href='/'
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/');
+            }}
+          >
+            <i className='fas fa-home'></i> Home
           </a>
-          <a href="/coach-dashboard.html" className="active">
-            <i className="fas fa-user-shield"></i> Dashboard
+          <a
+            href='/athlete-dashboard'
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/athlete-dashboard');
+            }}
+          >
+            <i className='fas fa-user-shield'></i> Dashboard
           </a>
-          <a href="/messages.html">
-            <i className="fas fa-envelope"></i> Messages{" "}
-            <span className="notification-badge">3</span>
+          <a href='/messages' className='active'>
+            <i className='fas fa-envelope'></i> Messages
           </a>
-          <a href="/coach-profile.html" className="profile-btn">
-            <i className="fas fa-user-tie"></i>
+          <a href='/profile' className='profile-btn'>
+            <i className='fas fa-user'></i>
           </a>
         </nav>
       </header>
 
-      <main className="messages-container">
-        {/* Sidebar - Conversations */}
-        <div className="sidebar">
-          <div className="conversation-list">
-            <div className="conversation-item">
-              <div className="conversation-avatar">AM</div>
-              <div className="conversation-info">
-                <div className="conversation-name">
-                  Coach Williams
-                  <span className="conversation-time">Today</span>
-                </div>
-                <div className="conversation-preview">
-                  Don't forget about our session tomorrow
-                </div>
-              </div>
-              <div className="unread-badge">2</div>
+      <main className='messages-container'>
+        <div className='conversation-list'>
+          <div className='conversation-header'>
+            <div>
+              <i className='fas fa-comments'></i> Conversations
             </div>
-
-            <div className="conversation-item">
-              <div className="conversation-avatar">SW</div>
-              <div className="conversation-info">
-                <div className="conversation-name">
-                  Coach Sarah
-                  <span className="conversation-time">Yesterday</span>
+            <button
+              className='new-message-btn'
+              onClick={() => setShowNewMessage(true)}
+            >
+              <i className='fas fa-plus'></i> New Message
+            </button>
+          </div>
+          <div className='conversation-search'>
+            <input type='text' placeholder='Search conversations...' />
+          </div>
+          <div className='conversation-items'>
+            {loading ? (
+              <div className='loading'>Loading conversations...</div>
+            ) : error ? (
+              <div className='error'>{error}</div>
+            ) : conversations.length === 0 ? (
+              <div className='no-conversation'>No conversations yet</div>
+            ) : (
+              conversations.map((conversation) => (
+                <div
+                  key={conversation.partnerId}
+                  className={`conversation-item ${
+                    selectedConversation?.partnerId === conversation.partnerId
+                      ? 'active'
+                      : ''
+                  }`}
+                  onClick={() => handleConversationSelect(conversation)}
+                >
+                  <div className='conversation-avatar'>
+                    {conversation.partnerImage ? (
+                      <img
+                        src={conversation.partnerImage}
+                        alt={conversation.partnerName}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      getInitials(conversation.partnerName)
+                    )}
+                  </div>
+                  <div className='conversation-info'>
+                    <div className='conversation-name'>
+                      {conversation.partnerName}
+                      <span className='conversation-time'>
+                        {formatTime(conversation.lastMessageTime)}
+                      </span>
+                    </div>
+                    <div className='conversation-preview'>
+                      {conversation.lastMessage}
+                    </div>
+                  </div>
+                  {conversation.unreadCount > 0 && (
+                    <div className='unread-badge'>
+                      {conversation.unreadCount}
+                    </div>
+                  )}
                 </div>
-                <div className="conversation-preview">New message received</div>
-              </div>
-            </div>
-
-            <div className="conversation-item">
-              <div className="conversation-avatar">JL</div>
-              <div className="conversation-info">
-                <div className="conversation-name">
-                  Coach Jessica
-                  <span className="conversation-time">Jun 5</span>
-                </div>
-                <div className="conversation-preview">
-                  Let's discuss new training plan
-                </div>
-              </div>
-            </div>
-
-            <div className="conversation-item">
-              <div className="conversation-avatar">TC</div>
-              <div className="conversation-info">
-                <div className="conversation-name">
-                  Coach Thompson
-                  <span className="conversation-time">May 30</span>
-                </div>
-                <div className="conversation-preview">
-                  You've been assigned to...
-                </div>
-              </div>
-            </div>
-
-            <div className="conversation-item">
-              <div className="conversation-avatar">JD</div>
-              <div className="conversation-info">
-                <div className="conversation-name">
-                  Coach Johnson
-                  <span className="conversation-time">May 28</span>
-                </div>
-                <div className="conversation-preview">
-                  Session rescheduled for June 15
-                </div>
-              </div>
-            </div>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Chat Area */}
-        <div className="chat-container">
-          <div className="chat-header">
-            <img
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="Coach Williams"
-            />
-            <div>
-              <div className="chat-title">Coach Williams</div>
-              <div className="chat-subtitle">Online</div>
-            </div>
-          </div>
-
-          <div className="chat-body">
-            <div className="message user">
-              <div className="message-content">
-                Hi Coach! Looking forward to our session tomorrow.
+        <div className='chat-container'>
+          {selectedConversation ? (
+            <>
+              <div className='chat-header'>
+                <div className='chat-avatar'>
+                  {selectedConversation.partnerImage ? (
+                    <img
+                      src={selectedConversation.partnerImage}
+                      alt={selectedConversation.partnerName}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    getInitials(selectedConversation.partnerName)
+                  )}
+                </div>
+                <div className='chat-user-info'>
+                  <div className='chat-name'>
+                    {selectedConversation.partnerName}
+                  </div>
+                  <div className='chat-status'>
+                    <span className='status-indicator'></span>{' '}
+                    {selectedConversation.partnerRole}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="message other">
-              <div className="message-content">
-                Great! I've updated your workout plan based on recent progress.
+              <div className='chat-messages'>
+                {messages.map((message) => {
+                  const userId = currentUser._id || currentUser.id;
+                  return (
+                    <div
+                      key={message._id}
+                      className={`message ${
+                        message.sender === userId
+                          ? 'message-sent'
+                          : 'message-received'
+                      }`}
+                    >
+                      {message.content}
+                      <div className='message-time'>
+                        {formatTime(message.timestamp)}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
 
-            <div className="message user">
-              <div className="message-content">
-                Thanks! I'm ready to push harder.
-              </div>
-            </div>
-
-            <div className="message other">
-              <div className="message-content">
-                I see that. You're improving quickly!
-              </div>
-            </div>
-          </div>
-
-          <div className="chat-footer">
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="chat-input-group">
+              <div className='chat-input'>
                 <input
-                  type="text"
-                  className="chat-input"
-                  placeholder="Type your message..."
+                  type='text'
+                  placeholder='Type your message...'
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
                 />
-                <button type="submit" className="send-btn">
-                  <i className="fas fa-paper-plane"></i>
+                <button
+                  className='send-btn'
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim()}
+                >
+                  <i className='fas fa-paper-plane'></i>
                 </button>
               </div>
-            </form>
-          </div>
+            </>
+          ) : (
+            <div className='no-conversation'>
+              Select a conversation to start messaging
+            </div>
+          )}
         </div>
       </main>
 
-      <footer>
-        <div className="footer-content">
-          <div className="footer-logo">
-            <i className="fas fa-running"></i> Sport Sphere
-          </div>
-          <div className="copyright">
-            &copy; 2025 Sport Sphere. All rights reserved.
+      {/* New Message Modal */}
+      {showNewMessage && (
+        <div className='modal-overlay' onClick={() => setShowNewMessage(false)}>
+          <div className='modal' onClick={(e) => e.stopPropagation()}>
+            <div className='modal-header'>
+              <div className='modal-title'>Start New Conversation</div>
+              <button
+                className='close-btn'
+                onClick={() => setShowNewMessage(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className='user-list'>
+              {availableUsers.map((user) => (
+                <div
+                  key={user._id}
+                  className='user-item'
+                  onClick={() => startNewConversation(user._id)}
+                >
+                  <div className='user-avatar'>
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      getInitials(user.name)
+                    )}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '600', color: '#2c3e50' }}>
+                      {user.name}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: '#7f8c8d' }}>
+                      {user.role}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </footer>
-    </div>
+      )}
+    </>
   );
 };
 
