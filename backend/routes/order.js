@@ -499,4 +499,54 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Vendor Analytics (sales, orders, charts)
+router.get('/vendor/:vendorId/analytics', async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    // Get all orders for this vendor
+    const orders = await Order.find({ 'products.productId': { $exists: true } })
+      .populate('products.productId', 'vendorId name price')
+      .populate('userId', 'name email');
+    // Filter orders for this vendor
+    const vendorOrders = orders.filter((order) =>
+      order.products.some(
+        (p) =>
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+      )
+    );
+    // Total sales and orders
+    let totalSales = 0;
+    let totalOrders = vendorOrders.length;
+    let salesByMonth = {};
+    let productSales = {};
+    vendorOrders.forEach((order) => {
+      // Only count this vendor's products in each order
+      order.products.forEach((p) => {
+        if (
+          p.productId &&
+          p.productId.vendorId &&
+          p.productId.vendorId.toString() === vendorId
+        ) {
+          // Total sales
+          totalSales += (p.productId.price || 0) * (p.quantity || 1);
+          // Sales by month
+          const month = order.createdAt.toISOString().slice(0, 7); // YYYY-MM
+          salesByMonth[month] =
+            (salesByMonth[month] || 0) +
+            (p.productId.price || 0) * (p.quantity || 1);
+          // Product sales
+          const prodName = p.productId.name || 'Unknown';
+          productSales[prodName] =
+            (productSales[prodName] || 0) + (p.quantity || 1);
+        }
+      });
+    });
+    res.json({ totalSales, totalOrders, salesByMonth, productSales });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch vendor analytics' });
+  }
+});
+
 export default router;

@@ -35,6 +35,8 @@ function AdminPaymentManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedType, setSelectedType] = useState('all'); // 'all', 'orders', 'sessions'
+  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState(null);
 
   useEffect(() => {
     fetchPaymentStats();
@@ -259,6 +261,16 @@ function AdminPaymentManagement() {
     });
   };
 
+  // Modal open/close handlers
+  const handleViewDetails = (data) => {
+    setModalData(data);
+    setShowModal(true);
+  };
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalData(null);
+  };
+
   const renderOrdersTable = () => (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
@@ -399,6 +411,7 @@ function AdminPaymentManagement() {
                     cursor: 'pointer',
                   }}
                   title='View Details'
+                  onClick={() => handleViewDetails(order)}
                 >
                   <FaEye />
                 </button>
@@ -582,6 +595,7 @@ function AdminPaymentManagement() {
                     cursor: 'pointer',
                   }}
                   title='View Details'
+                  onClick={() => handleViewDetails(booking)}
                 >
                   <FaEye />
                 </button>
@@ -1005,6 +1019,106 @@ function AdminPaymentManagement() {
           </div>
         )}
       </div>
+
+      {/* Modal for details */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+          onClick={handleCloseModal}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '10px',
+              padding: '2rem',
+              minWidth: 350,
+              maxWidth: 500,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={handleCloseModal}
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                color: '#e74c3c',
+                cursor: 'pointer',
+              }}
+              title='Close'
+            >
+              <FaTimes />
+            </button>
+            <h3 style={{ marginBottom: 16, color: '#2c3e50' }}>
+              Payment Details
+            </h3>
+            {modalData && (
+              <div style={{ color: '#2c3e50', fontSize: 16 }}>
+                <div>
+                  <b>ID:</b> {modalData._id}
+                </div>
+                {modalData.userId && (
+                  <div>
+                    <b>User:</b>{' '}
+                    {modalData.userId.name || modalData.userId.email || 'N/A'}
+                  </div>
+                )}
+                {modalData.athlete && (
+                  <div>
+                    <b>Athlete:</b> {modalData.athlete.name}
+                  </div>
+                )}
+                {modalData.coach && (
+                  <div>
+                    <b>Coach:</b> {modalData.coach.name}
+                  </div>
+                )}
+                <div>
+                  <b>Amount:</b>{' '}
+                  {formatCurrency(modalData.totalAmount || modalData.amount)}
+                </div>
+                <div>
+                  <b>Status:</b> {modalData.paymentStatus || modalData.status}
+                </div>
+                <div>
+                  <b>Date:</b>{' '}
+                  {formatDate(modalData.createdAt || modalData.date)}
+                </div>
+                {modalData.paymentMethod && (
+                  <div>
+                    <b>Payment Method:</b>{' '}
+                    {getPaymentMethodText
+                      ? getPaymentMethodText(modalData.paymentMethod)
+                      : modalData.paymentMethod}
+                  </div>
+                )}
+                {modalData.refundReason && (
+                  <div>
+                    <b>Refund Reason:</b> {modalData.refundReason}
+                  </div>
+                )}
+                {/* Add more fields as needed */}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

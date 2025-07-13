@@ -50,6 +50,7 @@ import CoachDashboard from './pages/coach/CoachDashboard';
 import Admin from './pages/admin/admin';
 import AdminPaymentManagement from './pages/admin/payment-managment';
 import AdminReport from './pages/admin/report';
+import AdminProfile from './pages/admin/admin-profile';
 import AdminUserManagement from './pages/admin/user-managment';
 import AdminAddUser from './pages/admin/admin-add-user.jsx';
 import ProfilePage from './pages/athelte/ProfilePage.jsx';
@@ -153,6 +154,7 @@ function App() {
 
         {/* Admin */}
         <Route path='/admin/dashboard' element={<Admin />} />
+        <Route path='/admin/profile' element={<AdminProfile />} />
         <Route
           path='/admin/payment-management'
           element={<AdminPaymentManagement />}
