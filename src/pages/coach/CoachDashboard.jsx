@@ -99,13 +99,6 @@ function CoachDashboard() {
     return `PKR ${amount}`;
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
-        Loading coach dashboard...
-      </div>
-    );
-  }
   if (error) {
     return (
       <div style={{ textAlign: 'center', marginTop: '5rem', color: '#e74c3c' }}>
@@ -190,9 +183,14 @@ function CoachDashboard() {
               fontWeight: 700,
               color: '#e74c3c',
               marginBottom: '0.5rem',
+              minHeight: '2.5rem',
             }}
           >
-            {stats?.upcomingSessions || 0}
+            {loading ? (
+              <span className='loading-skeleton'>...</span>
+            ) : (
+              stats?.upcomingSessions || 0
+            )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Upcoming Sessions
@@ -214,12 +212,17 @@ function CoachDashboard() {
               fontWeight: 700,
               color: '#e74c3c',
               marginBottom: '0.5rem',
+              minHeight: '2.5rem',
             }}
           >
-            {stats?.avgRating || 'N/A'}
+            {loading ? (
+              <span className='loading-skeleton'>...</span>
+            ) : (
+              stats?.completedSessions || 0
+            )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
-            Average Rating
+            Completed Sessions
           </div>
         </div>
         <div
@@ -238,12 +241,17 @@ function CoachDashboard() {
               fontWeight: 700,
               color: '#e74c3c',
               marginBottom: '0.5rem',
+              minHeight: '2.5rem',
             }}
           >
-            {stats?.retention || '0'}%
+            {loading ? (
+              <span className='loading-skeleton'>...</span>
+            ) : (
+              stats?.totalAthletes || 0
+            )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
-            Athlete Retention
+            Total Athletes
           </div>
         </div>
         <div
@@ -262,12 +270,19 @@ function CoachDashboard() {
               fontWeight: 700,
               color: '#e74c3c',
               marginBottom: '0.5rem',
+              minHeight: '2.5rem',
             }}
           >
-            {stats?.newAthletes || 0}
+            {loading ? (
+              <span className='loading-skeleton'>...</span>
+            ) : stats?.earnings ? (
+              `PKR ${stats.earnings}`
+            ) : (
+              'PKR 0'
+            )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
-            New Athletes
+            Total Earnings
           </div>
         </div>
       </div>
