@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useParams } from 'react-router-dom';
 import './css/find-coaches.css';
 import { SocketProvider } from './context/SocketContext';
 
@@ -23,6 +23,7 @@ import CheckoutSuccess from './pages/athelte/CheckoutSuccess.jsx';
 import BookingSuccess from './pages/athelte/BookingSuccess.jsx';
 import MyOrders from './pages/athelte/MyOrders.jsx';
 import MySessions from './pages/athelte/MySessions.jsx';
+import CoachProfileView from './pages/athelte/CoachProfileView.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
@@ -57,6 +58,17 @@ import ProfilePage from './pages/athelte/ProfilePage.jsx';
 import FindCoaches from './pages/athelte/find-coaches.jsx';
 import CoachAthleteProgress from './pages/coach/athelte-progress.jsx';
 import AdminPayouts from './pages/admin/admin-payouts.jsx';
+
+// Wrapper for dynamic coach profile
+function CoachProfileWithId() {
+  const { coachId } = useParams();
+  return <CoachProfileView coachId={coachId} />;
+}
+// Wrapper for dynamic athlete booking
+function AthleteBookingWithCoach() {
+  const { coachId } = useParams();
+  return <AthleteBooking coachId={coachId} />;
+}
 
 function App() {
   return (
@@ -109,6 +121,11 @@ function App() {
         <Route path='/athlete/profile' element={<ProfilePage />} />
         <Route path='/athlete/messages' element={<AthleteMessages />} />
         <Route path='/athlete/booking' element={<AthleteBooking />} />
+        <Route
+          path='/athlete/booking/:coachId'
+          element={<AthleteBookingWithCoach />}
+        />
+        <Route path='/athlete/coach/:coachId' element={<CoachProfileView />} />
         <Route path='/athlete/booking/success' element={<BookingSuccess />} />
         <Route path='/athlete/feedback' element={<AthleteFeedback />} />
         <Route path='/athlete/find-coaches' element={<FindCoaches />} />
@@ -143,6 +160,10 @@ function App() {
         {/* Coach */}
         <Route path='/coach/dashboard' element={<CoachDashboard />} />
         <Route path='/coach/profile' element={<CoachProfile />} />
+        <Route
+          path='/coach/profile/:coachId'
+          element={<CoachProfileWithId />}
+        />
         <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
         <Route path='/coach/marketplace' element={<CoachMarketplace />} />
         <Route path='/coach/messages' element={<CoachMessages />} />

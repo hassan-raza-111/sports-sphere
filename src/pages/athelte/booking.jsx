@@ -65,7 +65,7 @@ function PaymentSection({ amount, onPaymentSuccess, submitting }) {
   );
 }
 
-const BookingPage = () => {
+const BookingPage = ({ coachId }) => {
   const [coaches, setCoaches] = useState([]);
   const [selectedCoach, setSelectedCoach] = useState('');
   const [coachDescription, setCoachDescription] = useState('');
@@ -101,6 +101,13 @@ const BookingPage = () => {
     };
     fetchCoaches();
   }, []);
+
+  // Set coachId from prop if present
+  useEffect(() => {
+    if (coachId) {
+      setSelectedCoach(coachId);
+    }
+  }, [coachId]);
 
   // Set coach description and amount when coach is selected
   useEffect(() => {

@@ -513,4 +513,60 @@ router.post('/create-sample', async (req, res) => {
   }
 });
 
+// Get coach profile info, stats, and testimonials by Coach _id
+router.get('/profile/by-id/:coachId', async (req, res) => {
+  try {
+    const coach = await Coach.findById(req.params.coachId);
+    if (!coach) return res.status(404).json({ message: 'Coach not found' });
+    // Stats
+    const now = new Date();
+    const monthAgo = new Date();
+    monthAgo.setDate(now.getDate() - 30);
+    const allBookings = await Booking.find({ coach: coach._id });
+    const athletesTrained = [...new Set(allBookings.map((b) => b.athlete))]
+      .length;
+    const sessionsThisMonth = allBookings.filter((b) => {
+      const d = new Date(b.date);
+      return d >= monthAgo && d <= now;
+    }).length;
+    // Avg rating
+    const feedbacks = await Feedback.find({ selectedCoach: coach._id });
+    const avgRating = feedbacks.length
+      ? (
+          feedbacks.reduce((sum, f) => sum + (f.rating || 0), 0) /
+          feedbacks.length
+        ).toFixed(2)
+      : 'N/A';
+    // Retention: athletes with >1 session in last 30 days / total athletes
+    const recentBookings = allBookings.filter((b) => {
+      const d = new Date(b.date);
+      return d >= monthAgo && d <= now;
+    });
+    const retainedAthletes = [...new Set(recentBookings.map((b) => b.athlete))];
+    const retentionRate = athletesTrained
+      ? ((retainedAthletes.length / athletesTrained) * 100).toFixed(0)
+      : '0';
+    // Testimonials: feedbacks with text and rating
+    const testimonials = feedbacks
+      .filter((f) => f.feedbackText && f.rating)
+      .map((f) => ({
+        athlete: f.athlete,
+        rating: f.rating,
+        feedbackText: f.feedbackText,
+      }));
+    res.json({
+      ...coach.toObject(),
+      stats: {
+        athletesTrained,
+        avgRating,
+        retentionRate,
+        sessionsThisMonth,
+      },
+      testimonials,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 export default router;

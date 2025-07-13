@@ -111,10 +111,12 @@ const FindCoaches = () => {
   };
 
   const handleViewProfile = (coachId) => {
+    // Route should match the actual coach profile route
     navigate(`/coach/profile/${coachId}`);
   };
 
   const handleBookSession = (coachId) => {
+    // Route should match the actual booking route for athlete
     navigate(`/athlete/booking/${coachId}`);
   };
 
