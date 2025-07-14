@@ -240,11 +240,12 @@ router.get('/analytics/sport-breakdown', async (req, res) => {
         break;
     }
 
-    // Aggregate bookings by sport
+    // Aggregate bookings by sport, only for accepted/conducted/completed
     const sportBreakdown = await Booking.aggregate([
       {
         $match: {
           createdAt: { $gte: startDate },
+          status: { $in: ['accepted', 'conducted', 'completed'] },
         },
       },
       {
@@ -255,24 +256,17 @@ router.get('/analytics/sport-breakdown', async (req, res) => {
           as: 'coach',
         },
       },
-      {
-        $unwind: '$coach',
-      },
+      { $unwind: '$coach' },
       {
         $group: {
           _id: '$coach.sport',
           count: { $sum: 1 },
         },
       },
-      {
-        $sort: { count: -1 },
-      },
+      { $sort: { count: -1 } },
     ]);
 
-    // Get total for percentage calculation
     const total = sportBreakdown.reduce((sum, sport) => sum + sport.count, 0);
-
-    // Format data for chart
     const labels = sportBreakdown.map((sport) => sport._id || 'Other');
     const data = sportBreakdown.map((sport) => sport.count);
 
@@ -294,6 +288,11 @@ router.get('/analytics/recent-sessions', async (req, res) => {
 
     const recentSessions = await Booking.aggregate([
       {
+        $match: {
+          status: { $in: ['accepted', 'conducted', 'completed'] },
+        },
+      },
+      {
         $lookup: {
           from: 'users',
           localField: 'userId',
@@ -309,12 +308,8 @@ router.get('/analytics/recent-sessions', async (req, res) => {
           as: 'coach',
         },
       },
-      {
-        $unwind: '$athlete',
-      },
-      {
-        $unwind: '$coach',
-      },
+      { $unwind: '$athlete' },
+      { $unwind: '$coach' },
       {
         $lookup: {
           from: 'users',
@@ -323,9 +318,7 @@ router.get('/analytics/recent-sessions', async (req, res) => {
           as: 'coachUser',
         },
       },
-      {
-        $unwind: '$coachUser',
-      },
+      { $unwind: '$coachUser' },
       {
         $project: {
           date: '$createdAt',
@@ -337,12 +330,8 @@ router.get('/analytics/recent-sessions', async (req, res) => {
           status: '$status',
         },
       },
-      {
-        $sort: { date: -1 },
-      },
-      {
-        $limit: parseInt(limit),
-      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit) },
     ]);
 
     res.json(recentSessions);
