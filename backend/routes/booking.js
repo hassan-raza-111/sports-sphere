@@ -4,6 +4,8 @@ import Stripe from 'stripe';
 import { STRIPE_SECRET_KEY } from '../config.js';
 import bodyParser from 'body-parser';
 import Progress from '../models/Progress.js';
+import User from '../models/User.js';
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
 const stripe = new Stripe(STRIPE_SECRET_KEY);
@@ -132,6 +134,28 @@ router.post('/:id/accept', async (req, res) => {
       booking.status = 'accepted';
       booking.acceptedAt = new Date();
       await booking.save();
+      // Send email to athlete
+      try {
+        const athleteUser = await User.findById(booking.athlete);
+        if (athleteUser && athleteUser.email) {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: process.env.GMAIL_USER,
+              pass: process.env.GMAIL_PASS,
+            },
+          });
+          const mailOptions = {
+            to: athleteUser.email,
+            from: process.env.GMAIL_USER,
+            subject: 'Your Session Has Been Accepted!',
+            html: `<p>Your session has been accepted by the coach.<br/>Session Date: <b>${booking.date}</b><br/>Session Time: <b>${booking.time}</b><br/>Coach: <b>${booking.coach}</b></p>`,
+          };
+          await transporter.sendMail(mailOptions);
+        }
+      } catch (mailErr) {
+        console.error('Failed to send acceptance email:', mailErr);
+      }
       return res.json({
         message: 'Session accepted (payment was already captured on Stripe)',
         booking,
@@ -154,6 +178,29 @@ router.post('/:id/accept', async (req, res) => {
     booking.status = 'accepted';
     booking.acceptedAt = new Date();
     await booking.save();
+
+    // Send email to athlete
+    try {
+      const athleteUser = await User.findById(booking.athlete);
+      if (athleteUser && athleteUser.email) {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_PASS,
+          },
+        });
+        const mailOptions = {
+          to: athleteUser.email,
+          from: process.env.GMAIL_USER,
+          subject: 'Your Session Has Been Accepted!',
+          html: `<p>Your session has been accepted by the coach.<br/>Session Date: <b>${booking.date}</b><br/>Session Time: <b>${booking.time}</b><br/>Coach: <b>${booking.coach}</b></p>`,
+        };
+        await transporter.sendMail(mailOptions);
+      }
+    } catch (mailErr) {
+      console.error('Failed to send acceptance email:', mailErr);
+    }
 
     res.json({
       message:
