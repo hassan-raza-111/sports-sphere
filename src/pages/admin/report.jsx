@@ -11,6 +11,7 @@ import {
   FaChalkboardTeacher,
   FaCalendarCheck,
   FaStar,
+  FaStore,
 } from 'react-icons/fa';
 import Chart from 'chart.js/auto';
 
@@ -403,6 +404,38 @@ const AdminReport = () => {
             Sessions Booked
           </p>
           {renderTrendIndicator(analytics.sessionsBooked.trend)}
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '25px',
+            borderRadius: '10px',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+            textAlign: 'center',
+            transition: 'transform 0.3s',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <FaStore
+            style={{
+              fontSize: '2.2rem',
+              color: '#e74c3c',
+              marginBottom: '15px',
+            }}
+          />
+          <h4
+            style={{
+              fontSize: '1.8rem',
+              marginBottom: '5px',
+              color: '#2c3e50',
+            }}
+          >
+            {analytics.activeVendors?.count || 0}
+          </h4>
+          <p style={{ fontSize: '0.95rem', color: '#7f8c8d' }}>
+            Active Vendors
+          </p>
+          {renderTrendIndicator(analytics.activeVendors?.trend || 0)}
         </div>
       </div>
 

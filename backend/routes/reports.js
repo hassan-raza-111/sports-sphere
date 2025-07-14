@@ -76,6 +76,11 @@ router.get('/analytics/overview', async (req, res) => {
           previousMonthStats[2]
         ),
       },
+      activeVendors: {
+        count: await User.countDocuments({ role: 'vendor', status: 'active' }),
+        // For now, set trend to 0 (or you can implement similar to above if needed)
+        trend: 0,
+      },
       sessionsBooked: {
         count: currentMonthStats[3],
         trend: calculatePercentageChange(
