@@ -17,7 +17,7 @@ const Admin = () => {
         const [usersRes, reportsRes, revenueRes] = await Promise.all([
           fetch('/api/users/analytics'),
           fetch('/api/reports/open-count'),
-          fetch('/api/order/admin/stats'),
+          fetch('/api/orders/admin/stats'),
         ]);
         const usersData = await usersRes.json();
         const reportsData = await reportsRes.json();
