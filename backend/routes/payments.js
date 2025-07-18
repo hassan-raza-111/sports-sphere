@@ -65,6 +65,14 @@ router.post('/create-checkout-session', async (req, res) => {
         .json({ message: 'Total amount must be greater than 0' });
     }
 
+    // Stripe minimum: $0.50 (USD) ≈ ₨150 (PKR)
+    const MINIMUM_AMOUNT_PKR = 150;
+    if (totalAmount < MINIMUM_AMOUNT_PKR) {
+      return res.status(400).json({
+        message: `Minimum order amount for Stripe is ₨${MINIMUM_AMOUNT_PKR}. Please add more items to your cart.`,
+      });
+    }
+
     // Convert to cents for Stripe
     const amountInCents = Math.round(totalAmount * 100);
 
@@ -101,6 +109,26 @@ router.post('/create-checkout-session', async (req, res) => {
       };
     });
 
+    // Defensive check for lineItems
+    if (!Array.isArray(lineItems) || lineItems.length === 0) {
+      return res.status(400).json({ message: 'No valid items to checkout.' });
+    }
+    for (const li of lineItems) {
+      if (
+        !li.price_data ||
+        typeof li.price_data.unit_amount !== 'number' ||
+        li.price_data.unit_amount <= 0 ||
+        !li.price_data.product_data ||
+        !li.price_data.product_data.name ||
+        !li.quantity ||
+        li.quantity <= 0
+      ) {
+        return res
+          .status(400)
+          .json({ message: 'Invalid line item for Stripe.' });
+      }
+    }
+
     console.log('Creating checkout session with:', {
       userId,
       totalAmount,
@@ -136,6 +164,9 @@ router.post('/create-checkout-session', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
+    if (error.raw) {
+      console.error('Stripe error details:', error.raw);
+    }
 
     // Provide more specific error messages
     if (error.type === 'StripeInvalidRequestError') {

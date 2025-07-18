@@ -198,9 +198,37 @@ const CheckoutPage = () => {
               </div>
             </div>
 
+            {totalAmount < 150 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  background: '#fff6e5',
+                  border: '1.5px solid #ffb347',
+                  color: '#b26a00',
+                  borderRadius: 8,
+                  padding: '12px 16px',
+                  marginBottom: 16,
+                  fontWeight: 500,
+                  fontSize: '1rem',
+                  boxShadow: '0 2px 8px rgba(255,179,71,0.08)',
+                }}
+              >
+                <span style={{ fontSize: 22, color: '#ff9800' }}>⚠️</span>
+                <span>
+                  Minimum order amount for Stripe is <b>Rs. 150</b>. Please add
+                  more items to your cart.
+                </span>
+              </div>
+            )}
             {error && <div className='error-message'>{error}</div>}
 
-            <button type='submit' disabled={loading} className='pay-button'>
+            <button
+              type='submit'
+              disabled={loading || totalAmount < 150}
+              className='pay-button'
+            >
               {loading
                 ? 'Processing...'
                 : `Proceed to Payment - Rs. ${totalAmount}`}
