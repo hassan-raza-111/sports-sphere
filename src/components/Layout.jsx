@@ -10,6 +10,7 @@ import {
   FaChartLine,
   FaSignOutAlt,
   FaUser,
+  FaShoppingCart,
 } from 'react-icons/fa';
 
 const Layout = ({ children, role = 'coach' }) => {
@@ -63,7 +64,22 @@ const Layout = ({ children, role = 'coach' }) => {
               >
                 <FaHome /> <span>Home</span>
               </Link>
-              {/* Marketplace link removed */}
+              <Link
+                to='/coach/marketplace'
+                className={
+                  location.pathname === '/coach/marketplace' ? 'active' : ''
+                }
+              >
+                <FaStore /> <span>Marketplace</span>
+              </Link>
+              <Link
+                to='/coach/orders'
+                className={
+                  location.pathname === '/coach/orders' ? 'active' : ''
+                }
+              >
+                <FaShoppingCart /> <span>Orders</span>
+              </Link>
               <Link
                 to='/coach/messages'
                 className={

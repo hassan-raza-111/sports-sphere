@@ -14,6 +14,8 @@ if (!STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 // Create Stripe Checkout Session
 router.post('/create-checkout-session', async (req, res) => {
   try {
@@ -136,13 +138,23 @@ router.post('/create-checkout-session', async (req, res) => {
       lineItemsCount: lineItems.length,
     });
 
+    // Determine if this is a coach or athlete checkout
+    let isCoach = false;
+    if (req.originalUrl.includes('/coach') || req.body.role === 'coach') {
+      isCoach = true;
+    }
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `http://localhost:5173/athlete/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: 'http://localhost:5173/athlete/marketplace',
+      success_url: isCoach
+        ? `${FRONTEND_URL}/coach/checkout/success?session_id={CHECKOUT_SESSION_ID}`
+        : `${FRONTEND_URL}/athlete/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: isCoach
+        ? `${FRONTEND_URL}/coach/marketplace`
+        : `${FRONTEND_URL}/athlete/marketplace`,
       metadata: {
         userId: userId,
         cartItems: JSON.stringify(

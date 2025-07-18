@@ -46,6 +46,9 @@ import CoachProfileEdit from './pages/coach/coach-profile-edit.jsx';
 import CoachMarketplace from './pages/coach/marketplace';
 import CoachMessages from './pages/coach/message';
 import CoachDashboard from './pages/coach/CoachDashboard';
+import CoachCheckoutPage from './pages/coach/CheckoutPage.jsx';
+import CoachCheckoutSuccess from './pages/coach/CheckoutSuccess.jsx';
+import CoachOrders from './pages/coach/Orders.jsx';
 
 // Admin pages
 import Admin from './pages/admin/admin';
@@ -166,12 +169,18 @@ function App() {
         />
         <Route path='/coach/profile/edit' element={<CoachProfileEdit />} />
         <Route path='/coach/marketplace' element={<CoachMarketplace />} />
+        <Route path='/coach/checkout' element={<CoachCheckoutPage />} />
+        <Route
+          path='/coach/checkout/success'
+          element={<CoachCheckoutSuccess />}
+        />
         <Route path='/coach/messages' element={<CoachMessages />} />
         <Route path='/coach/booking' element={<CoachBooking />} />
         <Route
           path='/coach/athlete-progress'
           element={<CoachAthleteProgress />}
         />
+        <Route path='/coach/orders' element={<CoachOrders />} />
 
         {/* Admin */}
         <Route path='/admin/dashboard' element={<Admin />} />
