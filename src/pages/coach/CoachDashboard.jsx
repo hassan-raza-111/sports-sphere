@@ -167,6 +167,7 @@ function CoachDashboard() {
           marginBottom: '2rem',
         }}
       >
+        {/* Upcoming Sessions */}
         <div
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -189,13 +190,14 @@ function CoachDashboard() {
             {loading ? (
               <span className='loading-skeleton'>...</span>
             ) : (
-              stats?.upcomingSessions || 0
+              stats?.upcomingSessions ?? 0
             )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Upcoming Sessions
           </div>
         </div>
+        {/* Completed Sessions */}
         <div
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -218,13 +220,14 @@ function CoachDashboard() {
             {loading ? (
               <span className='loading-skeleton'>...</span>
             ) : (
-              stats?.completedSessions || 0
+              stats?.completedSessions ?? 0
             )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Completed Sessions
           </div>
         </div>
+        {/* Total Athletes */}
         <div
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -247,13 +250,14 @@ function CoachDashboard() {
             {loading ? (
               <span className='loading-skeleton'>...</span>
             ) : (
-              stats?.totalAthletes || 0
+              stats?.totalAthletes ?? 0
             )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Total Athletes
           </div>
         </div>
+        {/* Total Earnings */}
         <div
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -275,14 +279,42 @@ function CoachDashboard() {
           >
             {loading ? (
               <span className='loading-skeleton'>...</span>
-            ) : stats?.earnings ? (
-              `PKR ${stats.earnings}`
             ) : (
-              'PKR 0'
+              `PKR ${stats?.earnings ?? 0}`
             )}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Total Earnings
+          </div>
+        </div>
+        {/* Average Rating */}
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #e74c3c',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#e74c3c',
+              marginBottom: '0.5rem',
+              minHeight: '2.5rem',
+            }}
+          >
+            {loading ? (
+              <span className='loading-skeleton'>...</span>
+            ) : (
+              stats?.avgRating ?? 'N/A'
+            )}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Average Rating
           </div>
         </div>
       </div>

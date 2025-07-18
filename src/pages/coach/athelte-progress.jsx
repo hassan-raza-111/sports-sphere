@@ -105,7 +105,7 @@ const CoachAthleteProgress = () => {
         r.json()
       ),
       fetch(
-        `/api/progress/athletes/${selectedAthlete._id}/sessions?timeframe=${sessionFilter}`
+        `/api/progress/athletes/${selectedAthlete._id}/sessions?coachId=${coachId}&timeframe=${sessionFilter}`
       ).then((r) => r.json()),
     ])
       .then(([overviewData, chartData, metricsData, sessionsData]) => {
@@ -121,7 +121,7 @@ const CoachAthleteProgress = () => {
         setLoading(false);
         setSessionsLoading(false);
       });
-  }, [selectedAthlete, activeTimeframe, sessionFilter]);
+  }, [selectedAthlete, activeTimeframe, sessionFilter, coachId]);
 
   const openSessionModal = (session) => {
     setSelectedSession(session);

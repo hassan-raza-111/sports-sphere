@@ -74,9 +74,13 @@ router.get('/athletes/:id/metrics', async (req, res) => {
 
 // 5. Athlete session history
 router.get('/athletes/:id/sessions', async (req, res) => {
-  const sessions = await Progress.find({ userId: req.params.id })
-    .sort({ date: -1 })
-    .limit(20);
+  const { coachId } = req.query;
+  const filter = {
+    userId: req.params.id,
+    status: { $in: ['completed', 'missed', 'upcoming'] },
+  };
+  if (coachId) filter.coach = coachId;
+  const sessions = await Progress.find(filter).sort({ date: -1 }).limit(20);
   const table = sessions.map((s) => ({
     date: s.date.toLocaleDateString('en-US', {
       month: 'short',

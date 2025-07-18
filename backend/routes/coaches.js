@@ -32,78 +32,72 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get upcoming sessions for coach (next 7 days)
+// Get upcoming sessions for coach (future, not completed/cancelled)
 router.get('/:id/upcoming-sessions', async (req, res) => {
   try {
     const coachId = req.params.id;
     const now = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(now.getDate() + 7);
-    // Booking.date is string, so we need to filter by ISO string
+    // Only fetch future sessions that are not completed or cancelled
     const bookings = await Booking.find({
       coach: coachId,
-      status: { $in: ['pending', 'completed'] },
+      status: { $in: ['pending', 'accepted', 'conducted'] },
+      date: { $gte: now.toISOString().split('T')[0] },
     });
-    // Filter in JS for date range
-    const sessions = bookings.filter((b) => {
-      const d = new Date(b.date);
-      return d >= now && d <= nextWeek;
-    });
-    res.json(sessions);
+    res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-// Get coach dashboard stats
+// Get coach dashboard stats (by Coach _id)
 router.get('/:id/dashboard-stats', async (req, res) => {
   try {
-    const coachId = req.params.id;
+    const coach = await Coach.findById(req.params.id);
+    if (!coach) {
+      return res.status(404).json({ message: 'Coach not found' });
+    }
     const now = new Date();
-    const weekAgo = new Date();
-    weekAgo.setDate(now.getDate() - 7);
-    // Upcoming sessions count
-    const bookings = await Booking.find({
-      coach: coachId,
-      status: { $in: ['pending', 'completed'] },
+    // Upcoming sessions: future bookings (not completed or cancelled)
+    const upcomingSessions = await Booking.countDocuments({
+      coach: coach._id,
+      status: { $in: ['pending', 'accepted', 'conducted'] },
+      date: { $gte: now.toISOString().split('T')[0] },
     });
-    const upcomingSessions = bookings.filter((b) => {
-      const d = new Date(b.date);
-      return d >= now;
-    }).length;
+    // Completed sessions
+    const completedSessions = await Booking.countDocuments({
+      coach: coach._id,
+      status: 'completed',
+    });
+    // Unique athletes
+    const allBookings = await Booking.find({ coach: coach._id });
+    const totalAthletes = new Set(allBookings.map((b) => String(b.athlete)))
+      .size;
     // Average rating
-    const feedbacks = await Feedback.find({ selectedCoach: coachId });
+    const feedbacks = await Feedback.find({ selectedCoach: coach._id });
     const avgRating = feedbacks.length
       ? (
           feedbacks.reduce((sum, f) => sum + (f.rating || 0), 0) /
           feedbacks.length
         ).toFixed(2)
       : 'N/A';
-    // Athlete retention (athletes with >1 session in last 30 days / total athletes)
-    const monthAgo = new Date();
-    monthAgo.setDate(now.getDate() - 30);
-    const recentBookings = bookings.filter((b) => {
-      const d = new Date(b.date);
-      return d >= monthAgo && d <= now;
+    // Total earnings: sum of amount for completed bookings
+    const completedBookings = await Booking.find({
+      coach: coach._id,
+      status: 'completed',
     });
-    const athleteIds = [...new Set(bookings.map((b) => b.athlete))];
-    const retainedAthletes = [...new Set(recentBookings.map((b) => b.athlete))];
-    const retention = athleteIds.length
-      ? ((retainedAthletes.length / athleteIds.length) * 100).toFixed(0)
-      : '0';
-    // New athletes (created in last 7 days)
-    const newAthletes = await User.countDocuments({
-      role: 'athlete',
-      createdAt: { $gte: weekAgo },
-    });
+    const earnings = completedBookings.reduce(
+      (sum, b) => sum + (b.amount || 0),
+      0
+    );
     res.json({
       upcomingSessions,
+      completedSessions,
+      totalAthletes,
       avgRating,
-      retention,
-      newAthletes,
+      earnings,
     });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch dashboard stats' });
   }
 });
 
@@ -284,15 +278,50 @@ router.get('/:userId/dashboard-stats', async (req, res) => {
       return res.status(404).json({ message: 'Coach not found' });
     }
 
-    // Mock data for now - in real app, calculate from bookings and feedback
-    const stats = {
-      upcomingSessions: Math.floor(Math.random() * 10) + 5,
-      avgRating: (Math.random() * 2 + 3).toFixed(1), // 3.0 to 5.0
-      retention: Math.floor(Math.random() * 30) + 70, // 70% to 100%
-      newAthletes: Math.floor(Math.random() * 5) + 1,
-    };
+    // Real stats
+    const now = new Date();
+    // Upcoming sessions: future bookings
+    const upcomingSessions = await Booking.countDocuments({
+      coach: coach._id,
+      status: {
+        $in: ['pending', 'accepted', 'conducted', 'completed', 'captured'],
+      },
+      date: { $gte: now.toISOString().split('T')[0] },
+    });
+    // Completed sessions
+    const completedSessions = await Booking.countDocuments({
+      coach: coach._id,
+      status: 'completed',
+    });
+    // Unique athletes
+    const allBookings = await Booking.find({ coach: coach._id });
+    const totalAthletes = new Set(allBookings.map((b) => String(b.athlete)))
+      .size;
+    // Average rating
+    const feedbacks = await Feedback.find({ selectedCoach: coach._id });
+    const avgRating = feedbacks.length
+      ? (
+          feedbacks.reduce((sum, f) => sum + (f.rating || 0), 0) /
+          feedbacks.length
+        ).toFixed(2)
+      : 'N/A';
+    // Total earnings: sum of amount for completed bookings
+    const completedBookings = await Booking.find({
+      coach: coach._id,
+      status: 'completed',
+    });
+    const earnings = completedBookings.reduce(
+      (sum, b) => sum + (b.amount || 0),
+      0
+    );
 
-    res.json(stats);
+    res.json({
+      upcomingSessions,
+      completedSessions,
+      totalAthletes,
+      avgRating,
+      earnings,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch dashboard stats' });
   }

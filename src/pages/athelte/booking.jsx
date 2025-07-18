@@ -157,7 +157,7 @@ const BookingPage = ({ coachId }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          coach: selectedCoach,
+          coach: selectedCoach, // This should be Coach model _id
           athlete: athleteId,
           date,
           time,

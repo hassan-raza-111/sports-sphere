@@ -634,6 +634,7 @@ router.put('/:id/complete', async (req, res) => {
     // Create a Progress entry for the athlete
     await Progress.create({
       userId: booking.athlete,
+      coach: booking.coach, // Save coach reference
       date: booking.date,
       duration: booking.duration || '60 min',
       focusArea: focusArea || 'General',
@@ -782,6 +783,28 @@ router.get('/', async (req, res) => {
     res.json({ bookings });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch bookings' });
+  }
+});
+
+// Admin: Patch old bookings to set correct Coach _id in coach field
+router.post('/admin/fix-coach-ids', async (req, res) => {
+  try {
+    const bookings = await Booking.find();
+    let updated = 0;
+    for (const booking of bookings) {
+      // If coach field is not a valid Coach _id (i.e., it's a User _id), try to find the Coach model
+      const coachDoc = await require('../models/Coach').default.findOne({
+        userId: booking.coach,
+      });
+      if (coachDoc && String(booking.coach) !== String(coachDoc._id)) {
+        booking.coach = coachDoc._id;
+        await booking.save();
+        updated++;
+      }
+    }
+    res.json({ message: 'Patched bookings with correct Coach _id', updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to patch bookings' });
   }
 });
 
