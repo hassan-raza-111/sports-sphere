@@ -652,7 +652,27 @@ const AdminReport = () => {
                       textAlign: 'left',
                     }}
                   >
-                    Duration
+                    Amount
+                  </th>
+                  <th
+                    style={{
+                      background: '#e74c3c',
+                      color: 'white',
+                      padding: '12px 15px',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Payment Status
+                  </th>
+                  <th
+                    style={{
+                      background: '#e74c3c',
+                      color: 'white',
+                      padding: '12px 15px',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Status
                   </th>
                   <th
                     style={{
@@ -692,7 +712,73 @@ const AdminReport = () => {
                       <td style={{ padding: '10px 15px' }}>{session.coach}</td>
                       <td style={{ padding: '10px 15px' }}>{session.sport}</td>
                       <td style={{ padding: '10px 15px' }}>
-                        {session.duration} min
+                        {session.amount
+                          ? `PKR ${Number(session.amount).toLocaleString()}`
+                          : '-'}
+                      </td>
+                      <td style={{ padding: '10px 15px' }}>
+                        <span
+                          style={{
+                            padding: '0.3rem 0.8rem',
+                            borderRadius: '20px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            backgroundColor:
+                              session.paymentStatus === 'captured'
+                                ? '#d5f4e6'
+                                : session.paymentStatus === 'authorized'
+                                ? '#fef9e7'
+                                : session.paymentStatus === 'failed'
+                                ? '#fadbd8'
+                                : '#e8f4fd',
+                            color:
+                              session.paymentStatus === 'captured'
+                                ? '#27ae60'
+                                : session.paymentStatus === 'authorized'
+                                ? '#f39c12'
+                                : session.paymentStatus === 'failed'
+                                ? '#e74c3c'
+                                : '#3498db',
+                          }}
+                        >
+                          {session.paymentStatus
+                            ? session.paymentStatus.charAt(0).toUpperCase() +
+                              session.paymentStatus.slice(1)
+                            : '-'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 15px' }}>
+                        <span
+                          style={{
+                            padding: '0.3rem 0.8rem',
+                            borderRadius: '20px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            backgroundColor:
+                              session.status === 'completed' ||
+                              session.status === 'conducted'
+                                ? '#d5f4e6'
+                                : session.status === 'pending'
+                                ? '#fef9e7'
+                                : session.status === 'cancelled'
+                                ? '#fadbd8'
+                                : '#e8f4fd',
+                            color:
+                              session.status === 'completed' ||
+                              session.status === 'conducted'
+                                ? '#27ae60'
+                                : session.status === 'pending'
+                                ? '#f39c12'
+                                : session.status === 'cancelled'
+                                ? '#e74c3c'
+                                : '#3498db',
+                          }}
+                        >
+                          {session.status
+                            ? session.status.charAt(0).toUpperCase() +
+                              session.status.slice(1)
+                            : '-'}
+                        </span>
                       </td>
                       <td style={{ padding: '10px 15px' }}>
                         {session.rating ? (

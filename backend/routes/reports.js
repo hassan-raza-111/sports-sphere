@@ -245,18 +245,18 @@ router.get('/analytics/sport-breakdown', async (req, res) => {
         break;
     }
 
-    // Aggregate bookings by sport, only for accepted/conducted/completed
+    // Aggregate bookings by sport, only for accepted/conducted/completed/captured
     const sportBreakdown = await Booking.aggregate([
       {
         $match: {
           createdAt: { $gte: startDate },
-          status: { $in: ['accepted', 'conducted', 'completed'] },
+          status: { $in: ['accepted', 'conducted', 'completed', 'captured'] },
         },
       },
       {
         $lookup: {
           from: 'coaches',
-          localField: 'coachId',
+          localField: 'coach',
           foreignField: '_id',
           as: 'coach',
         },
@@ -264,7 +264,7 @@ router.get('/analytics/sport-breakdown', async (req, res) => {
       { $unwind: '$coach' },
       {
         $group: {
-          _id: '$coach.sport',
+          _id: '$coach.sports',
           count: { $sum: 1 },
         },
       },
@@ -294,13 +294,13 @@ router.get('/analytics/recent-sessions', async (req, res) => {
     const recentSessions = await Booking.aggregate([
       {
         $match: {
-          status: { $in: ['accepted', 'conducted', 'completed'] },
+          status: { $in: ['accepted', 'conducted', 'completed', 'captured'] },
         },
       },
       {
         $lookup: {
           from: 'users',
-          localField: 'userId',
+          localField: 'athlete',
           foreignField: '_id',
           as: 'athlete',
         },
@@ -308,7 +308,7 @@ router.get('/analytics/recent-sessions', async (req, res) => {
       {
         $lookup: {
           from: 'coaches',
-          localField: 'coachId',
+          localField: 'coach',
           foreignField: '_id',
           as: 'coach',
         },
@@ -329,10 +329,12 @@ router.get('/analytics/recent-sessions', async (req, res) => {
           date: '$createdAt',
           athlete: '$athlete.name',
           coach: '$coachUser.name',
-          sport: '$coach.sport',
+          sport: '$coach.sports',
           duration: '$duration',
           rating: '$rating',
           status: '$status',
+          paymentStatus: '$paymentStatus',
+          amount: '$amount',
         },
       },
       { $sort: { date: -1 } },
@@ -343,6 +345,40 @@ router.get('/analytics/recent-sessions', async (req, res) => {
   } catch (error) {
     console.error('Error fetching recent sessions:', error);
     res.status(500).json({ error: 'Failed to fetch recent sessions' });
+  }
+});
+
+// TEST ROUTE: Add a test booking for recent sessions
+router.post('/analytics/add-test-booking', async (req, res) => {
+  try {
+    const { athleteId, coachId, coachUserId } = req.body;
+    const Booking = require('../models/Booking');
+    const Coach = require('../models/Coach');
+
+    // Make sure coach exists and has correct userId
+    let coach = await Coach.findById(coachId);
+    if (!coach) {
+      coach = await Coach.create({
+        userId: coachUserId,
+        name: 'Test Coach',
+        sports: 'Football',
+      });
+    }
+
+    const booking = new Booking({
+      athlete: athleteId,
+      coach: coach._id,
+      date: new Date().toISOString().slice(0, 10),
+      time: '10:00',
+      notes: 'Test session',
+      amount: 2000,
+      paymentStatus: 'captured',
+      status: 'completed',
+    });
+    await booking.save();
+    res.json({ message: 'Test booking created!', booking });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

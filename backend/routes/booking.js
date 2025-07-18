@@ -303,7 +303,10 @@ router.get('/admin', async (req, res) => {
     const skip = (page - 1) * limit;
     const bookings = await Booking.find(query)
       .populate('athlete', 'name email')
-      .populate('coach', 'name')
+      .populate({
+        path: 'coach',
+        populate: { path: 'userId', select: 'name email' },
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));

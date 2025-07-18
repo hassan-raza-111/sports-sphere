@@ -517,6 +517,16 @@ function AdminPaymentManagement() {
               color: '#2c3e50',
             }}
           >
+            Payment Status
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
             Status
           </th>
           <th
@@ -541,7 +551,9 @@ function AdminPaymentManagement() {
               {booking.athlete?.name || 'Unknown Athlete'}
             </td>
             <td style={{ padding: '1rem', color: '#2c3e50' }}>
-              {booking.coach?.name || 'Unknown Coach'}
+              {booking.coach?.userId?.name ||
+                booking.coach?.name ||
+                'Unknown Coach'}
             </td>
             <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 600 }}>
               {formatCurrency(booking.amount)}
@@ -581,6 +593,37 @@ function AdminPaymentManagement() {
               >
                 {booking.paymentStatus.charAt(0).toUpperCase() +
                   booking.paymentStatus.slice(1)}
+              </span>
+            </td>
+            <td style={{ padding: '1rem' }}>
+              <span
+                style={{
+                  padding: '0.3rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor:
+                    booking.status === 'completed' ||
+                    booking.status === 'conducted'
+                      ? '#d5f4e6'
+                      : booking.status === 'pending'
+                      ? '#fef9e7'
+                      : booking.status === 'cancelled'
+                      ? '#fadbd8'
+                      : '#e8f4fd',
+                  color:
+                    booking.status === 'completed' ||
+                    booking.status === 'conducted'
+                      ? '#27ae60'
+                      : booking.status === 'pending'
+                      ? '#f39c12'
+                      : booking.status === 'cancelled'
+                      ? '#e74c3c'
+                      : '#3498db',
+                }}
+              >
+                {booking.status.charAt(0).toUpperCase() +
+                  booking.status.slice(1)}
               </span>
             </td>
             <td style={{ padding: '1rem' }}>
