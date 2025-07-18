@@ -37,6 +37,17 @@ function AdminPaymentManagement() {
   const [selectedType, setSelectedType] = useState('all'); // 'all', 'orders', 'sessions'
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
+  const refundReasons = [
+    { value: 'duplicate', label: 'Duplicate' },
+    { value: 'fraudulent', label: 'Fraudulent' },
+    { value: 'requested_by_customer', label: 'Requested by Customer' },
+  ];
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundType, setRefundType] = useState('session');
+  const [refundId, setRefundId] = useState(null);
+  const [selectedRefundReason, setSelectedRefundReason] = useState(
+    'requested_by_customer'
+  );
 
   useEffect(() => {
     fetchPaymentStats();
@@ -169,34 +180,43 @@ function AdminPaymentManagement() {
     }
   };
 
-  const handleRefundPayment = async (id, type) => {
-    const reason = prompt('Enter refund reason:');
-    if (!reason) return;
+  const handleRefundPayment = (id, type) => {
+    setRefundId(id);
+    setRefundType(type);
+    setSelectedRefundReason('requested_by_customer');
+    setShowRefundModal(true);
+  };
 
+  const processRefund = async () => {
+    if (!refundId || !selectedRefundReason) return;
     try {
       const endpoint =
-        type === 'session'
-          ? `/api/booking/admin/${id}/refund`
-          : `/api/orders/admin/${id}`;
-      const method = type === 'session' ? 'POST' : 'PUT';
+        refundType === 'session'
+          ? `/api/booking/admin/${refundId}/refund`
+          : `/api/orders/admin/${refundId}`;
+      const method = refundType === 'session' ? 'POST' : 'PUT';
       const body =
-        type === 'session'
-          ? { reason }
-          : { paymentStatus: 'refunded', refundReason: reason };
-
+        refundType === 'session'
+          ? { reason: selectedRefundReason }
+          : { paymentStatus: 'refunded', refundReason: selectedRefundReason };
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-
+      setShowRefundModal(false);
+      setRefundId(null);
+      setRefundType('session');
       if (response.ok) {
-        fetchData(); // Refresh data
+        fetchData();
         alert('Payment refunded successfully!');
       } else {
         alert('Failed to refund payment');
       }
     } catch (error) {
+      setShowRefundModal(false);
+      setRefundId(null);
+      setRefundType('session');
       console.error('Error refunding payment:', error);
       alert('Error refunding payment');
     }
@@ -1159,6 +1179,71 @@ function AdminPaymentManagement() {
                 {/* Add more fields as needed */}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {showRefundModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: 32,
+              borderRadius: 8,
+              minWidth: 320,
+            }}
+          >
+            <h3 style={{ marginBottom: 16 }}>Select Refund Reason</h3>
+            <select
+              value={selectedRefundReason}
+              onChange={(e) => setSelectedRefundReason(e.target.value)}
+              style={{ width: '100%', padding: 8, marginBottom: 24 }}
+            >
+              {refundReasons.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+            <div
+              style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}
+            >
+              <button
+                onClick={() => setShowRefundModal(false)}
+                style={{
+                  padding: '0.5rem 1.2rem',
+                  background: '#ccc',
+                  border: 'none',
+                  borderRadius: 4,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processRefund}
+                style={{
+                  padding: '0.5rem 1.2rem',
+                  background: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 4,
+                }}
+              >
+                Refund
+              </button>
+            </div>
           </div>
         </div>
       )}

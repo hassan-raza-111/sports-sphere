@@ -377,10 +377,32 @@ router.post('/admin/:id/refund', async (req, res) => {
       return res.status(400).json({ message: 'Payment cannot be refunded.' });
     }
 
+    // Debug: Log booking and paymentIntentId
+    console.log(
+      'Refunding booking:',
+      booking._id,
+      'paymentIntentId:',
+      booking.paymentIntentId
+    );
+
+    if (!booking.paymentIntentId) {
+      console.error('No paymentIntentId found for booking:', booking._id);
+      return res
+        .status(400)
+        .json({ message: 'No payment intent found for this booking.' });
+    }
+
+    // Only allow valid Stripe reasons
+    const allowedReasons = ['duplicate', 'fraudulent', 'requested_by_customer'];
+    let refundReason = reason;
+    if (!allowedReasons.includes(refundReason)) {
+      refundReason = 'requested_by_customer';
+    }
+
     // Refund the payment
     const refund = await stripe.refunds.create({
       payment_intent: booking.paymentIntentId,
-      reason: reason || 'requested_by_customer',
+      reason: refundReason,
     });
 
     // Update booking status
@@ -397,6 +419,7 @@ router.post('/admin/:id/refund', async (req, res) => {
       refund,
     });
   } catch (err) {
+    // Log the full error
     console.error('Error refunding payment:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
