@@ -21,6 +21,23 @@ const initialState = {
   website: '',
 };
 
+const SPORTS = [
+  'Tennis',
+  'Football',
+  'Basketball',
+  'Swimming',
+  'Boxing',
+  'Athletics',
+  'Yoga',
+  'Cricket',
+  'Hockey',
+  'Volleyball',
+  'Table Tennis',
+  'Badminton',
+  'Rugby',
+  'Other',
+];
+
 const AdminAddUser = () => {
   const [form, setForm] = useState(initialState);
   const [error, setError] = useState('');
@@ -135,13 +152,20 @@ const AdminAddUser = () => {
             <>
               <div style={{ marginBottom: 12 }}>
                 <label>Sports You Coach</label>
-                <input
+                <select
                   name='sports'
                   value={form.sports}
                   onChange={handleChange}
-                  placeholder='e.g. Football, Tennis'
+                  required
                   style={{ width: '100%', padding: 8, marginTop: 4 }}
-                />
+                >
+                  <option value=''>Select Sport</option>
+                  {SPORTS.map((sport) => (
+                    <option key={sport} value={sport}>
+                      {sport}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div style={{ marginBottom: 12 }}>
                 <label>Session Type</label>

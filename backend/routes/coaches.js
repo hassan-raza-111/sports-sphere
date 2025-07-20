@@ -210,7 +210,23 @@ router.get('/find', async (req, res) => {
 
     // Filter by sport
     if (sport && sport !== 'All Sports') {
-      query.sports = { $regex: sport, $options: 'i' };
+      const sportRegex = new RegExp(`(^|,| )${sport}(,| |$)`, 'i');
+      const sportFilter = {
+        $or: [
+          { sports: sport }, // exact match (for new data)
+          { sports: { $regex: sportRegex } }, // match in comma-separated or spaced list (for old data)
+          { specialties: sport },
+          { specialties: { $in: [sport] } },
+        ],
+      };
+      if (query.$and) {
+        query.$and.push(sportFilter);
+      } else if (query.$or) {
+        query.$and = [{ $or: query.$or }, sportFilter];
+        delete query.$or;
+      } else {
+        Object.assign(query, sportFilter);
+      }
     }
 
     // Filter by rating

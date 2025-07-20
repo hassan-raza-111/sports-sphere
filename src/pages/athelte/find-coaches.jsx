@@ -120,31 +120,8 @@ const FindCoaches = () => {
     navigate(`/athlete/booking/${coachId}`);
   };
 
-  // Filter coaches based on search and filters (if needed)
-  const filteredCoaches = coaches.filter((coach) => {
-    // Search filter (optional, since backend handles it)
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        coach.name?.toLowerCase().includes(searchLower) ||
-        coach.specialty?.toLowerCase().includes(searchLower) ||
-        coach.bio?.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
-    // Sport filter (optional, since backend handles it)
-    if (selectedSport !== 'All Sports') {
-      const coachSport = coach.specialty?.toLowerCase() || '';
-      const selectedSportLower = selectedSport.toLowerCase();
-      if (!coachSport.includes(selectedSportLower)) return false;
-    }
-    // Rating filter (optional, since backend handles it)
-    if (selectedRating === '4.5' && coach.rating < 4.5) {
-      return false;
-    }
-    // Available today filter (optional, since backend handles it)
-    // ...
-    return true;
-  });
+  // Remove client-side filtering; use backend-filtered data directly
+  // const filteredCoaches = coaches.filter(...);
 
   return (
     <AthleteLayout>
@@ -183,7 +160,7 @@ const FindCoaches = () => {
           </div>
         ) : (
           <div className='coaches-grid'>
-            {filteredCoaches.map((coach) => (
+            {coaches.map((coach) => (
               <div key={coach._id} className='coach-card'>
                 <div className='coach-image'>
                   <img src={coach.image} alt={coach.name} />
@@ -193,7 +170,7 @@ const FindCoaches = () => {
                 </div>
                 <div className='coach-info'>
                   <h3 className='coach-name'>{coach.name}</h3>
-                  <p className='coach-specialty'>{coach.specialty}</p>
+                  <p className='coach-specialty'>{coach.sports}</p>
                   <div className='coach-rating'>
                     <div className='stars'>
                       {renderStars(coach.stars, coach.rating)}
@@ -224,7 +201,7 @@ const FindCoaches = () => {
           </div>
         )}
 
-        {!loading && filteredCoaches.length === 0 && (
+        {!loading && coaches.length === 0 && (
           <div className='no-results'>
             <FaRunning className='no-results-icon' />
             <h3>No coaches found</h3>

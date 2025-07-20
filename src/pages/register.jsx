@@ -70,6 +70,23 @@ function Register() {
     setLoading(false);
   };
 
+  const SPORTS = [
+    'Tennis',
+    'Football',
+    'Basketball',
+    'Swimming',
+    'Boxing',
+    'Athletics',
+    'Yoga',
+    'Cricket',
+    'Hockey',
+    'Volleyball',
+    'Table Tennis',
+    'Badminton',
+    'Rugby',
+    'Other',
+  ];
+
   return (
     <>
       <style>{`
@@ -159,14 +176,20 @@ function Register() {
               id='coachFields'
             >
               <label htmlFor='sports'>Sports You Coach</label>
-              <input
-                type='text'
+              <select
                 id='sports'
                 name='sports'
-                placeholder='e.g. Football, Tennis'
                 value={formData.sports}
                 onChange={handleChange}
-              />
+                required={formData.role === 'coach'}
+              >
+                <option value=''>Select Sport</option>
+                {SPORTS.map((sport) => (
+                  <option key={sport} value={sport}>
+                    {sport}
+                  </option>
+                ))}
+              </select>
               <label htmlFor='sessionType'>Session Type</label>
               <select
                 id='sessionType'
