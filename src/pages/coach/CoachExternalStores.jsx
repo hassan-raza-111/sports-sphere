@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AthleteLayout from '../../components/AthleteLayout';
-import '../../css/vendor.css';
+import Layout from '../../components/Layout';
 import {
   FaStore,
   FaRunning,
@@ -8,8 +7,9 @@ import {
   FaGlobe,
   FaHandshake,
 } from 'react-icons/fa';
+import '../../css/vendor.css';
 
-export default function ExternalStoresAthlete() {
+export default function CoachExternalStores() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +31,7 @@ export default function ExternalStoresAthlete() {
   }, []);
 
   return (
-    <AthleteLayout>
+    <Layout role='coach'>
       <div className='vendors-container'>
         <div className='vendors-header'>
           <h2 className='vendors-heading'>
@@ -101,6 +101,6 @@ export default function ExternalStoresAthlete() {
           </div>
         )}
       </div>
-    </AthleteLayout>
+    </Layout>
   );
 }

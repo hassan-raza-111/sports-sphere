@@ -219,6 +219,13 @@ const CoachMarketplace = () => {
             <i className='fas fa-store'></i> Coach Marketplace
           </h2>
           <p>Premium sports equipment and training gear for coaches</p>
+          <Link
+            to='/external-stores'
+            className='btn secondary'
+            style={{ marginTop: 10 }}
+          >
+            View External Stores
+          </Link>
         </div>
 
         <div className='search-filters'>
