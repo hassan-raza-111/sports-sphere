@@ -5,9 +5,11 @@ import '../../css/marketplace.css';
 
 // Add this for notification
 const Notification = ({ message, onClose }) => (
-  <div className="cart-notification">
+  <div className='cart-notification'>
     {message}
-    <button onClick={onClose} className="close-btn">&times;</button>
+    <button onClick={onClose} className='close-btn'>
+      &times;
+    </button>
   </div>
 );
 
@@ -207,7 +209,10 @@ const MarketplacePage = () => {
   return (
     <AthleteLayout>
       {notification && (
-        <Notification message={notification} onClose={() => setNotification(null)} />
+        <Notification
+          message={notification}
+          onClose={() => setNotification(null)}
+        />
       )}
       <div className='marketplace-container'>
         <div className='marketplace-header'>
@@ -353,6 +358,14 @@ const MarketplacePage = () => {
                   <div className='product-actions'>
                     <button
                       className='btn secondary'
+                      onClick={() =>
+                        navigate(`/athlete/product/${product._id}`)
+                      }
+                    >
+                      View
+                    </button>
+                    <button
+                      className='btn'
                       onClick={() => addToCart(product)}
                       disabled={product.stock === 0}
                     >

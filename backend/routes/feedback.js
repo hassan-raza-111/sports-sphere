@@ -25,6 +25,27 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Add feedback for a product
+router.post('/product/:productId', async (req, res) => {
+  const { rating, feedbackText, userId } = req.body;
+  if (!rating || !feedbackText || !userId) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+  try {
+    const feedback = new Feedback({
+      feedbackType: 'product',
+      productId: req.params.productId,
+      userId,
+      rating,
+      feedbackText,
+    });
+    await feedback.save();
+    res.status(201).json({ message: 'Feedback submitted', feedback });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get average rating for an athlete
 router.get('/athlete/:id/average-rating', async (req, res) => {
   try {
@@ -62,6 +83,18 @@ router.get('/', async (req, res) => {
     res.json(feedbacks);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch testimonials' });
+  }
+});
+
+// Get all feedback for a product
+router.get('/product/:productId', async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find({ productId: req.params.productId })
+      .sort({ date: -1 })
+      .populate('userId', 'name email');
+    res.json(feedbacks);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch feedback' });
   }
 });
 

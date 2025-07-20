@@ -8,8 +8,6 @@ export default function FeedbackManagement() {
   const [feedbackTabLoading, setFeedbackTabLoading] = useState(true);
   const [feedbackTabError, setFeedbackTabError] = useState(null);
   const [feedbackList, setFeedbackList] = useState([]);
-  const [replying, setReplying] = useState({});
-  const [replyText, setReplyText] = useState({});
 
   // Get vendorId from localStorage
   const userStr = localStorage.getItem('user');
@@ -33,34 +31,6 @@ export default function FeedbackManagement() {
       });
   }, [vendorId]);
 
-  const handleReplyChange = (id, value) => {
-    setReplyText((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleReplySubmit = async (id) => {
-    if (!replyText[id]?.trim()) return;
-    setReplying((prev) => ({ ...prev, [id]: true }));
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/feedback/${id}/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reply: replyText[id] }),
-      });
-      if (!res.ok) throw new Error('Failed to reply');
-      const updated = feedbackList.map((fb) =>
-        fb._id === id
-          ? { ...fb, reply: replyText[id], repliedAt: new Date() }
-          : fb
-      );
-      setFeedbackList(updated);
-      setReplyText((prev) => ({ ...prev, [id]: '' }));
-    } catch (err) {
-      alert('Failed to submit reply');
-    } finally {
-      setReplying((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
   return (
     <VendorLayout>
       <div className='container'>
@@ -81,7 +51,6 @@ export default function FeedbackManagement() {
                 <th>Feedback</th>
                 <th>Buyer</th>
                 <th>Date</th>
-                <th>Reply</th>
               </tr>
             </thead>
             <tbody>
@@ -95,41 +64,6 @@ export default function FeedbackManagement() {
                   <td>{fb.feedbackText}</td>
                   <td>{fb.userId?.name || fb.email || '-'}</td>
                   <td>{new Date(fb.createdAt).toLocaleString()}</td>
-                  <td>
-                    {fb.reply ? (
-                      <div>
-                        <div style={{ color: '#2980b9' }}>{fb.reply}</div>
-                        <div style={{ fontSize: 12, color: '#888' }}>
-                          {fb.repliedAt
-                            ? 'Replied: ' +
-                              new Date(fb.repliedAt).toLocaleString()
-                            : ''}
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <input
-                          type='text'
-                          value={replyText[fb._id] || ''}
-                          onChange={(e) =>
-                            handleReplyChange(fb._id, e.target.value)
-                          }
-                          placeholder='Write a reply...'
-                          style={{ width: 120 }}
-                        />
-                        <button
-                          onClick={() => handleReplySubmit(fb._id)}
-                          disabled={
-                            replying[fb._id] ||
-                            !(replyText[fb._id] && replyText[fb._id].trim())
-                          }
-                          style={{ marginLeft: 5 }}
-                        >
-                          {replying[fb._id] ? 'Replying...' : 'Reply'}
-                        </button>
-                      </div>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>

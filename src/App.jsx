@@ -24,6 +24,7 @@ import BookingSuccess from './pages/athelte/BookingSuccess.jsx';
 import MyOrders from './pages/athelte/MyOrders.jsx';
 import MySessions from './pages/athelte/MySessions.jsx';
 import CoachProfileView from './pages/athelte/CoachProfileView.jsx';
+import ProductDetailAthlete from './pages/athelte/ProductDetail.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
@@ -38,6 +39,7 @@ import VendorPanel from './pages/vendor/VendorPanel';
 import OrderManagement from './pages/vendor/OrderManagement';
 import EarningsOverview from './pages/vendor/EarningsOverview';
 import FeedbackManagement from './pages/vendor/FeedbackManagement';
+import ProductDetailCoach from './pages/coach/ProductDetail.jsx';
 
 // Coach pages
 import CoachBooking from './pages/coach/booking';
@@ -142,6 +144,10 @@ function App() {
         />
         <Route path='/athlete/orders' element={<MyOrders />} />
         <Route path='/athlete/sessions' element={<MySessions />} />
+        <Route
+          path='/athlete/product/:productId'
+          element={<ProductDetailAthlete />}
+        />
 
         {/* Vendor */}
         <Route path='/vendor/dashboard' element={<Vendor />} />
@@ -181,6 +187,10 @@ function App() {
           element={<CoachAthleteProgress />}
         />
         <Route path='/coach/orders' element={<CoachOrders />} />
+        <Route
+          path='/coach/product/:productId'
+          element={<ProductDetailCoach />}
+        />
 
         {/* Admin */}
         <Route path='/admin/dashboard' element={<Admin />} />
