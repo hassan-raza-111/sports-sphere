@@ -420,4 +420,52 @@ router.get('/verify-email/:token', async (req, res) => {
   }
 });
 
+// Resend verification email
+router.post('/resend-verification', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email is required' });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      // For security, don't reveal if user exists
+      return res.json({
+        message:
+          'If your account exists and is not verified, a verification email has been sent.',
+      });
+    }
+    if (user.isEmailVerified) {
+      return res.json({
+        message: 'Your email is already verified. You can log in.',
+      });
+    }
+    // Generate new verification token
+    const crypto = await import('crypto');
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.verificationToken = verificationToken;
+    await user.save();
+    // Send verification email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
+    const verifyUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+    const mailOptions = {
+      to: user.email,
+      from: process.env.GMAIL_USER,
+      subject: 'Verify your email for Sports Sphere',
+      html: `<p>Please <a href="${verifyUrl}">click here</a> to verify your email and activate your account.</p>`,
+    };
+    await transporter.sendMail(mailOptions);
+    res.json({
+      message:
+        'If your account exists and is not verified, a verification email has been sent.',
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 export default router;

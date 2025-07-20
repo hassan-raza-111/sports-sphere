@@ -220,6 +220,26 @@ const MarketplacePage = () => {
             <i className='fas fa-store'></i> Gear Up for Success
           </h2>
           <p>Premium sports equipment and training gear from trusted vendors</p>
+          <button
+            className='external-stores-btn'
+            style={{
+              marginTop: '1rem',
+              padding: '0.7rem 1.5rem',
+              fontSize: '1rem',
+              background: '#222',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+            }}
+            onClick={() => navigate('/athlete/external-stores')}
+          >
+            <i
+              className='fas fa-external-link-alt'
+              style={{ marginRight: 8 }}
+            ></i>
+            External Stores
+          </button>
         </div>
 
         <div className='search-filters'>

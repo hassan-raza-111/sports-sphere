@@ -8,6 +8,7 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [resendMsg, setResendMsg] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -44,6 +45,24 @@ function Login() {
       }
     } catch (err) {
       setError('Server error. Please try again later.');
+    }
+  };
+
+  const handleResend = async () => {
+    setResendMsg('');
+    try {
+      const res = await fetch('http://localhost:5000/api/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      setResendMsg(
+        data.message ||
+          'If your account exists and is not verified, a verification email has been sent.'
+      );
+    } catch (err) {
+      setResendMsg('Server error. Please try again later.');
     }
   };
 
@@ -85,7 +104,32 @@ function Login() {
           />
 
           {error && (
-            <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>
+            <div style={{ color: 'red', marginBottom: '10px' }}>
+              {error}
+              {error.includes('invite has been sent') && (
+                <>
+                  <br />
+                  <button
+                    type='button'
+                    style={{
+                      color: 'blue',
+                      textDecoration: 'underline',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onClick={handleResend}
+                  >
+                    Resend verification email
+                  </button>
+                  {resendMsg && (
+                    <div style={{ color: 'green', marginTop: 5 }}>
+                      {resendMsg}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
 
           <button type='submit'>Login</button>
