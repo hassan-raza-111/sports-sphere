@@ -37,19 +37,17 @@ const sessionTimeframes = [
 const CoachAthleteProgress = () => {
   const [athletes, setAthletes] = useState([]);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
-  const [overview, setOverview] = useState(null);
-  const [chart, setChart] = useState(null);
-  const [metrics, setMetrics] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTimeframe, setActiveTimeframe] = useState('quarter');
   const [sessionFilter, setSessionFilter] = useState('quarter');
   const [athleteSearch, setAthleteSearch] = useState('');
   const [coachId, setCoachId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  // Add new analytics state
+  const [athleteStats, setAthleteStats] = useState(null);
 
   // Get user _id from localStorage and fetch Coach model _id
   useEffect(() => {
@@ -88,40 +86,67 @@ const CoachAthleteProgress = () => {
       });
   }, [coachId]);
 
-  // Fetch all data for selected athlete and timeframe
+  // Only fetch session data for selected athlete
   useEffect(() => {
     if (!selectedAthlete) return;
-    setLoading(true);
     setSessionsLoading(true);
     setError(null);
-    Promise.all([
-      fetch(
-        `/api/progress/athletes/${selectedAthlete._id}/progress-overview?timeframe=${activeTimeframe}`
-      ).then((r) => r.json()),
-      fetch(
-        `/api/progress/athletes/${selectedAthlete._id}/progress-chart?timeframe=${activeTimeframe}`
-      ).then((r) => r.json()),
-      fetch(`/api/progress/athletes/${selectedAthlete._id}/metrics`).then((r) =>
-        r.json()
-      ),
-      fetch(
-        `/api/progress/athletes/${selectedAthlete._id}/sessions?coachId=${coachId}&timeframe=${sessionFilter}`
-      ).then((r) => r.json()),
-    ])
-      .then(([overviewData, chartData, metricsData, sessionsData]) => {
-        setOverview(overviewData);
-        setChart(chartData);
-        setMetrics(metricsData);
+    fetch(
+      `/api/progress/athletes/${selectedAthlete._id}/sessions?coachId=${coachId}&timeframe=${sessionFilter}`
+    )
+      .then((r) => r.json())
+      .then((sessionsData) => {
         setSessions(sessionsData || []);
-        setLoading(false);
         setSessionsLoading(false);
       })
       .catch(() => {
-        setError('Failed to load athlete progress data');
-        setLoading(false);
+        setError('Failed to load athlete session data');
         setSessionsLoading(false);
       });
-  }, [selectedAthlete, activeTimeframe, sessionFilter, coachId]);
+  }, [selectedAthlete, sessionFilter, coachId]);
+
+  // Calculate athlete stats whenever sessions change
+  useEffect(() => {
+    if (!sessions || sessions.length === 0) {
+      setAthleteStats(null);
+      return;
+    }
+    const totalSessions = sessions.length;
+    const attended = sessions.filter((s) => s.status === 'completed').length;
+    const missed = sessions.filter((s) => s.status === 'missed').length;
+    const attendanceRate =
+      totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : 0;
+    // Average performance (if available)
+    const perfValues = sessions
+      .map((s) => parseFloat(s.performance))
+      .filter((v) => !isNaN(v));
+    const avgPerformance =
+      perfValues.length > 0
+        ? (perfValues.reduce((a, b) => a + b, 0) / perfValues.length).toFixed(1)
+        : 'N/A';
+    // Most frequent focus area
+    const focusAreas = sessions.map((s) => s.focusArea).filter(Boolean);
+    const focusAreaCount = {};
+    focusAreas.forEach((area) => {
+      focusAreaCount[area] = (focusAreaCount[area] || 0) + 1;
+    });
+    let mostFrequentFocus = 'N/A';
+    let maxCount = 0;
+    Object.entries(focusAreaCount).forEach(([area, count]) => {
+      if (count > maxCount) {
+        mostFrequentFocus = area;
+        maxCount = count;
+      }
+    });
+    setAthleteStats({
+      totalSessions,
+      attended,
+      missed,
+      attendanceRate,
+      avgPerformance,
+      mostFrequentFocus,
+    });
+  }, [sessions]);
 
   const openSessionModal = (session) => {
     setSelectedSession(session);
@@ -213,40 +238,7 @@ const CoachAthleteProgress = () => {
   }
 
   // Chart.js data
-  const chartData = chart
-    ? {
-        labels: chart.labels,
-        datasets: [
-          {
-            label: 'Technical Skills',
-            data: chart.technical,
-            borderColor: '#e74c3c',
-            backgroundColor: 'rgba(231, 76, 60, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-          },
-          {
-            label: 'Physical Conditioning',
-            data: chart.physical,
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-          },
-          {
-            label: 'Mental Toughness',
-            data: chart.mental,
-            borderColor: '#2ecc71',
-            backgroundColor: 'rgba(46, 204, 113, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      }
-    : null;
+  const chartData = null; // No chart data to display
 
   return (
     <Layout role='coach'>
@@ -301,132 +293,43 @@ const CoachAthleteProgress = () => {
               ))}
           </div>
         </div>
-        {/* Overview Cards */}
-        {overview && (
+        {/* Athlete Stats Analytics */}
+        {athleteStats && (
           <div className='analytics-grid'>
             <div className='analytics-card'>
               <FaCalendarCheck />
-              <h4>{overview.completedSessions}</h4>
-              <p>Completed Sessions</p>
-              <div className='trend-indicator trend-up'>
-                <FaArrowUp /> {overview.trends?.sessions}% from last month
-              </div>
+              <h4>{athleteStats.totalSessions}</h4>
+              <p>Total Sessions</p>
             </div>
             <div className='analytics-card'>
-              <FaTrophy />
-              <h4>{overview.goalCompletion}%</h4>
-              <p>Goal Completion</p>
-              <div className='trend-indicator trend-up'>
-                <FaArrowUp /> {overview.trends?.goals}% from last month
-              </div>
+              <FaCalendarCheck style={{ color: '#27ae60' }} />
+              <h4>{athleteStats.attended}</h4>
+              <p>Sessions Attended</p>
             </div>
             <div className='analytics-card'>
-              <FaRunning />
-              <h4>{overview.avgPerformance}</h4>
-              <p>Average Performance</p>
-              <div className='trend-indicator trend-up'>
-                <FaArrowUp /> {overview.trends?.performance} from last month
-              </div>
+              <FaCalendarCheck style={{ color: '#e74c3c' }} />
+              <h4>{athleteStats.missed}</h4>
+              <p>Sessions Missed</p>
             </div>
             <div className='analytics-card'>
               <FaHeartbeat />
-              <h4>{overview.attendanceRate}%</h4>
+              <h4>{athleteStats.attendanceRate}%</h4>
               <p>Attendance Rate</p>
-              <div
-                className={`trend-indicator ${
-                  overview.trends?.attendance < 0 ? 'trend-down' : 'trend-up'
-                }`}
-              >
-                {overview.trends?.attendance < 0 ? (
-                  <FaArrowDown />
-                ) : (
-                  <FaArrowUp />
-                )}{' '}
-                {Math.abs(overview.trends?.attendance)}% from last month
-              </div>
+            </div>
+            <div className='analytics-card'>
+              <FaStar />
+              <h4>{athleteStats.avgPerformance}</h4>
+              <p>Average Performance</p>
+            </div>
+            <div className='analytics-card'>
+              <FaTachometerAlt />
+              <h4>{athleteStats.mostFrequentFocus}</h4>
+              <p>Most Frequent Focus Area</p>
             </div>
           </div>
         )}
-        {/* Performance Progress Chart */}
-        <div className='chart-section'>
-          <div className='chart-header'>
-            <h3 className='chart-title'>
-              <FaChartLine /> Performance Progress
-            </h3>
-            <div className='time-selector'>
-              {timeframes.map((tf) => (
-                <button
-                  key={tf.key}
-                  className={`time-btn${
-                    activeTimeframe === tf.key ? ' active' : ''
-                  }`}
-                  onClick={() => setActiveTimeframe(tf.key)}
-                >
-                  {tf.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className='chart-container'>
-            {chartData ? (
-              <Line
-                data={chartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false },
-                  },
-                  scales: {
-                    y: {
-                      min: 0,
-                      max: 100,
-                      ticks: {
-                        callback: (value) => value + '%',
-                      },
-                      grid: { color: 'rgba(0,0,0,0.05)' },
-                    },
-                    x: { grid: { display: false } },
-                  },
-                }}
-                height={350}
-              />
-            ) : (
-              <div style={{ textAlign: 'center', color: '#e74c3c' }}>
-                No chart data
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Key Metrics Section */}
-        <div className='chart-section'>
-          <div className='chart-header'>
-            <h3 className='chart-title'>
-              <FaTachometerAlt /> Key Performance Metrics
-            </h3>
-          </div>
-          <div className='metrics-container'>
-            {metrics.length ? (
-              metrics.map((metric, idx) => (
-                <div className='metric-card' key={idx}>
-                  <div className='metric-header'>
-                    <span className='metric-title'>{metric.title}</span>
-                    <span className='metric-value'>{metric.value}</span>
-                  </div>
-                  <div className='progress-bar'>
-                    <div
-                      className='progress-fill'
-                      style={{ width: metric.value }}
-                    ></div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div style={{ color: '#e74c3c' }}>No metrics data</div>
-            )}
-          </div>
-        </div>
+        {/* Overview Cards removed */}
+        {/* Key Performance Metrics Section removed */}
         {/* Session History */}
         <div className='chart-section'>
           <div className='chart-header'>
