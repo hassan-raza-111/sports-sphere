@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fa';
 import '../../css/vendor.css';
 
-export default function CoachExternalStores() {
+const CoachExternalStores = () => {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -103,4 +103,6 @@ export default function CoachExternalStores() {
       </div>
     </Layout>
   );
-}
+};
+
+export default CoachExternalStores;

@@ -26,8 +26,6 @@ import MyOrders from './pages/athelte/MyOrders.jsx';
 import MySessions from './pages/athelte/MySessions.jsx';
 import CoachProfileView from './pages/athelte/CoachProfileView.jsx';
 import ProductDetailAthlete from './pages/athelte/ProductDetail.jsx';
-import ExternalStores from './pages/athelte/ExternalStores.jsx';
-import CoachExternalStores from './pages/coach/CoachExternalStores.jsx';
 import AthleteExternalStores from './pages/athelte/AthleteExternalStores.jsx';
 
 // Vendor pages
@@ -55,6 +53,7 @@ import CoachDashboard from './pages/coach/CoachDashboard';
 import CoachCheckoutPage from './pages/coach/CheckoutPage.jsx';
 import CoachCheckoutSuccess from './pages/coach/CheckoutSuccess.jsx';
 import CoachOrders from './pages/coach/Orders.jsx';
+import CoachExternalStores from './pages/coach/CoachExternalStores.jsx';
 
 // Admin pages
 import Admin from './pages/admin/admin';
@@ -174,7 +173,6 @@ function App() {
           path='/vendor/feedback-management'
           element={<FeedbackManagement />}
         />
-        <Route path='/vendor/external-stores' element={<ExternalStores />} />
 
         {/* Coach */}
         <Route path='/coach/dashboard' element={<CoachDashboard />} />

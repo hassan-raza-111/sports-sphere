@@ -221,7 +221,7 @@ const MarketplacePage = () => {
           </h2>
           <p>Premium sports equipment and training gear from trusted vendors</p>
           <Link
-            to='/coach/external-stores'
+            to='/athlete/external-stores'
             className='btn secondary'
             style={{ marginTop: 10 }}
           >

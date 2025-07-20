@@ -220,7 +220,7 @@ const CoachMarketplace = () => {
           </h2>
           <p>Premium sports equipment and training gear for coaches</p>
           <Link
-            to='/external-stores'
+            to='/coach/external-stores'
             className='btn secondary'
             style={{ marginTop: 10 }}
           >

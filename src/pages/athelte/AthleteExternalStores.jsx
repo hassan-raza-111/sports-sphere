@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import AthleteLayout from '../../components/AthleteLayout';
-import '../../css/vendor.css';
 import {
   FaStore,
   FaRunning,
@@ -8,8 +7,9 @@ import {
   FaGlobe,
   FaHandshake,
 } from 'react-icons/fa';
+import '../../css/vendor.css';
 
-export default function ExternalStoresAthlete() {
+const AthleteExternalStores = () => {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -103,4 +103,6 @@ export default function ExternalStoresAthlete() {
       </div>
     </AthleteLayout>
   );
-}
+};
+
+export default AthleteExternalStores;
