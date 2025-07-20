@@ -27,6 +27,8 @@ import MySessions from './pages/athelte/MySessions.jsx';
 import CoachProfileView from './pages/athelte/CoachProfileView.jsx';
 import ProductDetailAthlete from './pages/athelte/ProductDetail.jsx';
 import ExternalStores from './pages/athelte/ExternalStores.jsx';
+import CoachExternalStores from './pages/coach/CoachExternalStores.jsx';
+import AthleteExternalStores from './pages/athelte/AthleteExternalStores.jsx';
 
 // Vendor pages
 import Vendor from './pages/vendor/vendor';
@@ -151,6 +153,10 @@ function App() {
           path='/athlete/product/:productId'
           element={<ProductDetailAthlete />}
         />
+        <Route
+          path='/athlete/external-stores'
+          element={<AthleteExternalStores />}
+        />
 
         {/* Vendor */}
         <Route path='/vendor/dashboard' element={<Vendor />} />
@@ -195,7 +201,10 @@ function App() {
           path='/coach/product/:productId'
           element={<ProductDetailCoach />}
         />
-        <Route path='/coach/external-stores' element={<ExternalStores />} />
+        <Route
+          path='/coach/external-stores'
+          element={<CoachExternalStores />}
+        />
 
         {/* Admin */}
         <Route path='/admin/dashboard' element={<Admin />} />
