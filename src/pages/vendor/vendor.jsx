@@ -63,40 +63,42 @@ export default function Vendor() {
         ) : null}
 
         <div className='vendor-grid'>
-          {vendors.map((vendor, index) => (
-            <div className='vendor-card' key={vendor._id || index}>
-              <div className='vendor-image-container'>
-                <img
-                  src={
-                    vendor.image?.startsWith('http')
-                      ? vendor.image
-                      : vendor.image?.replace('/assets', '/src/assets')
-                  }
-                  alt={vendor.storeName}
-                  // onError={(e) => {
-                  //   e.target.src = '/src/assets/images/Logo.png';
-                  // }}
-                />
-                <div className='vendor-badge'>
-                  <FaStore />
+          {vendors
+            .filter((vendor) => vendor.website && vendor.website.trim() !== '')
+            .map((vendor, index) => (
+              <div className='vendor-card' key={vendor._id || index}>
+                <div className='vendor-image-container'>
+                  <img
+                    src={
+                      vendor.image?.startsWith('http')
+                        ? vendor.image
+                        : vendor.image?.replace('/assets', '/src/assets')
+                    }
+                    alt={vendor.storeName}
+                    // onError={(e) => {
+                    //   e.target.src = '/src/assets/images/Logo.png';
+                    // }}
+                  />
+                  <div className='vendor-badge'>
+                    <FaStore />
+                  </div>
+                </div>
+                <div className='vendor-info'>
+                  <h3>{vendor.storeName}</h3>
+                  <p>{vendor.description}</p>
+                  <div className='vendor-actions'>
+                    <a
+                      href={vendor.website}
+                      className='btn btn-primary'
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <FaGlobe /> Visit Store
+                    </a>
+                  </div>
                 </div>
               </div>
-              <div className='vendor-info'>
-                <h3>{vendor.storeName}</h3>
-                <p>{vendor.description}</p>
-                <div className='vendor-actions'>
-                  <a
-                    href={vendor.website}
-                    className='btn btn-primary'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    <FaGlobe /> Visit Store
-                  </a>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {vendors.length === 0 && !loading && (
