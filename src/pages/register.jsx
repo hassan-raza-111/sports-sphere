@@ -62,7 +62,9 @@ function Register() {
         setLoading(false);
         return;
       }
-      setSuccess('Registration successful! You can now log in.');
+      setSuccess(
+        'Registration successful! Please check your email for a verification link.'
+      );
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       setError('Server error. Please try again later.');

@@ -49,6 +49,8 @@ router.post('/register', upload.array('certificates'), async (req, res) => {
       return res.status(409).json({ message: 'Email already registered' });
     const hashed = await bcrypt.hash(password, 10);
     const status = role === 'coach' ? 'disabled' : 'active';
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
     // Create user
     const user = new User({
       name: fullName,
@@ -56,6 +58,8 @@ router.post('/register', upload.array('certificates'), async (req, res) => {
       password: hashed,
       role,
       status,
+      verificationToken,
+      isEmailVerified: false,
     });
     await user.save();
     // Role-specific logic
@@ -81,7 +85,26 @@ router.post('/register', upload.array('certificates'), async (req, res) => {
         website,
       });
     }
-    res.status(201).json({ message: 'Registration successful' });
+    // Send verification email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
+    const verifyUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+    const mailOptions = {
+      to: user.email,
+      from: process.env.GMAIL_USER,
+      subject: 'Verify your email for Sports Sphere',
+      html: `<p>Thank you for registering at Sports Sphere.<br/>Please <a href="${verifyUrl}">click here</a> to verify your email and activate your account.</p>`,
+    };
+    await transporter.sendMail(mailOptions);
+    res.status(201).json({
+      message:
+        'Registration successful. Please check your email to verify your account.',
+    });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -98,6 +121,12 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        message:
+          'An invite has been sent to your email. Please accept it to continue.',
+      });
+    }
     if (user.status === 'disabled') {
       return res.status(403).json({
         message: 'Your account is disabled. Please wait for admin approval.',
@@ -353,6 +382,39 @@ router.post('/users/admin-create', async (req, res) => {
       });
     }
     res.status(201).json({ message: 'User created successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Email verification endpoint
+router.get('/verify-email/:token', async (req, res) => {
+  const { token } = req.params;
+  try {
+    const user = await User.findOne({ verificationToken: token });
+    if (user) {
+      user.isEmailVerified = true;
+      user.verificationToken = undefined;
+      user.status = 'active'; // Activate account on email verification
+      await user.save();
+      return res.json({
+        message: 'Email verified successfully. You can now log in.',
+      });
+    } else {
+      // Check if token is invalid but user is already verified
+      const alreadyVerifiedUser = await User.findOne({
+        isEmailVerified: true,
+        verificationToken: { $in: [null, undefined] },
+      });
+      if (alreadyVerifiedUser) {
+        return res.json({
+          message: 'Your email is already verified. You can log in.',
+        });
+      }
+      return res
+        .status(400)
+        .json({ message: 'Invalid or expired verification token.' });
+    }
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

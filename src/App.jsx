@@ -9,6 +9,7 @@ import ForgotPassword from './pages/forgot-password';
 import ResetPassword from './pages/reset-password';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
+import VerifyEmail from './pages/verify-email.jsx';
 
 // Athlete pages
 import Athlete from './pages/athelte/athelte';
@@ -120,6 +121,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path='/verify-email/:token' element={<VerifyEmail />} />
 
         {/* Athlete */}
         <Route path='/athlete/dashboard' element={<Athlete />} />

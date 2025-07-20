@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema(
         progress: { type: Number, default: 0 }, // percent
       },
     ],
+    isEmailVerified: { type: Boolean, default: false },
+    verificationToken: String,
   },
   { timestamps: true }
 );
