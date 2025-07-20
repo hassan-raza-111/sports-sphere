@@ -6,6 +6,7 @@ function AdminProfile() {
   const user = JSON.parse(localStorage.getItem('user')) || {
     name: 'Admin',
     email: 'admin@example.com',
+    _id: '',
   };
   const [form, setForm] = useState({
     name: user.name || '',
@@ -31,12 +32,27 @@ function AdminProfile() {
     }
     setLoading(true);
     try {
-      // Replace with real API call
-      await new Promise((res) => setTimeout(res, 1000));
+      // Prepare update payload
+      const payload = {
+        name: form.name,
+        email: form.email,
+      };
+      if (form.password) payload.password = form.password;
+      // Call backend API to update user profile
+      const res = await fetch(`/api/users/${user._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update profile');
       setMessage('Profile updated successfully!');
       setForm({ ...form, password: '', confirmPassword: '' });
+      // Update localStorage user info if email or name changed
+      const updatedUser = { ...user, name: form.name, email: form.email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (err) {
-      setError('Failed to update profile');
+      setError(err.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
