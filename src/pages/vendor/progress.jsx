@@ -49,17 +49,67 @@ const Progress = () => {
               data: Object.values(analytics.salesByMonth),
               borderColor: '#e74c3c',
               backgroundColor: 'rgba(231, 76, 60, 0.1)',
-              borderWidth: 2,
+              borderWidth: 3,
               fill: true,
-              tension: 0.4,
+              tension: 0.3,
+              pointBackgroundColor: '#e74c3c',
+              pointBorderColor: '#fff',
+              pointRadius: 6,
+              pointHoverRadius: 8,
+              pointStyle: 'circle',
             },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero: true } },
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 16 } } },
+            title: {
+              display: true,
+              text: 'Sales Over Time',
+              font: { size: 20, weight: 'bold' },
+              color: '#2c3e50',
+              padding: { top: 10, bottom: 20 },
+            },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label: function (context) {
+                  let value = context.parsed.y;
+                  return 'PKR ' + value.toLocaleString();
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { display: true, color: '#eee' },
+              title: {
+                display: true,
+                text: 'Month',
+                font: { size: 16 },
+                color: '#2c3e50',
+              },
+              ticks: { font: { size: 14 } },
+            },
+            y: {
+              beginAtZero: true,
+              grid: { display: true, color: '#eee' },
+              title: {
+                display: true,
+                text: 'Sales (PKR)',
+                font: { size: 16 },
+                color: '#2c3e50',
+              },
+              ticks: {
+                font: { size: 14 },
+                callback: function (value) {
+                  return 'PKR ' + value.toLocaleString();
+                },
+              },
+            },
+          },
         },
       });
     }
