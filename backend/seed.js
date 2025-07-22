@@ -51,6 +51,7 @@ async function seed() {
       password: adminPassword,
       role: 'admin',
       status: 'active',
+      isEmailVerified: true,
     });
     await adminUser.save();
     console.log('Default admin user created: admin@gmail.com / 11223344');
