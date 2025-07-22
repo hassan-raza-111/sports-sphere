@@ -27,6 +27,12 @@ const CoachBookings = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [activeTab, setActiveTab] = useState('pending'); // pending, conducted, completed
+  const initialMetrics = { stamina: '', speed: '', strength: '', focus: '' };
+  const [showMetricsModal, setShowMetricsModal] = useState(false);
+  const [metrics, setMetrics] = useState(initialMetrics);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+  const [metricsError, setMetricsError] = useState('');
+  const [pendingCompleteId, setPendingCompleteId] = useState(null);
 
   // Get coach userId from localStorage
   const userStr = localStorage.getItem('user');
@@ -123,11 +129,29 @@ const CoachBookings = () => {
       const res = await fetch(`/api/booking/${bookingId}/reject`, {
         method: 'POST',
       });
-      if (!res.ok) throw new Error('Failed to reject booking');
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to reject booking');
+      }
+
       setBookings((prev) => prev.filter((b) => b._id !== bookingId));
-      alert('Session rejected successfully! Payment has been refunded.');
+
+      // Show appropriate message based on payment result
+      if (data.paymentResult && data.paymentResult.error) {
+        alert(
+          'Session rejected successfully! Note: Payment processing had some issues, but the session was cancelled.'
+        );
+      } else {
+        alert('Session rejected successfully! Payment has been processed.');
+      }
+
+      // Refresh data to ensure UI is in sync
+      await fetchBookings();
     } catch (err) {
-      setError('Failed to reject booking.');
+      console.error('Reject error:', err);
+      setError(err.message || 'Failed to reject booking.');
     } finally {
       setRejectingId('');
     }
@@ -503,7 +527,12 @@ const CoachBookings = () => {
                           acceptingId === booking._id ||
                           rejectingId === booking._id
                         }
-                        onClick={() => handleComplete(booking._id)}
+                        onClick={() => {
+                          setPendingCompleteId(booking._id);
+                          setShowMetricsModal(true);
+                          setMetrics(initialMetrics);
+                          setSelectedSession(booking);
+                        }}
                       >
                         {completingId === booking._id ? (
                           <>
@@ -819,6 +848,190 @@ const CoachBookings = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showMetricsModal && selectedSession && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+          }}
+          onClick={() => setShowMetricsModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '15px',
+              padding: '2rem',
+              maxWidth: '400px',
+              width: '90%',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowMetricsModal(false)}
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                cursor: 'pointer',
+              }}
+            >
+              <FaTimes />
+            </button>
+            <h2 style={{ marginBottom: 20 }}>Enter Athlete Metrics</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setMetricsLoading(true);
+                setMetricsError('');
+                try {
+                  // Complete session with metrics
+                  const res = await fetch(
+                    `/api/booking/${pendingCompleteId}/complete`,
+                    {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        completionNotes: 'Session completed successfully',
+                        metrics: {
+                          stamina: Number(metrics.stamina),
+                          speed: Number(metrics.speed),
+                          strength: Number(metrics.strength),
+                          focus: Number(metrics.focus),
+                        },
+                      }),
+                    }
+                  );
+
+                  const data = await res.json();
+
+                  if (!res.ok) {
+                    throw new Error(
+                      data.message || 'Failed to complete session'
+                    );
+                  }
+
+                  setShowMetricsModal(false);
+                  setMetrics(initialMetrics);
+                  setPendingCompleteId(null);
+
+                  // Show appropriate message
+                  if (data.message.includes('updated')) {
+                    alert('Session metrics updated successfully!');
+                  } else if (data.message.includes('already completed')) {
+                    alert(
+                      'Session is already completed. Metrics have been updated.'
+                    );
+                  } else {
+                    alert('Session completed successfully!');
+                  }
+
+                  // Refresh bookings
+                  await fetchBookings();
+                } catch (err) {
+                  console.error('Session completion error:', err);
+                  setMetricsError(err.message || 'Failed to complete session.');
+                } finally {
+                  setMetricsLoading(false);
+                }
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+            >
+              <label>
+                Stamina:
+                <input
+                  type='number'
+                  min='0'
+                  max='100'
+                  required
+                  value={metrics.stamina}
+                  onChange={(e) => {
+                    let val = Number(e.target.value);
+                    if (val > 100) val = 100;
+                    setMetrics({ ...metrics, stamina: val });
+                  }}
+                />
+              </label>
+              <label>
+                Speed:
+                <input
+                  type='number'
+                  min='0'
+                  max='100'
+                  required
+                  value={metrics.speed}
+                  onChange={(e) => {
+                    let val = Number(e.target.value);
+                    if (val > 100) val = 100;
+                    setMetrics({ ...metrics, speed: val });
+                  }}
+                />
+              </label>
+              <label>
+                Strength:
+                <input
+                  type='number'
+                  min='0'
+                  max='100'
+                  required
+                  value={metrics.strength}
+                  onChange={(e) => {
+                    let val = Number(e.target.value);
+                    if (val > 100) val = 100;
+                    setMetrics({ ...metrics, strength: val });
+                  }}
+                />
+              </label>
+              <label>
+                Focus:
+                <input
+                  type='number'
+                  min='0'
+                  max='100'
+                  required
+                  value={metrics.focus}
+                  onChange={(e) => {
+                    let val = Number(e.target.value);
+                    if (val > 100) val = 100;
+                    setMetrics({ ...metrics, focus: val });
+                  }}
+                />
+              </label>
+              {metricsError && (
+                <div style={{ color: 'red' }}>{metricsError}</div>
+              )}
+              <button
+                type='submit'
+                disabled={metricsLoading}
+                style={{
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  padding: '0.8rem',
+                  borderRadius: 8,
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {metricsLoading ? 'Saving...' : 'Save & Complete Session'}
+              </button>
+            </form>
           </div>
         </div>
       )}

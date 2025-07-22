@@ -48,6 +48,7 @@ const CoachAthleteProgress = () => {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   // Add new analytics state
   const [athleteStats, setAthleteStats] = useState(null);
+  const [latestMetrics, setLatestMetrics] = useState(null);
 
   // Get user _id from localStorage and fetch Coach model _id
   useEffect(() => {
@@ -148,6 +149,25 @@ const CoachAthleteProgress = () => {
     });
   }, [sessions]);
 
+  // Fetch latest metrics for selected athlete
+  useEffect(() => {
+    if (!selectedAthlete) return;
+    console.log('Fetching metrics for athlete:', selectedAthlete._id);
+    fetch(`/api/progress/athlete/${selectedAthlete._id}/metrics-summary`)
+      .then((res) => {
+        console.log('Metrics response status:', res.status);
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Metrics data received:', data);
+        setLatestMetrics(data);
+      })
+      .catch((err) => {
+        console.error('Error fetching metrics:', err);
+        setLatestMetrics(null);
+      });
+  }, [selectedAthlete]);
+
   const openSessionModal = (session) => {
     setSelectedSession(session);
     setShowSessionModal(true);
@@ -246,6 +266,84 @@ const CoachAthleteProgress = () => {
         <h2 className='analytics-heading'>
           <FaChartLine /> Athlete Progress Analysis
         </h2>
+        {/* Show latest metrics for selected athlete */}
+        {latestMetrics && (
+          <div
+            className='metrics-summary-grid'
+            style={{
+              display: 'flex',
+              gap: '2rem',
+              marginBottom: '2rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            {[
+              {
+                label: 'Stamina',
+                value: latestMetrics.stamina,
+                color: '#e74c3c',
+                icon: <FaRunning style={{ color: '#e74c3c', fontSize: 22 }} />,
+              },
+              {
+                label: 'Speed',
+                value: latestMetrics.speed,
+                color: '#3498db',
+                icon: <FaArrowUp style={{ color: '#3498db', fontSize: 22 }} />,
+              },
+              {
+                label: 'Strength',
+                value: latestMetrics.strength,
+                color: '#2ecc71',
+                icon: <FaTrophy style={{ color: '#2ecc71', fontSize: 22 }} />,
+              },
+              {
+                label: 'Focus',
+                value: latestMetrics.focus,
+                color: '#f39c12',
+                icon: (
+                  <FaHeartbeat style={{ color: '#f39c12', fontSize: 22 }} />
+                ),
+              },
+            ].map((metric) => (
+              <div
+                key={metric.label}
+                className='metrics-summary-card'
+                style={{
+                  background: '#f8f9fa',
+                  borderRadius: 10,
+                  padding: '1.2rem 2rem',
+                  minWidth: 180,
+                  textAlign: 'center',
+                  borderLeft: `4px solid ${metric.color}`,
+                }}
+              >
+                {metric.icon}
+                <h4 style={{ margin: '0.5rem 0 0.2rem' }}>
+                  {metric.value} / 100
+                </h4>
+                <div
+                  style={{
+                    width: '100%',
+                    background: '#eee',
+                    borderRadius: 6,
+                    height: 16,
+                    margin: '0.5rem 0 0.2rem',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.min(100, metric.value)}%`,
+                      background: metric.color,
+                      height: '100%',
+                    }}
+                  ></div>
+                </div>
+                <p style={{ margin: 0, color: '#7f8c8d' }}>{metric.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
         {/* Athlete Selector */}
         <div className='athlete-selector'>
           <div className='athlete-selector-header'>

@@ -395,7 +395,10 @@ router.get('/verify-email/:token', async (req, res) => {
     if (user) {
       user.isEmailVerified = true;
       user.verificationToken = undefined;
-      user.status = 'active'; // Activate account on email verification
+      // Only activate non-coach users on email verification
+      if (user.role !== 'coach') {
+        user.status = 'active'; // Activate account on email verification
+      }
       await user.save();
       return res.json({
         message: 'Email verified successfully. You can now log in.',

@@ -222,46 +222,65 @@ router.post('/:id/reject', async (req, res) => {
       console.error('Reject Error: Booking not found for id', req.params.id);
       return res.status(404).json({ message: 'Booking not found' });
     }
+
+    // Check if booking can be rejected
+    if (booking.status !== 'pending') {
+      console.error(
+        'Reject Error: Session is not in pending status.',
+        booking.status
+      );
+      return res.status(400).json({
+        message: `Cannot reject session. Current status: ${booking.status}. Only pending sessions can be rejected.`,
+      });
+    }
+
     if (booking.paymentStatus !== 'authorized') {
       console.error(
         'Reject Error: Payment not authorized or already processed.',
-        booking
+        booking.paymentStatus
       );
-      return res
-        .status(400)
-        .json({ message: 'Payment is not authorized or already processed.' });
-    }
-    if (booking.status !== 'pending') {
-      console.error('Reject Error: Session is not in pending status.', booking);
-      return res
-        .status(400)
-        .json({ message: 'Session is not in pending status.' });
-    }
-
-    // Refund the payment
-    let refund;
-    try {
-      refund = await stripe.refunds.create({
-        payment_intent: booking.paymentIntentId,
+      return res.status(400).json({
+        message: `Cannot reject session. Payment status: ${booking.paymentStatus}. Only authorized payments can be cancelled.`,
       });
-    } catch (stripeErr) {
-      console.error('Stripe refund error:', stripeErr);
-      return res
-        .status(500)
-        .json({ message: 'Stripe refund failed', error: stripeErr.message });
     }
 
-    // Update booking status
-    booking.paymentStatus = 'refunded';
+    // Handle payment cancellation/refund based on payment status
+    let paymentResult;
+    try {
+      if (booking.paymentStatus === 'authorized') {
+        // For manual capture payments, cancel the payment intent
+        paymentResult = await stripe.paymentIntents.cancel(
+          booking.paymentIntentId
+        );
+        console.log('Payment intent cancelled:', paymentResult.id);
+      } else if (booking.paymentStatus === 'captured') {
+        // For captured payments, create a refund
+        paymentResult = await stripe.refunds.create({
+          payment_intent: booking.paymentIntentId,
+        });
+        console.log('Payment refunded:', paymentResult.id);
+      }
+    } catch (stripeErr) {
+      console.error('Stripe payment error:', stripeErr);
+      // Don't fail the request if payment processing fails
+      // Just log the error and continue with booking cancellation
+      paymentResult = { error: stripeErr.message };
+    }
+
+    // Update booking status regardless of payment result
+    booking.paymentStatus =
+      booking.paymentStatus === 'authorized' ? 'cancelled' : 'refunded';
     booking.status = 'cancelled';
     booking.rejectedAt = new Date();
-    booking.refundId = refund.id;
+    if (paymentResult && !paymentResult.error) {
+      booking.refundId = paymentResult.id;
+    }
     await booking.save();
 
     res.json({
-      message: 'Session rejected and payment refunded',
+      message: 'Session rejected successfully',
       booking,
-      refund,
+      paymentResult,
     });
   } catch (err) {
     console.error('Error rejecting booking:', err);
@@ -604,11 +623,74 @@ router.get('/athlete/:id/bookings/completed', async (req, res) => {
 router.put('/:id/complete', async (req, res) => {
   try {
     const { id } = req.params;
-    const { completionNotes, performance, focusArea } = req.body;
+    const { completionNotes, performance, focusArea, metrics } = req.body;
+
+    console.log('Completing session with metrics:', { id, metrics });
 
     const booking = await Booking.findById(id);
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if session is already completed
+    if (booking.status === 'completed') {
+      // If already completed, just update the progress with new metrics
+      if (metrics && typeof metrics === 'object') {
+        // Validate and structure metrics
+        let validMetrics = {
+          stamina: 0,
+          speed: 0,
+          strength: 0,
+          focus: 0,
+          serveAccuracy: 0,
+          backhandPower: 0,
+          footworkSpeed: 0,
+        };
+
+        if (metrics && typeof metrics === 'object') {
+          validMetrics = {
+            stamina: Number(metrics.stamina) || 0,
+            speed: Number(metrics.speed) || 0,
+            strength: Number(metrics.strength) || 0,
+            focus: Number(metrics.focus) || 0,
+            serveAccuracy: Number(metrics.serveAccuracy) || 0,
+            backhandPower: Number(metrics.backhandPower) || 0,
+            footworkSpeed: Number(metrics.footworkSpeed) || 0,
+          };
+
+          // Validate metric values (0-100)
+          Object.keys(validMetrics).forEach((key) => {
+            if (validMetrics[key] < 0) validMetrics[key] = 0;
+            if (validMetrics[key] > 100) validMetrics[key] = 100;
+          });
+        }
+
+        // Update existing progress record
+        const updatedProgress = await Progress.findOneAndUpdate(
+          { userId: booking.athlete, coach: booking.coach },
+          {
+            metrics: validMetrics,
+            coachNotes: completionNotes || booking.completionNotes,
+            performance: performance || booking.performance,
+            focusArea: focusArea || booking.focusArea,
+            updatedAt: new Date(),
+          },
+          { new: true }
+        );
+
+        console.log('Updated existing progress:', updatedProgress);
+
+        return res.json({
+          message: 'Session metrics updated successfully',
+          booking,
+          progress: updatedProgress,
+        });
+      }
+
+      return res.json({
+        message: 'Session is already completed',
+        booking,
+      });
     }
 
     if (
@@ -631,21 +713,56 @@ router.put('/:id/complete', async (req, res) => {
     booking.completedAt = new Date();
     await booking.save();
 
-    // Create a Progress entry for the athlete
-    await Progress.create({
+    // Validate and structure metrics
+    let validMetrics = {
+      stamina: 0,
+      speed: 0,
+      strength: 0,
+      focus: 0,
+      serveAccuracy: 0,
+      backhandPower: 0,
+      footworkSpeed: 0,
+    };
+
+    if (metrics && typeof metrics === 'object') {
+      validMetrics = {
+        stamina: Number(metrics.stamina) || 0,
+        speed: Number(metrics.speed) || 0,
+        strength: Number(metrics.strength) || 0,
+        focus: Number(metrics.focus) || 0,
+        serveAccuracy: Number(metrics.serveAccuracy) || 0,
+        backhandPower: Number(metrics.backhandPower) || 0,
+        footworkSpeed: Number(metrics.footworkSpeed) || 0,
+      };
+
+      // Validate metric values (0-100)
+      Object.keys(validMetrics).forEach((key) => {
+        if (validMetrics[key] < 0) validMetrics[key] = 0;
+        if (validMetrics[key] > 100) validMetrics[key] = 100;
+      });
+    }
+
+    // Create a Progress entry for the athlete with metrics
+    const progressData = {
       userId: booking.athlete,
-      coach: booking.coach, // Save coach reference
+      coach: booking.coach,
       date: booking.date,
       duration: booking.duration || '60 min',
       focusArea: focusArea || 'General',
       performance: performance || 0,
       coachNotes: completionNotes || '',
       status: 'completed',
-    });
+      metrics: validMetrics,
+    };
+
+    console.log('Creating progress with data:', progressData);
+    const progress = await Progress.create(progressData);
+    console.log('Progress created:', progress);
 
     res.json({
       message: 'Session completed successfully',
       booking,
+      progress,
     });
   } catch (err) {
     console.error('Error completing session:', err);
