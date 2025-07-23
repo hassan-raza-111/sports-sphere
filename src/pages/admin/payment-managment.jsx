@@ -164,6 +164,7 @@ function AdminPaymentManagement() {
 
         const response = await fetch(`/api/booking/admin?${params}`);
         const data = await response.json();
+        console.log('Bookings data from backend:', data.bookings);
         setBookings(data.bookings || []);
       }
     } catch (error) {
@@ -648,9 +649,7 @@ function AdminPaymentManagement() {
               {booking.athlete?.name || 'Unknown Athlete'}
             </td>
             <td style={{ padding: '1rem', color: '#2c3e50' }}>
-              {booking.coach?.userId?.name ||
-                booking.coach?.name ||
-                'Unknown Coach'}
+              {booking.coachName || 'Unknown Coach'}
             </td>
             <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 600 }}>
               {formatCurrency(booking.amount)}

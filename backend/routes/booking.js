@@ -330,10 +330,46 @@ router.get('/admin', async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
+    // Process bookings to handle both User ID and Coach ID cases
+    const processedBookings = bookings.map((booking) => {
+      const bookingObj = booking.toObject();
+
+      console.log('Processing booking:', {
+        id: bookingObj._id,
+        coach: bookingObj.coach,
+        coachType: typeof bookingObj.coach,
+        hasUserId: bookingObj.coach && bookingObj.coach.userId,
+        coachName: bookingObj.coach?.userId?.name || bookingObj.coach?.name,
+      });
+
+      // If coach field is populated (Coach model), use coach.userId.name
+      if (bookingObj.coach && bookingObj.coach.userId) {
+        bookingObj.coachName = bookingObj.coach.userId.name;
+        bookingObj.coachEmail = bookingObj.coach.userId.email;
+      }
+      // If coach field is not populated, it might be a User ID directly
+      else if (bookingObj.coach && typeof bookingObj.coach === 'string') {
+        // This will be handled by the frontend fallback
+        bookingObj.coachName = 'Unknown Coach';
+        bookingObj.coachEmail = 'Unknown';
+      }
+      // If coach field is populated but doesn't have userId (direct Coach model)
+      else if (bookingObj.coach && bookingObj.coach.name) {
+        bookingObj.coachName = bookingObj.coach.name;
+        bookingObj.coachEmail = bookingObj.coach.email;
+      } else {
+        bookingObj.coachName = 'Unknown Coach';
+        bookingObj.coachEmail = 'Unknown';
+      }
+
+      console.log('Final coachName:', bookingObj.coachName);
+      return bookingObj;
+    });
+
     const total = await Booking.countDocuments(query);
 
     res.json({
-      bookings,
+      bookings: processedBookings,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(total / limit),
@@ -342,6 +378,7 @@ router.get('/admin', async (req, res) => {
       },
     });
   } catch (err) {
+    console.error('Error fetching admin bookings:', err);
     res.status(500).json({ message: 'Failed to fetch bookings' });
   }
 });
@@ -932,22 +969,60 @@ router.get('/', async (req, res) => {
 // Admin: Patch old bookings to set correct Coach _id in coach field
 router.post('/admin/fix-coach-ids', async (req, res) => {
   try {
+    console.log('Starting coach ID migration...');
     const bookings = await Booking.find();
     let updated = 0;
+    let skipped = 0;
+    let errors = 0;
+
     for (const booking of bookings) {
-      // If coach field is not a valid Coach _id (i.e., it's a User _id), try to find the Coach model
-      const coachDoc = await require('../models/Coach').default.findOne({
-        userId: booking.coach,
-      });
-      if (coachDoc && String(booking.coach) !== String(coachDoc._id)) {
-        booking.coach = coachDoc._id;
-        await booking.save();
-        updated++;
+      try {
+        // Check if coach field is a string (might be User ID)
+        if (typeof booking.coach === 'string') {
+          // Try to find Coach model with this userId
+          const Coach = require('../models/Coach').default;
+          const coachDoc = await Coach.findOne({ userId: booking.coach });
+
+          if (coachDoc) {
+            // Update booking with correct Coach _id
+            booking.coach = coachDoc._id;
+            await booking.save();
+            updated++;
+            console.log(
+              `Updated booking ${booking._id}: User ID ${booking.coach} -> Coach ID ${coachDoc._id}`
+            );
+          } else {
+            // No coach found with this userId
+            console.log(
+              `No coach found for User ID: ${booking.coach} in booking ${booking._id}`
+            );
+            errors++;
+          }
+        } else {
+          // Already a valid Coach ID or ObjectId
+          skipped++;
+        }
+      } catch (err) {
+        console.error(`Error processing booking ${booking._id}:`, err);
+        errors++;
       }
     }
-    res.json({ message: 'Patched bookings with correct Coach _id', updated });
+
+    console.log(
+      `Migration completed: ${updated} updated, ${skipped} skipped, ${errors} errors`
+    );
+    res.json({
+      message: 'Coach ID migration completed',
+      updated,
+      skipped,
+      errors,
+      total: bookings.length,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to patch bookings' });
+    console.error('Migration failed:', err);
+    res
+      .status(500)
+      .json({ error: 'Failed to patch bookings', details: err.message });
   }
 });
 
