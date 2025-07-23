@@ -37,6 +37,7 @@ function AdminPaymentManagement() {
   const [selectedType, setSelectedType] = useState('all'); // 'all', 'orders', 'sessions'
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
+  const [totalItems, setTotalItems] = useState(0); // Total items for pagination
   const refundReasons = [
     { value: 'duplicate', label: 'Duplicate' },
     { value: 'fraudulent', label: 'Fraudulent' },
@@ -155,6 +156,8 @@ function AdminPaymentManagement() {
         const response = await fetch(`/api/orders/admin?${params}`);
         const data = await response.json();
         setOrders(data.orders || []);
+        setTotalItems(data.pagination?.totalItems || 0);
+        setTotalPages(data.pagination?.totalPages || 1);
       }
 
       if (selectedType === 'all' || selectedType === 'sessions') {
@@ -172,6 +175,8 @@ function AdminPaymentManagement() {
         const data = await response.json();
         console.log('Bookings data from backend:', data.bookings);
         setBookings(data.bookings || []);
+        setTotalItems(data.pagination?.totalItems || 0);
+        setTotalPages(data.pagination?.totalPages || 1);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -198,6 +203,10 @@ function AdminPaymentManagement() {
   const handleDateFilterChange = (e) => {
     setDateFilter(e.target.value);
     setCurrentPage(1);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const handleExport = async () => {
@@ -368,6 +377,97 @@ function AdminPaymentManagement() {
   const handleCloseModal = () => {
     setShowModal(false);
     setModalData(null);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Previous button
+    pages.push(
+      <button
+        key='prev'
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        style={{
+          padding: '0.5rem 1rem',
+          margin: '0 0.25rem',
+          border: '1px solid #e1e5eb',
+          backgroundColor: currentPage === 1 ? '#f8f9fa' : 'white',
+          color: currentPage === 1 ? '#6c757d' : '#2c3e50',
+          borderRadius: '5px',
+          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+        }}
+      >
+        Previous
+      </button>
+    );
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          style={{
+            padding: '0.5rem 1rem',
+            margin: '0 0.25rem',
+            border: '1px solid #e1e5eb',
+            backgroundColor: currentPage === i ? '#e74c3c' : 'white',
+            color: currentPage === i ? 'white' : '#2c3e50',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Next button
+    pages.push(
+      <button
+        key='next'
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        style={{
+          padding: '0.5rem 1rem',
+          margin: '0 0.25rem',
+          border: '1px solid #e1e5eb',
+          backgroundColor: currentPage === totalPages ? '#f8f9fa' : 'white',
+          color: currentPage === totalPages ? '#6c757d' : '#2c3e50',
+          borderRadius: '5px',
+          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+        }}
+      >
+        Next
+      </button>
+    );
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: '2rem',
+          gap: '1rem',
+        }}
+      >
+        <span style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+          Page {currentPage} of {totalPages} ({totalItems} total items)
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>{pages}</div>
+      </div>
+    );
   };
 
   const renderOrdersTable = () => (
@@ -560,233 +660,250 @@ function AdminPaymentManagement() {
   );
 
   const renderSessionsTable = () => (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead>
-        <tr style={{ borderBottom: '2px solid #ecf0f1' }}>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Session ID
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Athlete
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Coach
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Amount
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Date & Time
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Payment Status
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Status
-          </th>
-          <th
-            style={{
-              padding: '1rem',
-              textAlign: 'left',
-              fontWeight: 600,
-              color: '#2c3e50',
-            }}
-          >
-            Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {bookings.map((booking) => (
-          <tr key={booking._id} style={{ borderBottom: '1px solid #ecf0f1' }}>
-            <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 500 }}>
-              #{booking._id.slice(-8)}
-            </td>
-            <td style={{ padding: '1rem', color: '#2c3e50' }}>
-              {booking.athlete?.name || 'Unknown Athlete'}
-            </td>
-            <td style={{ padding: '1rem', color: '#2c3e50' }}>
-              {booking.coachName || 'Unknown Coach'}
-            </td>
-            <td style={{ padding: '1rem', color: '#2c3e50', fontWeight: 600 }}>
-              {formatCurrency(booking.amount)}
-            </td>
-            <td style={{ padding: '1rem', color: '#7f8c8d' }}>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-              >
-                <FaCalendar />
-                {formatDate(booking.date)} at {booking.time}
-              </div>
-            </td>
-            <td style={{ padding: '1rem' }}>
-              <span
-                style={{
-                  padding: '0.3rem 0.8rem',
-                  borderRadius: '20px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  backgroundColor:
-                    booking.paymentStatus === 'captured'
-                      ? '#d5f4e6'
-                      : booking.paymentStatus === 'authorized'
-                      ? '#fef9e7'
-                      : booking.paymentStatus === 'failed'
-                      ? '#fadbd8'
-                      : booking.paymentStatus === 'refunded'
-                      ? '#e2e3e5'
-                      : '#e8f4fd',
-                  color:
-                    booking.paymentStatus === 'captured'
-                      ? '#27ae60'
-                      : booking.paymentStatus === 'authorized'
-                      ? '#f39c12'
-                      : booking.paymentStatus === 'failed'
-                      ? '#e74c3c'
-                      : booking.paymentStatus === 'refunded'
-                      ? '#6c757d'
-                      : '#3498db',
-                }}
-              >
-                {booking.paymentStatus.charAt(0).toUpperCase() +
-                  booking.paymentStatus.slice(1)}
-              </span>
-            </td>
-            <td style={{ padding: '1rem' }}>
-              <span
-                style={{
-                  padding: '0.3rem 0.8rem',
-                  borderRadius: '20px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  backgroundColor:
-                    booking.status === 'completed' ||
-                    booking.status === 'conducted'
-                      ? '#d5f4e6'
-                      : booking.status === 'pending'
-                      ? '#fef9e7'
-                      : booking.status === 'cancelled'
-                      ? '#fadbd8'
-                      : '#e8f4fd',
-                  color:
-                    booking.status === 'completed' ||
-                    booking.status === 'conducted'
-                      ? '#27ae60'
-                      : booking.status === 'pending'
-                      ? '#f39c12'
-                      : booking.status === 'cancelled'
-                      ? '#e74c3c'
-                      : '#3498db',
-                }}
-              >
-                {booking.status.charAt(0).toUpperCase() +
-                  booking.status.slice(1)}
-              </span>
-            </td>
-            <td style={{ padding: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: '#3498db',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                  }}
-                  title='View Details'
-                  onClick={() => handleViewDetails(booking)}
-                >
-                  <FaEye />
-                </button>
-                {booking.paymentStatus === 'authorized' && (
-                  <button
-                    style={{
-                      padding: '0.5rem',
-                      backgroundColor: '#27ae60',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                    }}
-                    title='Capture Payment'
-                    onClick={() => handleCapturePayment(booking._id, 'session')}
-                  >
-                    <FaCheck />
-                  </button>
-                )}
-                {(booking.paymentStatus === 'captured' ||
-                  booking.paymentStatus === 'authorized') && (
-                  <button
-                    style={{
-                      padding: '0.5rem',
-                      backgroundColor: '#e74c3c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                    }}
-                    title='Refund Payment'
-                    onClick={() => handleRefundPayment(booking._id, 'session')}
-                  >
-                    <FaTimes />
-                  </button>
-                )}
-              </div>
-            </td>
+    <div>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid #ecf0f1' }}>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Session ID
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Athlete
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Coach
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Amount
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Date & Time
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Payment Status
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Status
+            </th>
+            <th
+              style={{
+                padding: '1rem',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: '#2c3e50',
+              }}
+            >
+              Actions
+            </th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {bookings.map((booking) => (
+            <tr key={booking._id} style={{ borderBottom: '1px solid #ecf0f1' }}>
+              <td
+                style={{ padding: '1rem', color: '#2c3e50', fontWeight: 500 }}
+              >
+                #{booking._id.slice(-8)}
+              </td>
+              <td style={{ padding: '1rem', color: '#2c3e50' }}>
+                {booking.athlete?.name || 'Unknown Athlete'}
+              </td>
+              <td style={{ padding: '1rem', color: '#2c3e50' }}>
+                {booking.coachName || 'Unknown Coach'}
+              </td>
+              <td
+                style={{ padding: '1rem', color: '#2c3e50', fontWeight: 600 }}
+              >
+                {formatCurrency(booking.amount)}
+              </td>
+              <td style={{ padding: '1rem', color: '#7f8c8d' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <FaCalendar />
+                  {formatDate(booking.date)} at {booking.time}
+                </div>
+              </td>
+              <td style={{ padding: '1rem' }}>
+                <span
+                  style={{
+                    padding: '0.3rem 0.8rem',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    backgroundColor:
+                      booking.paymentStatus === 'captured'
+                        ? '#d5f4e6'
+                        : booking.paymentStatus === 'authorized'
+                        ? '#fef9e7'
+                        : booking.paymentStatus === 'failed'
+                        ? '#fadbd8'
+                        : booking.paymentStatus === 'refunded'
+                        ? '#e2e3e5'
+                        : '#e8f4fd',
+                    color:
+                      booking.paymentStatus === 'captured'
+                        ? '#27ae60'
+                        : booking.paymentStatus === 'authorized'
+                        ? '#f39c12'
+                        : booking.paymentStatus === 'failed'
+                        ? '#e74c3c'
+                        : booking.paymentStatus === 'refunded'
+                        ? '#6c757d'
+                        : '#3498db',
+                  }}
+                >
+                  {booking.paymentStatus.charAt(0).toUpperCase() +
+                    booking.paymentStatus.slice(1)}
+                </span>
+              </td>
+              <td style={{ padding: '1rem' }}>
+                <span
+                  style={{
+                    padding: '0.3rem 0.8rem',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    backgroundColor:
+                      booking.status === 'completed' ||
+                      booking.status === 'conducted'
+                        ? '#d5f4e6'
+                        : booking.status === 'pending'
+                        ? '#fef9e7'
+                        : booking.status === 'cancelled'
+                        ? '#fadbd8'
+                        : '#e8f4fd',
+                    color:
+                      booking.status === 'completed' ||
+                      booking.status === 'conducted'
+                        ? '#27ae60'
+                        : booking.status === 'pending'
+                        ? '#f39c12'
+                        : booking.status === 'cancelled'
+                        ? '#e74c3c'
+                        : '#3498db',
+                  }}
+                >
+                  {booking.status.charAt(0).toUpperCase() +
+                    booking.status.slice(1)}
+                </span>
+              </td>
+              <td style={{ padding: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: '#3498db',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                    title='View Details'
+                    onClick={() => handleViewDetails(booking)}
+                  >
+                    <FaEye />
+                  </button>
+                  {booking.paymentStatus === 'authorized' && (
+                    <button
+                      style={{
+                        padding: '0.5rem',
+                        backgroundColor: '#27ae60',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                      }}
+                      title='Capture Payment'
+                      onClick={() =>
+                        handleCapturePayment(booking._id, 'session')
+                      }
+                    >
+                      <FaCheck />
+                    </button>
+                  )}
+                  {(booking.paymentStatus === 'captured' ||
+                    booking.paymentStatus === 'authorized') && (
+                    <button
+                      style={{
+                        padding: '0.5rem',
+                        backgroundColor: '#e74c3c',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                      }}
+                      title='Refund Payment'
+                      onClick={() =>
+                        handleRefundPayment(booking._id, 'session')
+                      }
+                    >
+                      <FaTimes />
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Pagination for sessions */}
+      {renderPagination()}
+    </div>
   );
 
   return (
@@ -1136,23 +1253,25 @@ function AdminPaymentManagement() {
               <option value='all'>All time</option>
             </select>
           </div>
-          <button
-            onClick={handleExport}
-            style={{
-              padding: '0.8rem 1.5rem',
-              backgroundColor: '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontWeight: 600,
-            }}
-          >
-            <FaDownload /> Export CSV
-          </button>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <button
+              onClick={handleExport}
+              style={{
+                padding: '0.8rem 1.5rem',
+                backgroundColor: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 600,
+              }}
+            >
+              <FaDownload /> Export CSV
+            </button>
+          </div>
         </div>
 
         {/* Transactions Table */}
@@ -1209,53 +1328,6 @@ function AdminPaymentManagement() {
             </>
           )}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '1rem',
-              marginTop: '2rem',
-            }}
-          >
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #e1e5eb',
-                backgroundColor: 'white',
-                borderRadius: '5px',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                color: currentPage === 1 ? '#bdc3c7' : '#2c3e50',
-              }}
-            >
-              <FaChevronLeft />
-            </button>
-            <span style={{ color: '#2c3e50' }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage(Math.min(totalPages, currentPage + 1))
-              }
-              disabled={currentPage === totalPages}
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #e1e5eb',
-                backgroundColor: 'white',
-                borderRadius: '5px',
-                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                color: currentPage === totalPages ? '#bdc3c7' : '#2c3e50',
-              }}
-            >
-              <FaChevronRight />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Modal for details */}

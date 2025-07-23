@@ -334,14 +334,6 @@ router.get('/admin', async (req, res) => {
     const processedBookings = bookings.map((booking) => {
       const bookingObj = booking.toObject();
 
-      console.log('Processing booking:', {
-        id: bookingObj._id,
-        coach: bookingObj.coach,
-        coachType: typeof bookingObj.coach,
-        hasUserId: bookingObj.coach && bookingObj.coach.userId,
-        coachName: bookingObj.coach?.userId?.name || bookingObj.coach?.name,
-      });
-
       // If coach field is populated (Coach model), use coach.userId.name
       if (bookingObj.coach && bookingObj.coach.userId) {
         bookingObj.coachName = bookingObj.coach.userId.name;
@@ -362,7 +354,6 @@ router.get('/admin', async (req, res) => {
         bookingObj.coachEmail = 'Unknown';
       }
 
-      console.log('Final coachName:', bookingObj.coachName);
       return bookingObj;
     });
 
