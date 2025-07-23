@@ -349,6 +349,13 @@ const CoachMarketplace = () => {
                   </div>
                   <div className='product-price'>PKR {product.price}</div>
                   <div className='product-actions'>
+                    <Link
+                      to={`/coach/product/${product._id}`}
+                      className='btn'
+                      style={{ marginRight: '8px' }}
+                    >
+                      <i className='fas fa-eye'></i> View
+                    </Link>
                     <button
                       className='btn secondary'
                       onClick={() => addToCart(product)}
