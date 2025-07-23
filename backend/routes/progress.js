@@ -1,6 +1,7 @@
 import express from 'express';
 import Progress from '../models/Progress.js';
 import User from '../models/User.js';
+import Booking from '../models/Booking.js';
 
 const router = express.Router();
 
@@ -87,15 +88,32 @@ router.get('/athlete/:id/goal-progress', async (req, res) => {
   }
 });
 
-// List all athletes
+// List athletes for a specific coach (only those who have had sessions with this coach)
 router.get('/athletes', async (req, res) => {
   try {
+    const { coachId } = req.query;
+
+    if (!coachId) {
+      return res.status(400).json({ message: 'Coach ID is required' });
+    }
+
+    // Find all bookings for this coach to get athlete IDs
+    const bookings = await Booking.find({ coach: coachId });
+    const athleteIds = [...new Set(bookings.map((booking) => booking.athlete))];
+
+    if (athleteIds.length === 0) {
+      return res.json([]);
+    }
+
+    // Get athlete details for those who have had sessions with this coach
     const athletes = await User.find(
-      { role: 'athlete' },
-      'name _id preferredSport'
+      { _id: { $in: athleteIds }, role: 'athlete' },
+      'name _id preferredSport profileImage'
     );
+
     res.json(athletes);
   } catch (err) {
+    console.error('Error fetching athletes for coach:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

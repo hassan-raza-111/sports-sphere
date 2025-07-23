@@ -5,12 +5,34 @@ import Progress from '../models/Progress.js';
 
 const router = express.Router();
 
-// 1. Get all athletes
+// 1. Get athletes for a specific coach (only those who have had sessions with this coach)
 router.get('/athletes', async (req, res) => {
-  const athletes = await User.find({ role: 'athlete' }).select(
-    'name sport profileImage'
-  );
-  res.json(athletes);
+  try {
+    const { coachId } = req.query;
+
+    if (!coachId) {
+      return res.status(400).json({ message: 'Coach ID is required' });
+    }
+
+    // Find all bookings for this coach to get athlete IDs
+    const bookings = await Booking.find({ coach: coachId });
+    const athleteIds = [...new Set(bookings.map((booking) => booking.athlete))];
+
+    if (athleteIds.length === 0) {
+      return res.json([]);
+    }
+
+    // Get athlete details for those who have had sessions with this coach
+    const athletes = await User.find({
+      _id: { $in: athleteIds },
+      role: 'athlete',
+    }).select('name sport profileImage');
+
+    res.json(athletes);
+  } catch (err) {
+    console.error('Error fetching athletes for coach:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // 2. Athlete progress overview
