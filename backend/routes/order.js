@@ -79,6 +79,8 @@ router.get('/admin', async (req, res) => {
 // Get payment statistics (for admin)
 router.get('/admin/stats', async (req, res) => {
   try {
+    console.log('Fetching order statistics...');
+
     const { startDate, endDate } = req.query;
 
     let dateFilter = {};
@@ -107,8 +109,25 @@ router.get('/admin/stats', async (req, res) => {
     // Refunded amount
     const refundedAmount = await Order.aggregate([
       { $match: { ...dateFilter, paymentStatus: 'refunded' } },
-      { $group: { _id: null, total: { $sum: '$refundAmount' } } },
+      {
+        $addFields: {
+          actualRefundAmount: {
+            $cond: {
+              if: { $gt: ['$refundAmount', 0] },
+              then: '$refundAmount',
+              else: '$totalAmount',
+            },
+          },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$actualRefundAmount' } } },
     ]);
+
+    // Debug: Check refunded orders
+    const refundedOrders = await Order.find({
+      paymentStatus: 'refunded',
+    }).select('totalAmount refundAmount');
+    console.log('Refunded orders:', refundedOrders);
 
     // Total transactions
     const totalTransactions = await Order.countDocuments(dateFilter);
@@ -119,7 +138,7 @@ router.get('/admin/stats', async (req, res) => {
       { $group: { _id: '$paymentStatus', count: { $sum: 1 } } },
     ]);
 
-    res.json({
+    const stats = {
       totalRevenue: totalRevenue[0]?.total || 0,
       pendingPayments: pendingPayments[0]?.total || 0,
       refundedAmount: refundedAmount[0]?.total || 0,
@@ -128,7 +147,10 @@ router.get('/admin/stats', async (req, res) => {
         acc[item._id] = item.count;
         return acc;
       }, {}),
-    });
+    };
+
+    console.log('Order stats:', stats);
+    res.json(stats);
   } catch (error) {
     console.error('Error fetching payment stats:', error);
     res.status(500).json({ message: 'Failed to fetch payment statistics' });
@@ -146,12 +168,21 @@ router.put('/admin/:orderId', async (req, res) => {
     if (status) updateData.status = status;
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
     if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
-    if (refundAmount !== undefined) updateData.refundAmount = refundAmount;
     if (refundReason) updateData.refundReason = refundReason;
 
-    // If refunding, set refund date
+    // If refunding, set refund date and amount
     if (paymentStatus === 'refunded') {
       updateData.refundDate = new Date();
+
+      // Get the current order to access totalAmount
+      const currentOrder = await Order.findById(orderId);
+      if (currentOrder) {
+        // If refundAmount is not specified, use totalAmount
+        updateData.refundAmount =
+          refundAmount !== undefined ? refundAmount : currentOrder.totalAmount;
+      }
+    } else if (refundAmount !== undefined) {
+      updateData.refundAmount = refundAmount;
     }
 
     // If processing payment, set processed info

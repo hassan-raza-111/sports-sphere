@@ -56,25 +56,78 @@ function AdminPaymentManagement() {
 
   const fetchPaymentStats = async () => {
     try {
-      const [orderStats, bookingStats] = await Promise.all([
-        fetch('/api/orders/admin/stats').then((r) => r.json()),
-        fetch('/api/booking/admin/stats').then((r) => r.json()),
+      console.log('Fetching payment stats...');
+
+      const [orderStatsResponse, bookingStatsResponse] = await Promise.all([
+        fetch('/api/orders/admin/stats'),
+        fetch('/api/booking/admin/stats'),
       ]);
 
-      setStats({
-        ...orderStats,
-        sessionRevenue: bookingStats.totalRevenue || 0,
-        pendingSessions: bookingStats.pendingBookings || 0,
-        totalRevenue:
-          (orderStats.totalRevenue || 0) + (bookingStats.totalRevenue || 0),
-        totalTransactions:
-          (orderStats.totalTransactions || 0) +
-          (bookingStats.totalBookings || 0),
-        refundedAmount:
-          (orderStats.refundedAmount || 0) + (bookingStats.refundedAmount || 0),
-      });
+      if (!orderStatsResponse.ok) {
+        throw new Error(`Orders stats failed: ${orderStatsResponse.status}`);
+      }
+      if (!bookingStatsResponse.ok) {
+        throw new Error(`Booking stats failed: ${bookingStatsResponse.status}`);
+      }
+
+      const orderStats = await orderStatsResponse.json();
+      const bookingStats = await bookingStatsResponse.json();
+
+      console.log('Order stats:', orderStats);
+      console.log('Booking stats:', bookingStats);
+
+      // Calculate combined stats
+      const orderRevenue = orderStats.totalRevenue || 0;
+      const sessionRevenue = bookingStats.totalRevenue || 0;
+      const totalRevenue = orderRevenue + sessionRevenue;
+
+      const orderPending = orderStats.pendingPayments || 0;
+      const sessionPending = bookingStats.pendingBookings || 0;
+      const totalPending = orderPending + sessionPending;
+
+      const orderRefunded = orderStats.refundedAmount || 0;
+      const sessionRefunded = bookingStats.refundedAmount || 0;
+      const totalRefunded = orderRefunded + sessionRefunded;
+
+      const orderTransactions = orderStats.totalTransactions || 0;
+      const sessionTransactions = bookingStats.totalBookings || 0;
+      const totalTransactions = orderTransactions + sessionTransactions;
+
+      const newStats = {
+        totalRevenue,
+        pendingPayments: totalPending,
+        refundedAmount: totalRefunded,
+        totalTransactions,
+        // Keep individual stats for debugging
+        orderRevenue,
+        sessionRevenue,
+        orderPending,
+        sessionPending,
+        orderRefunded,
+        sessionRefunded,
+        orderTransactions,
+        sessionTransactions,
+      };
+
+      console.log('Combined stats:', newStats);
+      setStats(newStats);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching payment stats:', error);
+      // Set default stats if API fails
+      setStats({
+        totalRevenue: 0,
+        pendingPayments: 0,
+        refundedAmount: 0,
+        totalTransactions: 0,
+        orderRevenue: 0,
+        sessionRevenue: 0,
+        orderPending: 0,
+        sessionPending: 0,
+        orderRefunded: 0,
+        sessionRefunded: 0,
+        orderTransactions: 0,
+        sessionTransactions: 0,
+      });
     }
   };
 
@@ -779,6 +832,16 @@ function AdminPaymentManagement() {
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Total Revenue
           </div>
+          <div
+            style={{
+              color: '#95a5a6',
+              fontSize: '0.8rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            Orders: {formatCurrency(stats.orderRevenue)} | Sessions:{' '}
+            {formatCurrency(stats.sessionRevenue)}
+          </div>
         </div>
         <div
           style={{
@@ -798,10 +861,20 @@ function AdminPaymentManagement() {
               marginBottom: '0.5rem',
             }}
           >
-            {stats.pendingPayments + stats.pendingSessions}
+            {stats.pendingPayments}
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Pending Payments
+          </div>
+          <div
+            style={{
+              color: '#95a5a6',
+              fontSize: '0.8rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            Orders: {formatCurrency(stats.orderPending)} | Sessions:{' '}
+            {formatCurrency(stats.sessionPending)}
           </div>
         </div>
         <div
@@ -827,6 +900,16 @@ function AdminPaymentManagement() {
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Refunded Amount
           </div>
+          <div
+            style={{
+              color: '#95a5a6',
+              fontSize: '0.8rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            Orders: {formatCurrency(stats.orderRefunded)} | Sessions:{' '}
+            {formatCurrency(stats.sessionRefunded)}
+          </div>
         </div>
         <div
           style={{
@@ -850,6 +933,64 @@ function AdminPaymentManagement() {
           </div>
           <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
             Total Transactions
+          </div>
+          <div
+            style={{
+              color: '#95a5a6',
+              fontSize: '0.8rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            Orders: {stats.orderTransactions} | Sessions:{' '}
+            {stats.sessionTransactions}
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #27ae60',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '1.8rem',
+              fontWeight: 700,
+              color: '#27ae60',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {formatCurrency(stats.orderRevenue)}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Product Orders Revenue
+          </div>
+        </div>
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '10px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            borderLeft: '4px solid #3498db',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '1.8rem',
+              fontWeight: 700,
+              color: '#3498db',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {formatCurrency(stats.sessionRevenue)}
+          </div>
+          <div style={{ color: '#7f8c8d', fontSize: '0.9rem' }}>
+            Session Bookings Revenue
           </div>
         </div>
       </div>

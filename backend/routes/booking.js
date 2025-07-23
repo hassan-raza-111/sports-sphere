@@ -447,6 +447,8 @@ router.post('/admin/:id/refund', async (req, res) => {
 // Get booking statistics for admin
 router.get('/admin/stats', async (req, res) => {
   try {
+    console.log('Fetching booking statistics...');
+
     const totalBookings = await Booking.countDocuments();
     const pendingBookings = await Booking.countDocuments({ status: 'pending' });
     const completedBookings = await Booking.countDocuments({
@@ -470,6 +472,14 @@ router.get('/admin/stats', async (req, res) => {
 
     const totalRevenue = revenueData[0]?.total || 0;
 
+    // Calculate pending payments amount
+    const pendingPaymentsData = await Booking.aggregate([
+      { $match: { paymentStatus: 'authorized' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+
+    const pendingPayments = pendingPaymentsData[0]?.total || 0;
+
     // Calculate refunded amount
     const refundedData = await Booking.aggregate([
       { $match: { paymentStatus: 'refunded' } },
@@ -478,7 +488,7 @@ router.get('/admin/stats', async (req, res) => {
 
     const refundedAmount = refundedData[0]?.total || 0;
 
-    res.json({
+    const stats = {
       totalBookings,
       pendingBookings,
       completedBookings,
@@ -486,9 +496,14 @@ router.get('/admin/stats', async (req, res) => {
       authorizedPayments,
       refundedPayments,
       totalRevenue,
+      pendingPayments,
       refundedAmount,
-    });
+    };
+
+    console.log('Booking stats:', stats);
+    res.json(stats);
   } catch (err) {
+    console.error('Error fetching booking statistics:', err);
     res.status(500).json({ message: 'Failed to fetch booking statistics' });
   }
 });
