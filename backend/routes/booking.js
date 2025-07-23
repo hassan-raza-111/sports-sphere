@@ -470,6 +470,14 @@ router.get('/admin/stats', async (req, res) => {
 
     const totalRevenue = revenueData[0]?.total || 0;
 
+    // Calculate refunded amount
+    const refundedData = await Booking.aggregate([
+      { $match: { paymentStatus: 'refunded' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+
+    const refundedAmount = refundedData[0]?.total || 0;
+
     res.json({
       totalBookings,
       pendingBookings,
@@ -478,6 +486,7 @@ router.get('/admin/stats', async (req, res) => {
       authorizedPayments,
       refundedPayments,
       totalRevenue,
+      refundedAmount,
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch booking statistics' });

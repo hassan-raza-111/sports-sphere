@@ -70,6 +70,8 @@ function AdminPaymentManagement() {
         totalTransactions:
           (orderStats.totalTransactions || 0) +
           (bookingStats.totalBookings || 0),
+        refundedAmount:
+          (orderStats.refundedAmount || 0) + (bookingStats.refundedAmount || 0),
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -195,10 +197,27 @@ function AdminPaymentManagement() {
           ? `/api/booking/admin/${refundId}/refund`
           : `/api/orders/admin/${refundId}`;
       const method = refundType === 'session' ? 'POST' : 'PUT';
-      const body =
-        refundType === 'session'
-          ? { reason: selectedRefundReason }
-          : { paymentStatus: 'refunded', refundReason: selectedRefundReason };
+
+      let body;
+      if (refundType === 'session') {
+        body = { reason: selectedRefundReason };
+      } else {
+        // For orders, we need to get the order details to set the refund amount
+        const orderResponse = await fetch(`/api/orders/admin/${refundId}`);
+        if (orderResponse.ok) {
+          const order = await orderResponse.json();
+          body = {
+            paymentStatus: 'refunded',
+            refundReason: selectedRefundReason,
+            refundAmount: order.totalAmount,
+          };
+        } else {
+          body = {
+            paymentStatus: 'refunded',
+            refundReason: selectedRefundReason,
+          };
+        }
+      }
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -401,6 +420,8 @@ function AdminPaymentManagement() {
                       ? '#fef9e7'
                       : order.paymentStatus === 'failed'
                       ? '#fadbd8'
+                      : order.paymentStatus === 'refunded'
+                      ? '#e2e3e5'
                       : '#e8f4fd',
                   color:
                     order.paymentStatus === 'completed'
@@ -409,6 +430,8 @@ function AdminPaymentManagement() {
                       ? '#f39c12'
                       : order.paymentStatus === 'failed'
                       ? '#e74c3c'
+                      : order.paymentStatus === 'refunded'
+                      ? '#6c757d'
                       : '#3498db',
                 }}
               >
@@ -451,7 +474,8 @@ function AdminPaymentManagement() {
                     <FaCheck />
                   </button>
                 )}
-                {order.paymentStatus !== 'refunded' && (
+                {(order.paymentStatus === 'completed' ||
+                  order.paymentStatus === 'pending') && (
                   <button
                     style={{
                       padding: '0.5rem',
@@ -600,6 +624,8 @@ function AdminPaymentManagement() {
                       ? '#fef9e7'
                       : booking.paymentStatus === 'failed'
                       ? '#fadbd8'
+                      : booking.paymentStatus === 'refunded'
+                      ? '#e2e3e5'
                       : '#e8f4fd',
                   color:
                     booking.paymentStatus === 'captured'
@@ -608,6 +634,8 @@ function AdminPaymentManagement() {
                       ? '#f39c12'
                       : booking.paymentStatus === 'failed'
                       ? '#e74c3c'
+                      : booking.paymentStatus === 'refunded'
+                      ? '#6c757d'
                       : '#3498db',
                 }}
               >
@@ -678,7 +706,8 @@ function AdminPaymentManagement() {
                     <FaCheck />
                   </button>
                 )}
-                {booking.paymentStatus !== 'refunded' && (
+                {(booking.paymentStatus === 'captured' ||
+                  booking.paymentStatus === 'authorized') && (
                   <button
                     style={{
                       padding: '0.5rem',
