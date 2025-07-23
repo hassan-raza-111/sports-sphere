@@ -44,9 +44,18 @@ router.post('/register', upload.array('certificates'), async (req, res) => {
     if (!fullName || !email || !password || !role) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    const existing = await User.findOne({ email });
-    if (existing)
+    // Normalize email (lowercase and trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check for existing user with case-insensitive email
+    const existing = await User.findOne({
+      email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') },
+    });
+
+    if (existing) {
+      console.log('Email already exists:', existing.email);
       return res.status(409).json({ message: 'Email already registered' });
+    }
     const hashed = await bcrypt.hash(password, 10);
     const status = role === 'coach' ? 'disabled' : 'active';
     // Generate verification token
