@@ -879,10 +879,12 @@ router.get('/athlete/:id/recent', async (req, res) => {
 // Get all sessions for an athlete
 router.get('/athlete/:id/all', async (req, res) => {
   try {
-    const bookings = await Booking.find({ athlete: req.params.id }).sort({
-      date: -1,
-      time: -1,
-    });
+    const bookings = await Booking.find({ athlete: req.params.id })
+      .populate('coach', 'name')
+      .sort({
+        date: -1,
+        time: -1,
+      });
     res.json({ bookings });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch sessions' });

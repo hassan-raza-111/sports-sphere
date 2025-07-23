@@ -86,7 +86,9 @@ const MySessions = () => {
               <div className='athlete-session-card' key={session._id}>
                 <div className='athlete-session-row'>
                   <span className='athlete-session-label'>Coach:</span>
-                  <span className='athlete-session-value'>{session.coach}</span>
+                  <span className='athlete-session-value'>
+                    {session.coach?.name || 'Coach'}
+                  </span>
                 </div>
                 <div className='athlete-session-row'>
                   <span className='athlete-session-label'>Date:</span>
