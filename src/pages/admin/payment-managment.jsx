@@ -54,6 +54,12 @@ function AdminPaymentManagement() {
     fetchData();
   }, [activeTab, searchTerm, dateFilter, currentPage, selectedType]);
 
+  // Force refresh when component mounts
+  useEffect(() => {
+    console.log('Component mounted, fetching data...');
+    fetchData();
+  }, []);
+
   const fetchPaymentStats = async () => {
     try {
       console.log('Fetching payment stats...');
