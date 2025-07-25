@@ -79,10 +79,8 @@ router.post('/create-checkout-session', async (req, res) => {
         .json({ message: 'Total amount must be greater than 0' });
     }
 
-    // Stripe minimum: $0.50 (USD) ≈ ₨150 (PKR)
+    // Stripe minimum: ₨150 (PKR)
     const MINIMUM_AMOUNT_PKR = 150;
-    const USD_RATE = 280; // Conversion rate: 1 USD = 280 PKR
-    const MINIMUM_AMOUNT_USD = MINIMUM_AMOUNT_PKR / USD_RATE;
 
     if (totalAmount < MINIMUM_AMOUNT_PKR) {
       return res.status(400).json({
@@ -90,22 +88,21 @@ router.post('/create-checkout-session', async (req, res) => {
       });
     }
 
-    // Convert PKR to USD for Stripe
-    const totalAmountUSD = totalAmount / USD_RATE;
-    const amountInCents = Math.round(totalAmountUSD * 100);
+    // Use PKR directly (Stripe supports PKR)
+    const amountInCents = Math.round(totalAmount * 100);
 
     // Create line items for Stripe
     const lineItems = cartItems.map((item) => {
-      // Convert item price to USD
-      const itemPriceUSD = item.price / USD_RATE;
-      let itemPriceCents = Math.round(itemPriceUSD * 100);
+      // Use PKR directly
+      const itemPriceCents = Math.round(item.price * 100);
 
-      // Ensure minimum amount for Stripe (50 cents = $0.50)
-      if (itemPriceCents < 50) {
+      // Ensure minimum amount for Stripe (₨150 PKR)
+      if (itemPriceCents < 15000) {
+        // 15000 cents = ₨150
         console.warn(
           `Item ${item.name} price too low: ${itemPriceCents} cents, setting to minimum`
         );
-        itemPriceCents = 50;
+        itemPriceCents = 15000;
       }
 
       // Create simplified product data (no images to avoid URL issues)
@@ -116,7 +113,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
       return {
         price_data: {
-          currency: 'usd',
+          currency: 'pkr',
           product_data: productData,
           unit_amount: itemPriceCents,
         },
@@ -147,11 +144,11 @@ router.post('/create-checkout-session', async (req, res) => {
       }
 
       // Additional validation for Stripe requirements
-      if (li.price_data.unit_amount < 50) {
-        // Stripe minimum is $0.50 (50 cents)
+      if (li.price_data.unit_amount < 15000) {
+        // Stripe minimum is ₨150 PKR
         console.error('Line item amount too low:', li.price_data.unit_amount);
         return res.status(400).json({
-          message: 'Item price too low for Stripe. Minimum is $0.50 USD.',
+          message: 'Item price too low for Stripe. Minimum is ₨150 PKR.',
           item: li,
         });
       }
@@ -160,7 +157,6 @@ router.post('/create-checkout-session', async (req, res) => {
     console.log('Creating checkout session with:', {
       userId,
       totalAmount,
-      totalAmountUSD,
       amountInCents,
       lineItemsCount: lineItems.length,
       lineItems: lineItems.map((item) => ({
