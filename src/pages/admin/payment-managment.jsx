@@ -150,7 +150,12 @@ function AdminPaymentManagement() {
         });
 
         if (activeTab !== 'all') {
-          params.append('paymentStatus', activeTab);
+          // For cancelled orders, use status field instead of paymentStatus
+          if (activeTab === 'cancelled') {
+            params.append('status', activeTab);
+          } else {
+            params.append('paymentStatus', activeTab);
+          }
         }
 
         const response = await fetch(`/api/orders/admin?${params}`);
@@ -168,7 +173,12 @@ function AdminPaymentManagement() {
         });
 
         if (activeTab !== 'all') {
-          params.append('paymentStatus', activeTab);
+          // For cancelled sessions, use status field instead of paymentStatus
+          if (activeTab === 'cancelled') {
+            params.append('status', activeTab);
+          } else {
+            params.append('paymentStatus', activeTab);
+          }
         }
 
         const response = await fetch(`/api/booking/admin?${params}`);
@@ -346,6 +356,7 @@ function AdminPaymentManagement() {
       case 'authorized':
         return 'pending';
       case 'failed':
+      case 'cancelled':
         return 'failed';
       case 'refunded':
         return 'refunded';
@@ -522,7 +533,17 @@ function AdminPaymentManagement() {
               color: '#2c3e50',
             }}
           >
-            Status
+            Payment Status
+          </th>
+          <th
+            style={{
+              padding: '1rem',
+              textAlign: 'left',
+              fontWeight: 600,
+              color: '#2c3e50',
+            }}
+          >
+            Order Status
           </th>
           <th
             style={{
@@ -597,6 +618,38 @@ function AdminPaymentManagement() {
               >
                 {order.paymentStatus.charAt(0).toUpperCase() +
                   order.paymentStatus.slice(1)}
+              </span>
+            </td>
+            <td style={{ padding: '1rem' }}>
+              <span
+                style={{
+                  padding: '0.3rem 0.8rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor:
+                    order.status === 'completed'
+                      ? '#d5f4e6'
+                      : order.status === 'pending'
+                      ? '#fef9e7'
+                      : order.status === 'cancelled'
+                      ? '#fadbd8'
+                      : order.status === 'refunded'
+                      ? '#e2e3e5'
+                      : '#e8f4fd',
+                  color:
+                    order.status === 'completed'
+                      ? '#27ae60'
+                      : order.status === 'pending'
+                      ? '#f39c12'
+                      : order.status === 'cancelled'
+                      ? '#e74c3c'
+                      : order.status === 'refunded'
+                      ? '#6c757d'
+                      : '#3498db',
+                }}
+              >
+                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
             </td>
             <td style={{ padding: '1rem', color: '#7f8c8d' }}>
@@ -732,7 +785,7 @@ function AdminPaymentManagement() {
                 color: '#2c3e50',
               }}
             >
-              Status
+              Session Status
             </th>
             <th
               style={{
@@ -1176,6 +1229,7 @@ function AdminPaymentManagement() {
             { key: 'all', label: 'All Status' },
             { key: 'completed', label: 'Completed' },
             { key: 'pending', label: 'Pending' },
+            { key: 'cancelled', label: 'Cancelled' },
             { key: 'failed', label: 'Failed' },
             { key: 'refunded', label: 'Refunded' },
           ].map((tab) => (
@@ -1404,7 +1458,10 @@ function AdminPaymentManagement() {
                   {formatCurrency(modalData.totalAmount || modalData.amount)}
                 </div>
                 <div>
-                  <b>Status:</b> {modalData.paymentStatus || modalData.status}
+                  <b>Payment Status:</b> {modalData.paymentStatus || 'N/A'}
+                </div>
+                <div>
+                  <b>Order/Session Status:</b> {modalData.status || 'N/A'}
                 </div>
                 <div>
                   <b>Date:</b>{' '}
