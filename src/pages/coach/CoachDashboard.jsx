@@ -494,7 +494,7 @@ function CoachDashboard() {
                   })}
                 </div>
                 <div className='athlete'>
-                  <FaUser /> {session.athlete}
+                  <FaUser /> {session.athlete?.name || 'Unknown Athlete'}
                 </div>
                 <div className='time'>{session.time}</div>
                 <div className='action-btn'>
@@ -605,7 +605,7 @@ function CoachDashboard() {
                 <div>
                   <strong style={{ color: '#2c3e50' }}>Athlete:</strong>
                   <span style={{ marginLeft: '0.5rem', color: '#7f8c8d' }}>
-                    {selectedSession.athlete || 'N/A'}
+                    {selectedSession.athlete?.name || 'Unknown Athlete'}
                   </span>
                 </div>
               </div>

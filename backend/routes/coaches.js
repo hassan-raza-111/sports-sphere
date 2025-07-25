@@ -42,7 +42,7 @@ router.get('/:id/upcoming-sessions', async (req, res) => {
       coach: coachId,
       status: { $in: ['pending', 'accepted', 'conducted'] },
       date: { $gte: now.toISOString().split('T')[0] },
-    });
+    }).populate('athlete', 'name email'); // Populate athlete name and email
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
