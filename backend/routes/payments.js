@@ -37,22 +37,34 @@ router.post('/create-checkout-session', async (req, res) => {
     }
 
     // Validate cart items
+
     for (const item of cartItems) {
-      if (!item._id || !item.name || !item.price || !item.quantity) {
-        return res.status(400).json({ message: 'Invalid cart item data' });
+      if (
+        !item._id ||
+        !item.name ||
+        item.price === undefined ||
+        item.quantity === undefined
+      ) {
+        return res.status(400).json({
+          message: 'Invalid cart item data - missing required fields',
+          item: item,
+        });
       }
 
       // Ensure price and quantity are numbers
       if (typeof item.price !== 'number' || typeof item.quantity !== 'number') {
-        return res
-          .status(400)
-          .json({ message: 'Price and quantity must be numbers' });
+        return res.status(400).json({
+          message: 'Price and quantity must be numbers',
+          item: item,
+        });
       }
 
       if (item.price <= 0 || item.quantity <= 0) {
-        return res
-          .status(400)
-          .json({ message: 'Price and quantity must be greater than 0' });
+        console.error('Invalid values in cart item:', item);
+        return res.status(400).json({
+          message: 'Price and quantity must be greater than 0',
+          item: item,
+        });
       }
     }
 
@@ -69,43 +81,44 @@ router.post('/create-checkout-session', async (req, res) => {
 
     // Stripe minimum: $0.50 (USD) ≈ ₨150 (PKR)
     const MINIMUM_AMOUNT_PKR = 150;
+    const USD_RATE = 280; // Conversion rate: 1 USD = 280 PKR
+    const MINIMUM_AMOUNT_USD = MINIMUM_AMOUNT_PKR / USD_RATE;
+
     if (totalAmount < MINIMUM_AMOUNT_PKR) {
       return res.status(400).json({
         message: `Minimum order amount for Stripe is ₨${MINIMUM_AMOUNT_PKR}. Please add more items to your cart.`,
       });
     }
 
-    // Convert to cents for Stripe
-    const amountInCents = Math.round(totalAmount * 100);
+    // Convert PKR to USD for Stripe
+    const totalAmountUSD = totalAmount / USD_RATE;
+    const amountInCents = Math.round(totalAmountUSD * 100);
 
     // Create line items for Stripe
     const lineItems = cartItems.map((item) => {
-      // Validate and clean image URL
-      let imageUrl = null;
-      if (item.image) {
-        // If it's a relative path, make it absolute
-        if (item.image.startsWith('/')) {
-          imageUrl = `http://localhost:5000${item.image}`;
-        } else if (item.image.startsWith('http')) {
-          imageUrl = item.image;
-        }
+      // Convert item price to USD
+      const itemPriceUSD = item.price / USD_RATE;
+      let itemPriceCents = Math.round(itemPriceUSD * 100);
+
+      // Ensure minimum amount for Stripe (50 cents = $0.50)
+      if (itemPriceCents < 50) {
+        console.warn(
+          `Item ${item.name} price too low: ${itemPriceCents} cents, setting to minimum`
+        );
+        itemPriceCents = 50;
       }
 
-      // Create product data without images if URL is invalid
+      // Create simplified product data (no images to avoid URL issues)
       const productData = {
         name: item.name,
+        description: item.description || `Product: ${item.name}`,
       };
-
-      // Only add images if we have a valid URL
-      if (imageUrl) {
-        productData.images = [imageUrl];
-      }
 
       return {
         price_data: {
-          currency: 'pkr',
+          currency: 'usd',
           product_data: productData,
-          unit_amount: Math.round(item.price * 100), // Convert to cents
+          unit_amount: itemPriceCents,
         },
         quantity: item.quantity,
       };
@@ -115,6 +128,7 @@ router.post('/create-checkout-session', async (req, res) => {
     if (!Array.isArray(lineItems) || lineItems.length === 0) {
       return res.status(400).json({ message: 'No valid items to checkout.' });
     }
+
     for (const li of lineItems) {
       if (
         !li.price_data ||
@@ -125,24 +139,40 @@ router.post('/create-checkout-session', async (req, res) => {
         !li.quantity ||
         li.quantity <= 0
       ) {
-        return res
-          .status(400)
-          .json({ message: 'Invalid line item for Stripe.' });
+        console.error('Invalid line item structure:', li);
+        return res.status(400).json({
+          message: 'Invalid line item for Stripe.',
+          invalidItem: li,
+        });
+      }
+
+      // Additional validation for Stripe requirements
+      if (li.price_data.unit_amount < 50) {
+        // Stripe minimum is $0.50 (50 cents)
+        console.error('Line item amount too low:', li.price_data.unit_amount);
+        return res.status(400).json({
+          message: 'Item price too low for Stripe. Minimum is $0.50 USD.',
+          item: li,
+        });
       }
     }
 
     console.log('Creating checkout session with:', {
       userId,
       totalAmount,
+      totalAmountUSD,
       amountInCents,
       lineItemsCount: lineItems.length,
+      lineItems: lineItems.map((item) => ({
+        name: item.price_data.product_data.name,
+        unit_amount: item.price_data.unit_amount,
+        quantity: item.quantity,
+        currency: item.price_data.currency,
+      })),
     });
 
     // Determine if this is a coach or athlete checkout
-    let isCoach = false;
-    if (req.originalUrl.includes('/coach') || req.body.role === 'coach') {
-      isCoach = true;
-    }
+    const isCoach = req.body.role === 'coach';
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -157,6 +187,7 @@ router.post('/create-checkout-session', async (req, res) => {
         : `${FRONTEND_URL}/athlete/marketplace`,
       metadata: {
         userId: userId,
+        role: isCoach ? 'coach' : 'athlete',
         cartItems: JSON.stringify(
           cartItems.map((item) => ({
             productId: item._id,
@@ -176,14 +207,29 @@ router.post('/create-checkout-session', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
+    console.error('Error type:', error.type);
+    console.error('Error message:', error.message);
+
     if (error.raw) {
       console.error('Stripe error details:', error.raw);
     }
 
+    // Log the line items that were sent to Stripe
+    console.error('Line items sent to Stripe:', lineItems);
+
     // Provide more specific error messages
     if (error.type === 'StripeInvalidRequestError') {
+      console.error('Stripe invalid request error details:', {
+        message: error.message,
+        param: error.param,
+        code: error.code,
+      });
+
       return res.status(400).json({
-        message: 'Invalid request to Stripe. Please check your cart items.',
+        message: `Invalid request to Stripe: ${error.message}`,
+        details: error.param
+          ? `Invalid parameter: ${error.param}`
+          : 'Unknown parameter error',
       });
     }
 
@@ -195,6 +241,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
     res.status(500).json({
       message: 'Error creating checkout session. Please try again.',
+      error: error.message,
     });
   }
 });
