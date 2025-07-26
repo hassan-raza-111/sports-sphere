@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import VendorLayout from '../../components/VendorLayout';
 import { useNavigate } from 'react-router-dom';
+import { BACKEND_URL } from '../../config.js';
 
 export default function VendorProfileForm() {
   const fileInputRef = useRef();
@@ -22,7 +23,6 @@ export default function VendorProfileForm() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const navigate = useNavigate();
-  const BACKEND_URL = 'http://localhost:5000'; // Change if your backend runs elsewhere
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');

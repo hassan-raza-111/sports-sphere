@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config.js';
 import '../css/login.css';
 
 function ResetPassword() {
@@ -21,14 +22,11 @@ function ResetPassword() {
     }
     setLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/reset-password/${token}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/reset-password/${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
       const data = await res.json();
       if (!res.ok) {
         setError(data.message || 'Failed to reset password');

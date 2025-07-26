@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { Link, useNavigate } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/find-coaches.css';
@@ -41,9 +42,7 @@ const FindCoaches = () => {
       if (selectedRating) params.append('rating', selectedRating);
       if (availableToday) params.append('available', 'true');
 
-      const response = await fetch(
-        `http://localhost:5000/api/coaches/find?${params}`
-      );
+      const response = await fetch(`${API_BASE_URL}/coaches/find?${params}`);
       const data = await response.json();
       setCoaches(Array.isArray(data) ? data : data.coaches || []);
     } catch (err) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import logoImg from '../../assets/images/Logo.png';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
@@ -392,7 +393,7 @@ const UserManagement = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch('http://localhost:5000/api/users');
+        const res = await fetch(`${API_BASE_URL}/users`);
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
         setUsers(data);
@@ -424,7 +425,7 @@ const UserManagement = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/users');
+      const res = await fetch(`${API_BASE_URL}/users`);
       if (!res.ok) throw new Error('Failed to fetch users');
       const data = await res.json();
       setUsers(data);
@@ -443,14 +444,11 @@ const UserManagement = () => {
     )
       return;
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/users/${user._id}/status`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/users/${user._id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to update status');
       alert(data.message);
@@ -465,14 +463,11 @@ const UserManagement = () => {
     const newPassword = window.prompt('Enter new password for this user:');
     if (!newPassword) return;
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/users/${user._id}/password`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: newPassword }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/users/${user._id}/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to reset password');
       alert(data.message);

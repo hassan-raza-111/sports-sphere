@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/images/Logo.png';
+import { API_BASE_URL } from '../config.js';
 
 const AthleteLayout = ({ children }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,7 +19,7 @@ const AthleteLayout = ({ children }) => {
   const markNotificationAsRead = async (notificationId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/notifications/${notificationId}/read`,
+        `${API_BASE_URL}/notifications/${notificationId}/read`,
         {
           method: 'PUT',
           headers: {

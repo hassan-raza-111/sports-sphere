@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/orders.css';
 
@@ -70,7 +71,7 @@ const OrderDetailModal = ({ order, onClose }) => {
                         src={
                           image.startsWith('http')
                             ? image
-                            : `http://localhost:5000${image}`
+                            : `${BACKEND_URL}${image}`
                         }
                         alt={name}
                       />
@@ -107,7 +108,7 @@ const MyOrders = () => {
 
     if (!userId) return;
 
-    fetch(`http://localhost:5000/api/orders?userId=${userId}`)
+    fetch(`${API_BASE_URL}/orders?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);

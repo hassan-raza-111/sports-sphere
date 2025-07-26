@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -32,15 +33,13 @@ const AthleteProgress = () => {
     const userId = user._id;
     setLoading(true);
     Promise.all([
-      fetch(
-        `http://localhost:5000/api/progress/athlete/${userId}/metrics-summary`
-      ).then((r) => r.json()),
-      fetch(
-        `http://localhost:5000/api/progress/athlete/${userId}/metrics-trend`
-      ).then((r) => r.json()),
-      fetch(`http://localhost:5000/api/feedback/athlete/${userId}`).then((r) =>
-        r.json()
+      fetch(`${API_BASE_URL}/progress/athlete/${userId}/metrics-summary`).then(
+        (r) => r.json()
       ),
+      fetch(`${API_BASE_URL}/progress/athlete/${userId}/metrics-trend`).then(
+        (r) => r.json()
+      ),
+      fetch(`${API_BASE_URL}/feedback/athlete/${userId}`).then((r) => r.json()),
     ])
       .then(([metricsData, trendData, feedbackData]) => {
         setMetrics(metricsData);

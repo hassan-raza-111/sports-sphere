@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/images/Logo.png';
+import { API_BASE_URL } from '../config.js';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -52,7 +53,7 @@ function Register() {
           data.append(key, value);
         }
       });
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         body: data,
       });

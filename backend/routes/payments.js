@@ -1,6 +1,6 @@
 import express from 'express';
 import Stripe from 'stripe';
-import { STRIPE_SECRET_KEY } from '../config.js';
+import { STRIPE_SECRET_KEY, FRONTEND_URL } from '../config.js';
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
@@ -13,8 +13,6 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
-
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // Create Stripe Checkout Session
 router.post('/create-checkout-session', async (req, res) => {

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {  BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
-
-const BACKEND_URL = 'http://localhost:5000';
 
 const Progress = () => {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);

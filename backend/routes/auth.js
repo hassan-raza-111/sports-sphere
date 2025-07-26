@@ -8,6 +8,7 @@ import Coach from '../models/Coach.js';
 import VendorProfile from '../models/VendorProfile.js';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { FRONTEND_URL } from '../config.js';
 
 const router = express.Router();
 
@@ -102,7 +103,7 @@ router.post('/register', upload.array('certificates'), async (req, res) => {
         pass: process.env.GMAIL_PASS,
       },
     });
-    const verifyUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+    const verifyUrl = `${FRONTEND_URL}/verify-email/${verificationToken}`;
     const mailOptions = {
       to: user.email,
       from: process.env.GMAIL_USER,
@@ -230,7 +231,7 @@ router.post('/forgot-password', async (req, res) => {
         pass: process.env.GMAIL_PASS,
       },
     });
-    const resetUrl = `http://localhost:5173/reset-password/${token}`;
+    const resetUrl = `${FRONTEND_URL}/reset-password/${token}`;
     const mailOptions = {
       to: user.email,
       from: process.env.GMAIL_USER,
@@ -463,7 +464,7 @@ router.post('/resend-verification', async (req, res) => {
         pass: process.env.GMAIL_PASS,
       },
     });
-    const verifyUrl = `http://localhost:5173/verify-email/${verificationToken}`;
+    const verifyUrl = `${FRONTEND_URL}/verify-email/${verificationToken}`;
     const mailOptions = {
       to: user.email,
       from: process.env.GMAIL_USER,

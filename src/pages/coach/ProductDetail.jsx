@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import { useParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import '../../css/marketplace.css';
@@ -24,9 +25,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `http://localhost:5000/api/products/${productId}`
-        );
+        const res = await fetch(`${API_BASE_URL}/products/${productId}`);
         if (!res.ok) throw new Error('Product not found');
         const data = await res.json();
         setProduct(data);
@@ -43,7 +42,7 @@ const ProductDetail = () => {
   useEffect(() => {
     setFeedbackLoading(true);
     setFeedbackError(null);
-    fetch(`http://localhost:5000/api/feedback/product/${productId}`)
+    fetch(`${API_BASE_URL}/feedback/product/${productId}`)
       .then((res) => res.json())
       .then((data) => {
         setFeedbacks(data);
@@ -68,14 +67,11 @@ const ProductDetail = () => {
     setSubmitting(true);
     setSubmitMsg('');
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/feedback/product/${productId}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating, feedbackText: comment, userId }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/feedback/product/${productId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, feedbackText: comment, userId }),
+      });
       if (!res.ok) throw new Error('Failed to submit feedback');
       setRating(0);
       setComment('');
@@ -112,7 +108,7 @@ const ProductDetail = () => {
               src={
                 product.image?.startsWith('http')
                   ? product.image
-                  : `http://localhost:5000${product.image}`
+                  : `${BACKEND_URL}${product.image}`
               }
               alt={product.name}
               className='product-detail-main-image'

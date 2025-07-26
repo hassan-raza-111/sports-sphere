@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../css/marketplace.css';
 import Layout from '../../components/Layout';
@@ -66,7 +67,7 @@ const CoachMarketplace = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(`${API_BASE_URL}/products`);
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -78,7 +79,7 @@ const CoachMarketplace = () => {
 
   const fetchCart = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/cart/${userId}`);
       const data = await response.json();
       setCart(data);
       localStorage.setItem('coachCartData', JSON.stringify(data));
@@ -93,14 +94,11 @@ const CoachMarketplace = () => {
 
   const addToCart = async (product) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/${userId}/add`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product._id, quantity: 1 }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/cart/${userId}/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product._id, quantity: 1 }),
+      });
       if (response.ok) {
         fetchCart();
         setNotification('Product added to cart!');
@@ -118,7 +116,7 @@ const CoachMarketplace = () => {
   const removeFromCart = async (productId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/cart/${userId}/remove/${productId}`,
+        `${API_BASE_URL}/cart/${userId}/remove/${productId}`,
         { method: 'DELETE' }
       );
       if (response.ok) {
@@ -131,14 +129,11 @@ const CoachMarketplace = () => {
 
   const updateQuantity = async (productId, newQuantity) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/${userId}/update`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId, quantity: newQuantity }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/cart/${userId}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: newQuantity }),
+      });
       if (response.ok) {
         fetchCart();
       }
@@ -171,7 +166,7 @@ const CoachMarketplace = () => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '/src/assets/images/Logo.png';
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${BACKEND_URL}${imagePath}`;
   };
 
   const getCategoryIcon = (category) => {

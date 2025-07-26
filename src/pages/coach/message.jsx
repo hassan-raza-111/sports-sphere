@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
 import CoachLayout from '../../components/Layout';
@@ -733,7 +734,7 @@ function Messages() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:5000/api/messages/conversations/${userId}`
+        `${API_BASE_URL}/messages/conversations/${userId}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch conversations');
@@ -752,7 +753,7 @@ function Messages() {
     if (!currentUser) return;
     try {
       const response = await fetch(
-        `http://localhost:5000/api/messages/users/${currentUser._id}/${currentUser.role}`
+        `${API_BASE_URL}/messages/users/${currentUser._id}/${currentUser.role}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch users');
@@ -767,7 +768,7 @@ function Messages() {
   const fetchMessages = async (senderId, receiverId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/messages/${senderId}/${receiverId}`
+        `${API_BASE_URL}/messages/${senderId}/${receiverId}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -824,7 +825,7 @@ function Messages() {
       // Mark messages as read
       try {
         await fetch(
-          `http://localhost:5000/api/messages/mark-read/${currentUser._id}/${conversation.partnerId}`,
+          `${API_BASE_URL}/messages/mark-read/${currentUser._id}/${conversation.partnerId}`,
           {
             method: 'PUT',
           }
@@ -840,7 +841,7 @@ function Messages() {
 
     try {
       // Create a new conversation by sending an initial message
-      const response = await fetch('http://localhost:5000/api/messages', {
+      const response = await fetch(`${API_BASE_URL}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

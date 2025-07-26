@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor-panel.css';
-
-const BACKEND_URL = 'http://localhost:5000';
 
 export default function EarningsOverview() {
   const [earnings, setEarnings] = useState(null);

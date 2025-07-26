@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/checkout.css';
@@ -61,7 +62,7 @@ const CheckoutPage = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/payments/create-checkout-session',
+        `${API_BASE_URL}/payments/create-checkout-session`,
         {
           method: 'POST',
           headers: {

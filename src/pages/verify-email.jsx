@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config.js';
 
 function VerifyEmail() {
   const { token } = useParams();
@@ -12,9 +13,7 @@ function VerifyEmail() {
     const verify = async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/verify-email/${token}`
-        );
+        const res = await fetch(`${API_BASE_URL}/verify-email/${token}`);
         const data = await res.json();
         if (!res.ok) {
           setError(data.message || 'Verification failed.');

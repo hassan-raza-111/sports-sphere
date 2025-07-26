@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { BACKEND_URL } from '../../config.js';
 import { Link } from 'react-router-dom';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/profile.css';
-
-const BACKEND_URL = 'http://localhost:5000';
 
 const VendorProfile = () => {
   const [profile, setProfile] = useState(null);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext';
 import AthleteLayout from '../../components/AthleteLayout';
@@ -745,7 +746,7 @@ const Messages = () => {
       setLoading(true);
       console.log('Fetching conversations for user:', userId);
       const response = await fetch(
-        `http://localhost:5000/api/messages/conversations/${userId}`
+        `${API_BASE_URL}/messages/conversations/${userId}`
       );
       console.log('Response status:', response.status);
       if (!response.ok) {
@@ -767,7 +768,7 @@ const Messages = () => {
     try {
       const userId = currentUser._id || currentUser.id;
       const response = await fetch(
-        `http://localhost:5000/api/messages/users/${userId}/${currentUser.role}`
+        `${API_BASE_URL}/messages/users/${userId}/${currentUser.role}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch users');
@@ -782,7 +783,7 @@ const Messages = () => {
   const fetchMessages = async (senderId, receiverId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/messages/${senderId}/${receiverId}`
+        `${API_BASE_URL}/messages/${senderId}/${receiverId}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
@@ -840,7 +841,7 @@ const Messages = () => {
       // Mark messages as read
       try {
         await fetch(
-          `http://localhost:5000/api/messages/mark-read/${userId}/${conversation.partnerId}`,
+          `${API_BASE_URL}/messages/mark-read/${userId}/${conversation.partnerId}`,
           {
             method: 'PUT',
           }
@@ -857,7 +858,7 @@ const Messages = () => {
     try {
       const currentUserId = currentUser._id || currentUser.id;
       // Create a new conversation by sending an initial message
-      const response = await fetch('http://localhost:5000/api/messages', {
+      const response = await fetch(`${API_BASE_URL}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

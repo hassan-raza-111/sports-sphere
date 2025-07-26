@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config.js';
 
 const AthleteDashboard = () => {
   const [athleteName, setAthleteName] = useState('Loading...');
@@ -26,7 +27,7 @@ const AthleteDashboard = () => {
     try {
       setLoading(true);
       setError('');
-      const baseUrl = 'http://localhost:5000/api';
+      const baseUrl = API_BASE_URL;
 
       // Fetch only essential data
       const [

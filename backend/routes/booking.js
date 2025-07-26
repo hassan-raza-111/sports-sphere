@@ -1,7 +1,7 @@
 import express from 'express';
 import Booking from '../models/Booking.js';
 import Stripe from 'stripe';
-import { STRIPE_SECRET_KEY } from '../config.js';
+import { STRIPE_SECRET_KEY, FRONTEND_URL } from '../config.js';
 import bodyParser from 'body-parser';
 import Progress from '../models/Progress.js';
 import User from '../models/User.js';
@@ -86,8 +86,8 @@ router.post('/create-checkout-session', async (req, res) => {
           notes,
         },
       },
-      success_url: `http://localhost:5173/athlete/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: 'http://localhost:5173/athlete/booking',
+      success_url: `${FRONTEND_URL}/athlete/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${FRONTEND_URL}/athlete/booking`,
       metadata: {
         coach,
         athlete,

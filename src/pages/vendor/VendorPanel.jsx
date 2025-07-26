@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor-panel.css';
-
-const BACKEND_URL = 'http://localhost:5000';
 
 const initialForm = {
   name: '',

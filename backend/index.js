@@ -20,13 +20,14 @@ import athleteProgressRoutes from './routes/athleteProgress.js';
 import payoutRequestsRouter from './routes/payoutRequests.js';
 import dotenv from 'dotenv';
 import path from 'path';
+import { FRONTEND_URL } from './config.js';
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
   },
 });

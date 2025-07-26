@@ -6,6 +6,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import { API_BASE_URL } from '../config.js';
 
 // Load Stripe (replace with your publishable key)
 const stripePromise = loadStripe(
@@ -38,7 +39,7 @@ const CheckoutForm = ({
     try {
       // Create payment intent
       const response = await fetch(
-        'http://localhost:5000/api/payments/create-payment-intent',
+        `${API_BASE_URL}/payments/create-payment-intent`,
         {
           method: 'POST',
           headers: {
@@ -74,7 +75,7 @@ const CheckoutForm = ({
       if (paymentIntent.status === 'succeeded') {
         // Confirm payment with backend
         const confirmResponse = await fetch(
-          'http://localhost:5000/api/payments/confirm-payment',
+          `${API_BASE_URL}/payments/confirm-payment`,
           {
             method: 'POST',
             headers: {

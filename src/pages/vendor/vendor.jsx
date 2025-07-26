@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { Link } from 'react-router-dom';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor.css';
@@ -22,7 +23,7 @@ export default function Vendor() {
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/vendor-profile');
+        const res = await fetch('${API_BASE_URL}/vendor-profile');
         if (!res.ok) throw new Error('Failed to fetch vendors');
         const data = await res.json();
         setVendors(data);

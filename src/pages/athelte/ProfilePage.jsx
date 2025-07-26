@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../css/profile.css';
 import AthleteLayout from '../../components/AthleteLayout';
@@ -39,7 +40,7 @@ const ProfilePage = () => {
     try {
       setLoading(true);
       setError('');
-      const baseUrl = 'http://localhost:5000/api';
+      const baseUrl = API_BASE_URL;
 
       // Fetch profile data
       const profileRes = await fetch(`${baseUrl}/users/${userId}`);

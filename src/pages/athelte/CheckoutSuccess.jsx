@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/checkout.css';
@@ -25,16 +26,13 @@ const CheckoutSuccess = () => {
 
   const confirmOrder = async (sessionId) => {
     try {
-      const response = await fetch(
-        'http://localhost:5000/api/payments/confirm-order',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sessionId }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/payments/confirm-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId }),
+      });
 
       const result = await response.json();
 

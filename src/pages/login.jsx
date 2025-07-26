@@ -3,6 +3,7 @@ import '../css/login.css';
 import '../css/index.css';
 import logo from '../assets/images/Logo.png';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config.js';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ function Login() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/login', {
+      const res = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -51,7 +52,7 @@ function Login() {
   const handleResend = async () => {
     setResendMsg('');
     try {
-      const res = await fetch('http://localhost:5000/api/resend-verification', {
+      const res = await fetch(`${API_BASE_URL}/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

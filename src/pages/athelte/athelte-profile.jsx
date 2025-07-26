@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../config.js';
 import { useNavigate } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout.jsx';
 import '../../css/athlete-layout.css';
@@ -29,7 +30,7 @@ const Profile = () => {
 
     console.log('Fetching profile for user:', user._id);
 
-    fetch(`http://localhost:5000/api/users/${user._id}`)
+    fetch(`${API_BASE_URL}/users/${user._id}`)
       .then((res) => {
         console.log('API Response status:', res.status);
         if (!res.ok) {
@@ -69,16 +70,14 @@ const Profile = () => {
         const [sessionsRes, ratingRes, progressRes, currentRes] =
           await Promise.all([
             fetch(
-              `http://localhost:5000/api/booking/athlete/${user._id}/bookings/completed`
+              `${API_BASE_URL}/booking/athlete/${user._id}/bookings/completed`
             ),
             fetch(
-              `http://localhost:5000/api/feedback/athlete/${user._id}/average-rating`
+              `${API_BASE_URL}/feedback/athlete/${user._id}/average-rating`
             ),
+            fetch(`${API_BASE_URL}/progress/athlete/${user._id}/goal-progress`),
             fetch(
-              `http://localhost:5000/api/progress/athlete/${user._id}/goal-progress`
-            ),
-            fetch(
-              `http://localhost:5000/api/booking/athlete/${user._id}/bookings/current`
+              `${API_BASE_URL}/booking/athlete/${user._id}/bookings/current`
             ),
           ]);
 
@@ -111,7 +110,7 @@ const Profile = () => {
     setError('');
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const res = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+      const res = await fetch(`${API_BASE_URL}/users/${user._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

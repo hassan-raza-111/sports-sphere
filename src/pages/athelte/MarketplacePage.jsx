@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import { Link, useNavigate } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/marketplace.css';
@@ -72,7 +73,7 @@ const MarketplacePage = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(`${API_BASE_URL}/products`);
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -84,7 +85,7 @@ const MarketplacePage = () => {
 
   const fetchCart = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/cart/${userId}`);
       const data = await response.json();
       setCart(data);
       // Save cart data to localStorage for persistence
@@ -101,19 +102,16 @@ const MarketplacePage = () => {
 
   const addToCart = async (product) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/${userId}/add`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId: product._id,
-            quantity: 1,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/cart/${userId}/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: 1,
+        }),
+      });
 
       if (response.ok) {
         fetchCart(); // Refresh cart from server
@@ -132,7 +130,7 @@ const MarketplacePage = () => {
   const removeFromCart = async (productId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/cart/${userId}/remove/${productId}`,
+        `${API_BASE_URL}/cart/${userId}/remove/${productId}`,
         {
           method: 'DELETE',
         }
@@ -148,19 +146,16 @@ const MarketplacePage = () => {
 
   const updateQuantity = async (productId, newQuantity) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cart/${userId}/update`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId,
-            quantity: newQuantity,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/cart/${userId}/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId,
+          quantity: newQuantity,
+        }),
+      });
 
       if (response.ok) {
         fetchCart(); // Refresh cart from server
@@ -193,7 +188,7 @@ const MarketplacePage = () => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '/src/assets/images/Logo.png';
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${BACKEND_URL}${imagePath}`;
   };
 
   if (loading) {
