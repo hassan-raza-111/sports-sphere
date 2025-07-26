@@ -150,7 +150,7 @@ const AthleteProgress = () => {
                 Focus
               </h3>
               <div className='metric-value'>
-                {metrics?.focus !== undefined ? `${metrics.focus}/10` : '-'}
+                {metrics?.focus !== undefined ? `${metrics.focus}%` : '-'}
               </div>
               <div className='metric-description'>
                 Coach's latest focus rating
@@ -158,7 +158,7 @@ const AthleteProgress = () => {
               <div className='progress-bar'>
                 <div
                   className='progress-fill'
-                  style={{ width: percent(metrics?.focus * 10) }}
+                  style={{ width: percent(metrics?.focus) }}
                 ></div>
               </div>
             </div>

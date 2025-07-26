@@ -56,16 +56,13 @@ router.post('/', async (req, res) => {
   console.log('Validated metrics:', validMetrics);
 
   try {
-    // Upsert: update if exists, else create
-    const progress = await Progress.findOneAndUpdate(
-      { userId },
-      {
-        metrics: validMetrics,
-        date: new Date(),
-      },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
-    console.log('Progress saved/updated:', progress);
+    // Create a new progress document for each session
+    const progress = new Progress({
+      userId,
+      metrics: validMetrics,
+      date: new Date(),
+    });
+    await progress.save();
     res.status(201).json({ message: 'Progress saved', progress });
   } catch (err) {
     console.error('Error saving progress:', err);
@@ -185,56 +182,29 @@ router.get('/athlete/:id', async (req, res) => {
   }
 });
 
-// Test endpoint to check database
-router.get('/test-db', async (req, res) => {
-  try {
-    const allProgress = await Progress.find({}).sort({ date: -1 }).limit(5);
-    console.log(
-      'All progress documents:',
-      JSON.stringify(allProgress, null, 2)
-    );
-    res.json({
-      count: allProgress.length,
-      documents: allProgress,
-      message: 'Check console for detailed logs',
-    });
-  } catch (err) {
-    console.error('Error in test-db:', err);
-    res.status(500).json({ error: 'Failed to fetch test data' });
-  }
-});
-
 // Get latest metrics summary for athlete
 router.get('/athlete/:id/metrics-summary', async (req, res) => {
   try {
     const userId = req.params.id;
-    console.log('Fetching metrics summary for userId:', userId);
-    const latest = await Progress.find({ userId }).sort({ date: -1 }).limit(1);
-    console.log('Found progress documents:', latest.length);
-    if (!latest.length) {
-      console.log('No progress found, returning zeros');
+    // Get all progress records for this user, sorted by createdAt (most recent first)
+    const allProgress = await Progress.find({ userId }).sort({ createdAt: -1 });
+    if (!allProgress.length) {
       return res.json({ stamina: 0, speed: 0, strength: 0, focus: 0 });
     }
-
-    // Debug: Log the entire document
-    console.log(
-      'Latest progress document:',
-      JSON.stringify(latest[0], null, 2)
-    );
-    console.log('Metrics field:', latest[0].metrics);
-    console.log('Metrics type:', typeof latest[0].metrics);
-    console.log('Metrics keys:', Object.keys(latest[0].metrics || {}));
-
+    // Get the latest record (first in the array since we sorted by createdAt: -1)
+    const latest = allProgress[0];
+    // Defensive: Check if metrics exists and is an object
+    if (!latest.metrics || typeof latest.metrics !== 'object') {
+      return res.json({ stamina: 0, speed: 0, strength: 0, focus: 0 });
+    }
     const {
       stamina = 0,
       speed = 0,
       strength = 0,
       focus = 0,
-    } = latest[0].metrics || {};
-    console.log('Returning metrics:', { stamina, speed, strength, focus });
+    } = latest.metrics || {};
     res.json({ stamina, speed, strength, focus });
   } catch (err) {
-    console.error('Error in metrics-summary:', err);
     res.status(500).json({ error: 'Failed to fetch metrics summary' });
   }
 });

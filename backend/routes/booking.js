@@ -717,25 +717,25 @@ router.put('/:id/complete', async (req, res) => {
           });
         }
 
-        // Update existing progress record
-        const updatedProgress = await Progress.findOneAndUpdate(
-          { userId: booking.athlete, coach: booking.coach },
-          {
-            metrics: validMetrics,
-            coachNotes: completionNotes || booking.completionNotes,
-            performance: performance || booking.performance,
-            focusArea: focusArea || booking.focusArea,
-            updatedAt: new Date(),
-          },
-          { new: true }
-        );
+        // Create a new progress record for the updated metrics
+        const progressData = {
+          userId: booking.athlete,
+          coach: booking.coach,
+          date: new Date(), // Use current date when metrics are updated
+          duration: booking.duration || '60 min',
+          focusArea: focusArea || booking.focusArea || 'General',
+          performance: performance || booking.performance || 0,
+          coachNotes: completionNotes || booking.completionNotes || '',
+          status: 'completed',
+          metrics: validMetrics,
+        };
 
-        console.log('Updated existing progress:', updatedProgress);
+        const newProgress = await Progress.create(progressData);
 
         return res.json({
           message: 'Session metrics updated successfully',
           booking,
-          progress: updatedProgress,
+          progress: newProgress,
         });
       }
 
@@ -798,7 +798,7 @@ router.put('/:id/complete', async (req, res) => {
     const progressData = {
       userId: booking.athlete,
       coach: booking.coach,
-      date: booking.date,
+      date: new Date(),
       duration: booking.duration || '60 min',
       focusArea: focusArea || 'General',
       performance: performance || 0,
