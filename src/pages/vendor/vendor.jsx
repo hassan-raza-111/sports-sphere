@@ -23,7 +23,7 @@ export default function Vendor() {
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const res = await fetch('${API_BASE_URL}/vendor-profile');
+        const res = await fetch(`${API_BASE_URL}/vendor-profile`);
         if (!res.ok) throw new Error('Failed to fetch vendors');
         const data = await res.json();
         setVendors(data);

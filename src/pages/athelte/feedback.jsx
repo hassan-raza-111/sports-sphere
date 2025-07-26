@@ -9,6 +9,7 @@ import {
   faStar,
   faQuoteLeft,
 } from '@fortawesome/free-solid-svg-icons';
+import { API_BASE_URL } from '../../config.js';
 
 const FEEDBACK_TYPES = [
   { value: 'coach', label: 'Coach Feedback' },
@@ -36,7 +37,7 @@ const AthleteFeedback = () => {
     const fetchCoaches = async () => {
       setLoadingCoaches(true);
       try {
-        const res = await fetch('/api/coaches');
+        const res = await fetch(`${API_BASE_URL}/coaches`);
         const data = await res.json();
         setCoaches(data);
       } catch (err) {
@@ -53,7 +54,7 @@ const AthleteFeedback = () => {
     const fetchTestimonials = async () => {
       setLoadingTestimonials(true);
       try {
-        const res = await fetch('/api/feedback');
+        const res = await fetch(`${API_BASE_URL}/feedback`);
         const data = await res.json();
         setTestimonials(data);
       } catch (err) {
@@ -71,7 +72,7 @@ const AthleteFeedback = () => {
     setSuccessMsg('');
     setErrorMsg('');
     try {
-      const res = await fetch('/api/feedback', {
+      const res = await fetch(`${API_BASE_URL}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,7 +91,7 @@ const AthleteFeedback = () => {
       setFeedbackText('');
       setEmail('');
       // Refresh testimonials
-      const testimonialsRes = await fetch('/api/feedback');
+      const testimonialsRes = await fetch(`${API_BASE_URL}/feedback`);
       setTestimonials(await testimonialsRes.json());
     } catch (err) {
       setErrorMsg('Failed to submit feedback. Please try again.');

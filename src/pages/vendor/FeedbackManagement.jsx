@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor-panel.css';
 
@@ -18,7 +18,7 @@ export default function FeedbackManagement() {
     if (!vendorId) return;
     setFeedbackTabLoading(true);
     setFeedbackTabError(null);
-    fetch(`${BACKEND_URL}/api/feedback/vendor/${vendorId}`)
+    fetch(`${API_BASE_URL}/feedback/vendor/${vendorId}`)
       .then((res) => res.json())
       .then((data) => {
         setFeedbackList(data);

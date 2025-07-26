@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import VendorLayout from '../../components/VendorLayout';
 import { useNavigate } from 'react-router-dom';
-import { BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 
 export default function VendorProfileForm() {
   const fileInputRef = useRef();
@@ -33,7 +33,7 @@ export default function VendorProfileForm() {
     }
     const user = JSON.parse(userStr);
     const userId = user._id;
-    fetch(`/api/vendor-profile/${userId}`)
+    fetch(`${API_BASE_URL}/vendor-profile/${userId}`)
       .then((res) => {
         if (!res.ok) throw new Error('Profile not found');
         return res.json();
@@ -102,10 +102,13 @@ export default function VendorProfileForm() {
       if (imageFile) {
         const formData = new FormData();
         formData.append('image', imageFile);
-        const uploadRes = await fetch('/api/vendor-profile/upload-image', {
-          method: 'POST',
-          body: formData,
-        });
+        const uploadRes = await fetch(
+          `${API_BASE_URL}/vendor-profile/upload-image`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
         if (!uploadRes.ok) throw new Error('Image upload failed');
         const uploadData = await uploadRes.json();
         imagePath = uploadData.imagePath;
@@ -114,18 +117,21 @@ export default function VendorProfileForm() {
       const userStr = localStorage.getItem('user');
       const user = JSON.parse(userStr);
       const userId = user._id;
-      const userRes = await fetch(`/api/vendor-profile/user/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-        }),
-      });
+      const userRes = await fetch(
+        `${API_BASE_URL}/vendor-profile/user/${userId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            phone: form.phone,
+          }),
+        }
+      );
       if (!userRes.ok) throw new Error('User info update failed');
       // Update VendorProfile info
-      const res = await fetch(`/api/vendor-profile/${userId}`, {
+      const res = await fetch(`${API_BASE_URL}/vendor-profile/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

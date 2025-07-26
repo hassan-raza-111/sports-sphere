@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import { API_BASE_URL } from '../../config.js';
 
 const initialState = {
   name: '',
@@ -57,7 +58,7 @@ const AdminAddUser = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/users/admin-create', {
+      const res = await fetch(`${API_BASE_URL}/users/admin-create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

@@ -14,6 +14,7 @@ import {
   FaStore,
 } from 'react-icons/fa';
 import Chart from 'chart.js/auto';
+import { API_BASE_URL } from '../../config.js';
 
 const AdminReport = () => {
   const [analytics, setAnalytics] = useState({
@@ -68,7 +69,9 @@ const AdminReport = () => {
 
   const fetchAnalyticsData = async () => {
     try {
-      const response = await fetch('/api/reports/analytics/overview');
+      const response = await fetch(
+        `${API_BASE_URL}/reports/analytics/overview`
+      );
       const data = await response.json();
       setAnalytics(data);
     } catch (error) {
@@ -79,7 +82,7 @@ const AdminReport = () => {
   const fetchUserGrowthData = async () => {
     try {
       const response = await fetch(
-        `/api/reports/analytics/user-growth?timeframe=${activeTimeframe}`
+        `${API_BASE_URL}/reports/analytics/user-growth?timeframe=${activeTimeframe}`
       );
       const data = await response.json();
       setUserGrowthData(data);
@@ -91,7 +94,7 @@ const AdminReport = () => {
   const fetchSportBreakdown = async () => {
     try {
       const response = await fetch(
-        `/api/reports/analytics/sport-breakdown?timeframe=${activePieTimeframe}`
+        `${API_BASE_URL}/reports/analytics/sport-breakdown?timeframe=${activePieTimeframe}`
       );
       const data = await response.json();
       setSportBreakdown(data);
@@ -103,7 +106,7 @@ const AdminReport = () => {
   const fetchRecentSessions = async () => {
     try {
       const response = await fetch(
-        '/api/reports/analytics/recent-sessions?limit=10'
+        `${API_BASE_URL}/reports/analytics/recent-sessions?limit=10`
       );
       const data = await response.json();
       setRecentSessions(data);

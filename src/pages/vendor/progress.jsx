@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {  BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 
 const Progress = () => {
@@ -17,7 +17,7 @@ const Progress = () => {
   useEffect(() => {
     setAnalyticsLoading(true);
     setAnalyticsError(null);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}/analytics`)
+    fetch(`${API_BASE_URL}/orders/vendor/${vendorId}/analytics`)
       .then((res) => res.json())
       .then((data) => {
         setAnalytics(data);
@@ -197,18 +197,18 @@ const Progress = () => {
                 </h3>
               </div>
               <a
-                href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.csv`}
-                target='_blank'
-                rel='noopener noreferrer'
+                href={`${API_BASE_URL}/orders/vendor/${vendorId}/report.csv`}
+                download
+                className='btn btn-secondary'
               >
-                <button style={{ marginRight: 10 }}>Download CSV</button>
+                Download CSV
               </a>
               <a
-                href={`${BACKEND_URL}/api/orders/vendor/${vendorId}/report.pdf`}
-                target='_blank'
-                rel='noopener noreferrer'
+                href={`${API_BASE_URL}/orders/vendor/${vendorId}/report.pdf`}
+                download
+                className='btn btn-secondary'
               >
-                <button>Download PDF</button>
+                Download PDF
               </a>
             </div>
           </>

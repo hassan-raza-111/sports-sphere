@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import { API_BASE_URL } from '../../config.js';
 import { FaUserShield, FaUsers, FaMoneyBillWave, FaFlag } from 'react-icons/fa';
 
 const Admin = () => {
@@ -15,9 +16,9 @@ const Admin = () => {
     async function fetchStats() {
       try {
         const [usersRes, reportsRes, revenueRes] = await Promise.all([
-          fetch('/api/users/analytics'),
-          fetch('/api/reports/open-count'),
-          fetch('/api/orders/admin/stats'),
+          fetch(`${API_BASE_URL}/users/analytics`),
+          fetch(`${API_BASE_URL}/reports/open-count`),
+          fetch(`${API_BASE_URL}/orders/admin/stats`),
         ]);
         const usersData = await usersRes.json();
         const reportsData = await reportsRes.json();

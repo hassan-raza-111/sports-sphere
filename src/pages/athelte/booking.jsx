@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config.js';
 import AthleteLayout from '../../components/AthleteLayout';
 import '../../css/booking.css';
 import { loadStripe } from '@stripe/stripe-js';
@@ -90,7 +91,7 @@ const BookingPage = ({ coachId }) => {
     const fetchCoaches = async () => {
       setLoadingCoaches(true);
       try {
-        const res = await fetch('/api/coaches');
+        const res = await fetch(`${API_BASE_URL}/coaches`);
         const data = await res.json();
         setCoaches(data);
       } catch (err) {
@@ -153,18 +154,21 @@ const BookingPage = ({ coachId }) => {
     setSubmitting(true);
     try {
       // Call backend to create Stripe Checkout Session
-      const res = await fetch('/api/booking/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          coach: selectedCoach, // This should be Coach model _id
-          athlete: athleteId,
-          date,
-          time,
-          notes,
-          amount,
-        }),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/booking/create-checkout-session`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            coach: selectedCoach, // This should be Coach model _id
+            athlete: athleteId,
+            date,
+            time,
+            notes,
+            amount,
+          }),
+        }
+      );
       const data = await res.json();
       if (!res.ok || !data.url) {
         setErrorMsg(data.message || 'Failed to start payment.');

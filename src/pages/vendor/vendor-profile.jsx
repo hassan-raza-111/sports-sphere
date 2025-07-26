@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import { Link } from 'react-router-dom';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/profile.css';
@@ -7,7 +7,7 @@ import '../../css/profile.css';
 const VendorProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -18,7 +18,7 @@ const VendorProfile = () => {
     }
     const user = JSON.parse(userStr);
     const userId = user._id;
-    fetch(`/api/vendor-profile/${userId}`)
+    fetch(`${API_BASE_URL}/vendor-profile/${userId}`)
       .then((res) => {
         if (!res.ok) throw new Error('Profile not found');
         return res.json();

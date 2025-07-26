@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor-panel.css';
 
@@ -20,7 +20,7 @@ export default function OrderManagement() {
     if (!vendorId) return;
     setOrdersLoading(true);
     setOrderError(null);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}`)
+    fetch(`${API_BASE_URL}/orders/vendor/${vendorId}`)
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);
@@ -35,7 +35,7 @@ export default function OrderManagement() {
   const handleStatusUpdate = async (orderId, newStatus) => {
     setStatusUpdating(orderId);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}/status`, {
+      const res = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -56,7 +56,7 @@ export default function OrderManagement() {
   const handleViewOrder = async (orderId) => {
     setOrderDetail('loading');
     try {
-      const res = await fetch(`${BACKEND_URL}/api/orders/${orderId}`);
+      const res = await fetch(`${API_BASE_URL}/orders/${orderId}`);
       if (!res.ok) throw new Error('Failed to fetch order');
       const data = await res.json();
       setOrderDetail(data);

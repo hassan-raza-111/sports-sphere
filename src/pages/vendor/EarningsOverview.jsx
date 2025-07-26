@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor-panel.css';
 
@@ -25,7 +25,7 @@ export default function EarningsOverview() {
     if (!vendorId) return;
     setEarningsLoading(true);
     setEarningsError(null);
-    fetch(`${BACKEND_URL}/api/orders/vendor/${vendorId}/earnings`)
+    fetch(`${API_BASE_URL}/orders/vendor/${vendorId}/earnings`)
       .then((res) => res.json())
       .then((data) => {
         setEarnings(data);
@@ -37,7 +37,7 @@ export default function EarningsOverview() {
       });
     // Fetch payout history from new endpoint
     setPayoutHistoryLoading(true);
-    fetch(`${BACKEND_URL}/api/payout-requests/vendor/${vendorId}/history`)
+    fetch(`${API_BASE_URL}/payout-requests/vendor/${vendorId}/history`)
       .then((res) => res.json())
       .then((data) => {
         setPayoutHistory(data);
@@ -53,7 +53,7 @@ export default function EarningsOverview() {
     setPayoutSuccess('');
     try {
       const res = await fetch(
-        `${BACKEND_URL}/api/payout-requests/vendor/${vendorId}`,
+        `${API_BASE_URL}/payout-requests/vendor/${vendorId}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -69,7 +69,7 @@ export default function EarningsOverview() {
       setPayoutNotes('');
       // Refresh payout history
       const historyRes = await fetch(
-        `${BACKEND_URL}/api/payout-requests/vendor/${vendorId}/history`
+        `${API_BASE_URL}/payout-requests/vendor/${vendorId}/history`
       );
       const historyData = await historyRes.json();
       setPayoutHistory(historyData);

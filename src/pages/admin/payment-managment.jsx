@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import { API_BASE_URL } from '../../config.js';
 import {
   FaMoneyBillWave,
   FaSearch,
@@ -66,8 +67,8 @@ function AdminPaymentManagement() {
       console.log('Fetching payment stats...');
 
       const [orderStatsResponse, bookingStatsResponse] = await Promise.all([
-        fetch('/api/orders/admin/stats'),
-        fetch('/api/booking/admin/stats'),
+        fetch(`${API_BASE_URL}/orders/admin/stats`),
+        fetch(`${API_BASE_URL}/booking/admin/stats`),
       ]);
 
       if (!orderStatsResponse.ok) {
@@ -221,7 +222,7 @@ function AdminPaymentManagement() {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/orders/admin/export');
+      const response = await fetch(`${API_BASE_URL}/orders/admin/export`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -238,8 +239,8 @@ function AdminPaymentManagement() {
     try {
       const endpoint =
         type === 'session'
-          ? `/api/booking/admin/${id}/capture`
-          : `/api/orders/admin/${id}`;
+          ? `${API_BASE_URL}/booking/admin/${id}/capture`
+          : `${API_BASE_URL}/orders/admin/${id}`;
       const method = type === 'session' ? 'POST' : 'PUT';
       const body = type === 'session' ? {} : { paymentStatus: 'completed' };
 
@@ -273,8 +274,8 @@ function AdminPaymentManagement() {
     try {
       const endpoint =
         refundType === 'session'
-          ? `/api/booking/admin/${refundId}/refund`
-          : `/api/orders/admin/${refundId}`;
+          ? `${API_BASE_URL}/booking/admin/${refundId}/refund`
+          : `${API_BASE_URL}/orders/admin/${refundId}`;
       const method = refundType === 'session' ? 'POST' : 'PUT';
 
       let body;
@@ -282,7 +283,9 @@ function AdminPaymentManagement() {
         body = { reason: selectedRefundReason };
       } else {
         // For orders, we need to get the order details to set the refund amount
-        const orderResponse = await fetch(`/api/orders/admin/${refundId}`);
+        const orderResponse = await fetch(
+          `${API_BASE_URL}/orders/admin/${refundId}`
+        );
         if (orderResponse.ok) {
           const order = await orderResponse.json();
           body = {

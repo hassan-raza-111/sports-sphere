@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AthleteLayout from '../../components/AthleteLayout';
+import { API_BASE_URL } from '../../config.js';
 import '../../css/checkout.css';
 
 const BookingSuccess = () => {
@@ -25,13 +26,16 @@ const BookingSuccess = () => {
 
   const confirmSessionBooking = async (sessionId) => {
     try {
-      const response = await fetch('/api/booking/confirm-session-booking', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/booking/confirm-session-booking`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId }),
+        }
+      );
       const result = await response.json();
       if (result.success) {
         setBookingId(result.booking._id);

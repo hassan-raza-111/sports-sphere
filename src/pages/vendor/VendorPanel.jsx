@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import { API_BASE_URL, BACKEND_URL } from '../../config.js';
 import VendorLayout from '../../components/VendorLayout';
 import '../../css/vendor-panel.css';
 
@@ -43,7 +43,7 @@ export default function VendorPanel() {
   useEffect(() => {
     if (!vendorId) return;
     setLoading(true);
-    fetch(`/api/products/vendor/${vendorId}`)
+    fetch(`${API_BASE_URL}/products/vendor/${vendorId}`)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
@@ -104,7 +104,7 @@ export default function VendorPanel() {
       if (imageFile) {
         const formData = new FormData();
         formData.append('image', imageFile);
-        const uploadRes = await fetch('/api/products/upload-image', {
+        const uploadRes = await fetch(`${API_BASE_URL}/products/upload-image`, {
           method: 'POST',
           body: formData,
         });
@@ -129,14 +129,14 @@ export default function VendorPanel() {
       let res;
       if (editId) {
         // Edit
-        res = await fetch(`/api/products/${editId}`, {
+        res = await fetch(`${API_BASE_URL}/products/${editId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(productData),
         });
       } else {
         // Add
-        res = await fetch('/api/products', {
+        res = await fetch(`${API_BASE_URL}/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(productData),
@@ -144,7 +144,9 @@ export default function VendorPanel() {
       }
       if (!res.ok) throw new Error('Product save failed');
       // Refresh product list
-      const productsRes = await fetch(`/api/products/vendor/${vendorId}`);
+      const productsRes = await fetch(
+        `${API_BASE_URL}/products/vendor/${vendorId}`
+      );
       setProducts(await productsRes.json());
       resetForm();
     } catch (err) {
@@ -173,9 +175,11 @@ export default function VendorPanel() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?'))
       return;
-    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    await fetch(`${API_BASE_URL}/products/${id}`, { method: 'DELETE' });
     // Refresh product list
-    const productsRes = await fetch(`/api/products/vendor/${vendorId}`);
+    const productsRes = await fetch(
+      `${API_BASE_URL}/products/vendor/${vendorId}`
+    );
     setProducts(await productsRes.json());
   };
 

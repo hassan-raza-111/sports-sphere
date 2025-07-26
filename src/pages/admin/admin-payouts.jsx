@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import { API_BASE_URL } from '../../config.js';
 
 function AdminPayouts() {
   const [payouts, setPayouts] = useState([]);
@@ -15,7 +16,7 @@ function AdminPayouts() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/payout-requests');
+      const res = await fetch(`${API_BASE_URL}/payout-requests`);
       const data = await res.json();
       setPayouts(data.payoutRequests || []);
     } catch (err) {
@@ -31,7 +32,7 @@ function AdminPayouts() {
     )
       return;
     try {
-      const res = await fetch(`/api/payout-requests/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/payout-requests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
